@@ -7,10 +7,6 @@ Require Import
 Require Export
   HoTTClasses.interfaces.ua_basic.
 
-Require HoTTClasses.misc.notation.
-
-Import notation.sum_notation.
-
 Section for_signature.
   Variable σ: Signature.
 
@@ -172,7 +168,7 @@ Section for_signature.
        | Impl a b => F a → F b
        | Ext P => P
        | Conj a b => F a ∧ F b
-       | Disj a b => F a ∨ F b
+       | Disj a b => F a |_| F b
        end.
 
     Definition boring_eval_entailment (vars: Vars A nat) (ee: EqEntailment):

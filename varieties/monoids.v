@@ -1,12 +1,13 @@
 (* To be imported qualified. *)
 Require Import
   Coq.Unicode.Utf8
-  HoTTClasses.interfaces.abstract_algebra
+  HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.universal_algebra
   HoTTClasses.categories.varieties
   HoTTClasses.misc.workaround_tactics
   HoTTClasses.theory.ua_homomorphisms
-  HoTT.Spaces.Nat.
+  HoTT.Spaces.Nat
+  HoTT.Basics.Equivalences.
 
 Inductive op := mult | one.
 
@@ -35,18 +36,8 @@ Definition Object := varieties.Object theory.
 
 Local Hint Extern 3 => progress simpl : typeclass_instances.
 
-(*
-Definition forget: Object → setoids.Object :=
-  @product.project unit
-    (λ _, setoids.Object)
-    (λ _, _) _
-    (λ _, _) (λ _, _) (λ _, _) tt
-     ∘ forget_algebra.object theory ∘ forget_variety.forget theory.
-  (* todo: too ugly *)
-*)
-
 (* Now follow a series of encoding/decoding functions to convert between the
- specialized Monoid/Monoid_Morphism type classes and the universal
+ specialized Monoid/MonoidMorphism type classes and the universal
  Algebra/InVariety/HomoMorphism type classes instantiated with the above
  signature and theory. *)
 
@@ -59,13 +50,25 @@ Section decode_operations.
   Global Instance: SgOp (A tt) := algebra_op mult.
 End decode_operations.
 
+Section monoid_morphism.
+  Context (A B : Type) {Aop : SgOp A} {Bop : SgOp B}
+      {Aunit : MonUnit A} {Bunit : MonUnit B}.
+
+  Class MonoidMorphism (f : A → B) :=
+    { monoid_morphism_domain: Monoid A
+    ; monoid_morphism_codomain: Monoid B
+    ; monoid_morphism:> HomoMorphism sig (const A) (const B) (const f) }.
+
+  Coercion monoid_morphism : MonoidMorphism >-> HomoMorphism.
+End monoid_morphism.
+
 Section encode_variety_and_ops.
   Context A `{Monoid A}.
 
   Global Instance encode_algebra_and_ops: Algebra sig _.
   Proof. constructor. intro. apply _. Qed.
 
-  Global Instance encode_variety_and_ops: InVariety theory (λ _, A) | 10.
+  Global Instance encode_variety_and_ops: InVariety theory (const A) | 10.
   Proof.
    constructor. apply _.
    intros ? [] ?; simpl; unfold algebra_op; simpl.
@@ -74,7 +77,7 @@ Section encode_variety_and_ops.
    apply right_identity.
   Qed.
 
-  Definition object: Object := varieties.object theory (λ _, A).
+  Definition object: Object := varieties.object theory (const A).
 End encode_variety_and_ops.
 
 Lemma encode_algebra_only `{!AlgebraOps theory A} `{!Monoid (A tt)}: Algebra theory A .
@@ -92,35 +95,17 @@ Proof with simpl; auto.
   intro. apply_simplified (laws _ e_mult_1_r)...
 Qed.
 
-Lemma encode_morphism_only
-  `{AlgebraOps theory A} `{AlgebraOps theory B}
-  (f: ∀ u, A u → B u) `{!Monoid_Morphism (f tt)}: HomoMorphism sig A B f.
+Instance monoid_morphism_preserving
+  {A B : Type} (f : A → B)
+  `{MonoidMorphism A B f}: MonoidPreserving f.
 Proof.
- pose proof (monmor_a (f:=f tt)).
- pose proof (monmor_b (f:=f tt)).
  constructor.
-   intros []; simpl.
-    apply preserves_sg_op.
-   apply preserves_mon_unit.
-  apply encode_algebra_only.
- apply encode_algebra_only.
+ intros x y.
+ apply_simplified (preserves sig (const A) (const B) (const f) mult).
+ apply_simplified (preserves sig (const A) (const B) (const f) one).
 Qed.
 
-Lemma encode_morphism_and_ops `{Monoid_Morphism A B f}:
-  @HomoMorphism sig (λ _, A) (λ _, B) ( _) ( _) (λ _, f).
-Proof. intros. apply encode_morphism_only. assumption. Qed.
-
-Lemma decode_morphism_and_ops
-  `{InVariety theory x} `{InVariety theory y} `{!HomoMorphism theory x y f}:
-    Monoid_Morphism (f tt).
-Proof.
- constructor; try apply _.
-  constructor; try apply _.
-  apply (preserves theory x y f mult).
- apply (preserves theory x y f one).
-Qed.
-
-Instance id_monoid_morphism `{Monoid A}: Monoid_Morphism (@id A).
+Instance id_monoid_morphism `{Monoid A}: MonoidMorphism A A id.
 Proof. repeat (split; try apply _); easy. Qed.
 
 (* Finally, we use these encoding/decoding functions to specialize some universal results: *)
@@ -131,24 +116,29 @@ Section specialized.
     (f : A → B) (g : B → C).
 
   Instance compose_monoid_morphism:
-    Monoid_Morphism f → Monoid_Morphism g → Monoid_Morphism (g ∘ f).
+    MonoidMorphism A B f → MonoidMorphism B C g → MonoidMorphism A C (g ∘ f).
   Proof.
-    intros. pose proof (encode_morphism_and_ops (f:=f)) as P.
-    pose proof (encode_morphism_and_ops (f:=g)) as Q.
-    pose proof (@compose_homomorphisms theory _ _ _ _ _ _ _ _ P Q) as PP.
-    pose proof (monmor_a (f:=f)). pose proof (monmor_b (f:=f)). pose proof (monmor_b (f:=g)).
-    apply (@decode_morphism_and_ops _ _ _ _ _ _ _ PP).
+    intros.
+    pose proof (@compose_homomorphisms theory _ _ _ _ _ _ _ _ X X0) as PP.
+    pose proof (@monoid_morphism_domain _ _ _ _ _ _ f).
+    pose proof (@monoid_morphism_codomain _ _ _ _ _ _ f).
+    pose proof (@monoid_morphism_codomain _ _ _ _ _ _ g).
+    destruct X, X0. constructor; assumption.
   Qed.
 
-  Lemma invert_monoid_morphism:
-    ∀ `{!Inverse f}, Bijective f → Monoid_Morphism f → Monoid_Morphism (f⁻¹).
-  Proof.
-    intros. pose proof (encode_morphism_and_ops (f:=f)) as P.
-    pose proof (@invert_homomorphism theory _ _ _ _ _ P) as Q.
-    pose proof (monmor_a (f:=f)). pose proof (monmor_b (f:=f)).
-    apply (@decode_morphism_and_ops _ _ _ _ _ _ _ (Q (λ _, Inverse0) _ _)).
+  Lemma invert_monoid_morphism `{IsEquiv A B f}
+    : MonoidMorphism A B f → MonoidMorphism B A (f^-1).
+  Proof with try assumption.
+    intros.
+    pose proof (@invert_homomorphism theory _ _ _ _ _ _ X) as Q.
+    pose proof monoid_morphism_domain.
+    pose proof monoid_morphism_codomain.
+    destruct X.
+    destruct Q.
+    constructor...
+    constructor...
   Qed.
 End specialized.
 
-Hint Extern 4 (Monoid_Morphism (_ ∘ _)) => class_apply @compose_monoid_morphism : typeclass_instances.
-Hint Extern 4 (Monoid_Morphism (_⁻¹)) => class_apply @invert_monoid_morphism : typeclass_instances.
+Hint Extern 4 (MonoidMorphism (_ ∘ _)) => class_apply @compose_monoid_morphism : typeclass_instances.
+Hint Extern 4 (MonoidMorphism (_^-1)) => class_apply @invert_monoid_morphism : typeclass_instances.
