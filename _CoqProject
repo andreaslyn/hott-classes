@@ -1,0 +1,17 @@
+-R . HoTTClasses
+
+./misc/notation.v
+./misc/workaround_tactics.v
+
+./implementations/list.v
+./implementations/ne_list.v
+
+./interfaces/abstract_algebra.v
+./interfaces/ua_basic.v
+./interfaces/universal_algebra.v
+
+./theory/ua_homomorphisms.v
+
+./categories/varieties.v
+
+./varieties/monoids.v
