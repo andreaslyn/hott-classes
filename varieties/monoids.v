@@ -36,11 +36,6 @@ Definition Object := varieties.Object theory.
 
 Local Hint Extern 3 => progress simpl : typeclass_instances.
 
-(* Now follow a series of encoding/decoding functions to convert between the
- specialized Monoid/MonoidMorphism type classes and the universal
- Algebra/InVariety/HomoMorphism type classes instantiated with the above
- signature and theory. *)
-
 Instance encode_operations A `{!SgOp A} `{!MonUnit A}: AlgebraOps sig (λ _, A) :=
   λ u, match u with mult => (&) | one => mon_unit: A end.
 
@@ -108,7 +103,6 @@ Qed.
 Instance id_monoid_morphism `{Monoid A}: MonoidMorphism A A id.
 Proof. repeat (split; try apply _); easy. Qed.
 
-(* Finally, we use these encoding/decoding functions to specialize some universal results: *)
 Section specialized.
   Context `{MonUnit A} `{SgOp A}
      `{MonUnit B} `{SgOp B}

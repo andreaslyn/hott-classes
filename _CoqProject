@@ -9,6 +9,9 @@
 ./interfaces/universal_algebra.v
 
 ./theory/ua_homomorphisms.v
+./theory/ua_products.v
+./theory/ua_subalgebra.v
+./theory/ua_congruence.v
 
 ./categories/varieties.v
 

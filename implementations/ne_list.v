@@ -156,6 +156,7 @@ Fixpoint inits {A} (l: L A): L (L A) :=
 
 Module notations.
   Global Notation ne_list := L.
+  Global Notation neone := ne_list.one.
   Global Infix ":::" := cons (at level 60, right associativity).
     (* Todo: Try to get that "[ x ; .. ; y ]" notation working. *)
 

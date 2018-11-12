@@ -57,8 +57,6 @@ Definition single_sorted_signature {Op: Type0} (arities: Op → nat): Signature 
 
 Class AlgebraOps (σ: Signature) (A: sorts σ → Type) := algebra_op: ∀ u, op_type A (σ u).
 
-(* .. which, if they are proper with respect to a bona fide setoid equality, form an algebra: *)
-
 Class Algebra
   (σ: Signature)
   (carriers: sorts σ → Type)
