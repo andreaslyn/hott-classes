@@ -69,6 +69,12 @@ Section contents.
     | _, _ => one (head l)
     end.
 
+  Fixpoint front (l: L) : list T :=
+    match l with
+    | one _ => nil
+    | cons x xs => x :: front xs
+    end.
+
   Lemma two_level_rect (P: L → Type)
     (Pone: ∀ x, P (one x))
     (Ptwo: ∀ x y, P (cons x (one y)))
