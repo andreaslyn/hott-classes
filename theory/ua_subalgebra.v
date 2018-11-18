@@ -62,8 +62,7 @@ Section subalgebras.
 
   Global Instance: HomoMorphism sign carrier A proj.
   Proof with try apply _.
-   constructor...
-   intro.
+   intro u.
    unfold impl, algebra_op.
    generalize (subset_closed u).
    unfold algebra_op.

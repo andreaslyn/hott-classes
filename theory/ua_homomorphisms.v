@@ -3,7 +3,8 @@ Require Import
   HoTT.Classes.interfaces.canonical_names
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.universal_algebra
-  HoTT.Basics.Equivalences.
+  HoTT.Basics.Equivalences
+  HoTT.Types.Forall.
 
 Section contents.
   Variable σ: Signature.
@@ -21,41 +22,37 @@ Section contents.
       | ne_list.cons x y => λ oA oB, ∀ x, Preservation (oA x) (oB (f _ x))
       end.
 
-    Class HomoMorphism: Type :=
-      { preserves: ∀ (u: σ), Preservation (A_ops u) (B_ops u)
-      ; homomorphism_domain: Algebra σ A
-      ; homomorphism_codomain: Algebra σ B }.
+    Class HomoMorphism {dom : Algebra σ A} {cod : Algebra σ B} : Type :=
+      preserves: ∀ (u: σ), Preservation (A_ops u) (B_ops u).
   End homo.
 
   Global Instance id_homomorphism A
     `{ao: AlgebraOps σ A} `{!Algebra σ A}: HomoMorphism _ _ (λ _, id).
   Proof with try apply _; auto.
-   constructor; intros...
+   intros u.
    generalize (ao u).
    induction (σ u); simpl...
   Qed.
 
   Global Instance compose_homomorphisms A B C f g
     {ao: AlgebraOps σ A} {bo: AlgebraOps σ B} {co: AlgebraOps σ C}
+    {AA: Algebra σ A} {BB: Algebra σ B} {CC: Algebra σ C}
     {gh: HomoMorphism A B g} {fh: HomoMorphism B C f}
     : HomoMorphism A C (λ a, f a ∘ g a).
   Proof with try apply _; auto.
-   pose proof (homomorphism_domain _ _ g).
-   pose proof (homomorphism_codomain _ _ g).
-   pose proof (homomorphism_codomain _ _ f).
-   constructor; intros...
+   intros u.
    generalize (ao u) (bo u) (co u) (preserves _ _ g u) (preserves _ _ f u).
    induction (σ u); simpl; intros.
-    rewrite <- X3, <- X2. reflexivity.
-   apply (IHo _ (o1 (g _ x))). apply X2. apply X3.
+    rewrite <- X0, <- X. reflexivity.
+   apply (IHo _ (o1 (g _ x))). apply X. apply X0.
   Qed.
 
   Lemma invert_homomorphism A B f
     {ao: AlgebraOps σ A} {bo: AlgebraOps σ B}
+    {AA: Algebra σ A} {BB: Algebra σ B}
     `{∀ a, IsEquiv (f a)} {h : HomoMorphism A B f}
     : HomoMorphism B A (λ a, (f a)^-1).
   Proof.
-   constructor; try (destruct h; assumption).
    intro.
    generalize (ao u) (bo u) (preserves _ _ f u).
    intros.
@@ -68,3 +65,17 @@ Section contents.
     exact (transport (λ y, Preservation A B f _ (o0 y)) (X0 x) (X (_^-1 x))).
   Qed.
 End contents.
+
+Global Instance Preservation_hprop : ∀ `{Funext} {σ : Signature}
+    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+    {AA : Algebra σ A} {BB : Algebra σ B}
+  (f : ∀ s, A s → B s) {n : OpType (sorts σ)}
+  (a : op_type A n) (b : op_type B n),
+    IsHProp (Preservation σ A B f a b).
+Proof. intros. induction n; apply _. Defined.
+
+Global Instance HomoMorphism_hprop `{Funext} : ∀ {σ : Signature}
+    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+    {AA : Algebra σ A} {BB : Algebra σ B}
+    (f : ∀ s, A s → B s), IsHProp (HomoMorphism σ A B f).
+Proof. intros. apply trunc_forall. Defined.

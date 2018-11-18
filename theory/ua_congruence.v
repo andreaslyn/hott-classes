@@ -189,8 +189,7 @@ Global Instance quotient_is_homomorphism `{Funext} {σ : Signature}
   {C : Congruence σ e}
   : HomoMorphism σ A (carrier σ e) (quotient_homomorphism e).
 Proof.
-  constructor; try apply _.
-  intros.
+  intro u.
   unfold quotient_homomorphism.
   unfold quotient_ops, algebra_op.
   set (ao := As u).
@@ -199,23 +198,6 @@ Proof.
   induction (σ u); simpl; intros; auto.
 Qed.
 
-(* TODO: Where should this Lemma be? *)
-Global Instance Preservation_hprop : ∀ `{Funext} {σ : Signature}
-    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
-    {AA : Algebra σ A} {BB : Algebra σ B}
-  (f : ∀ s, A s → B s) {n : OpType (sorts σ)}
-  (a : op_type A n) (b : op_type B n),
-    IsHProp (Preservation σ A B f a b).
-Proof. intros. induction n; apply _. Defined.
-
-(* TODO: Fix HomoMorphism. *)
-Global Instance HomoMorphism_hprop : ∀ {σ : Signature}
-    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
-    {AA : Algebra σ A} {BB : Algebra σ B}
-  (f : ∀ s, A s → B s),
-    IsHProp (HomoMorphism σ A B f).
-Proof. Admitted.
-
 Definition quotient_mapout_homomorphism `{Funext} {σ : Signature}
     {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
     {AA : Algebra σ A} {BB : Algebra σ B}
@@ -223,7 +205,7 @@ Definition quotient_mapout_homomorphism `{Funext} {σ : Signature}
     (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}
     (P : ∀ s x y, e s x y → f s x = f s y)
     : ∀ s, carrier σ e s → B s :=
-  λ s, (quotient_ump (e s) _)^-1 (f s; P s).
+  λ s, (quotient_ump (e s) (BuildhSet (B s)))^-1 (f s; P s).
 
 Global Instance quotient_mapout_is_homomorphism `{Funext} {σ : Signature}
     {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
@@ -234,7 +216,6 @@ Global Instance quotient_mapout_is_homomorphism `{Funext} {σ : Signature}
     (P : ∀ s x y, e s x y → f s x = f s y)
     : HomoMorphism σ (carrier σ e) B (quotient_mapout_homomorphism e f P).
 Proof.
-  constructor; try apply _.
   intro u.
   unfold quotient_ops, algebra_op.
   generalize (preserves σ A B f u).
@@ -264,6 +245,37 @@ Proof.
   apply _.
 Defined.
 
+Definition quotient_factor_homomorphism `{Funext} {σ : Signature}
+    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+    {AA : Algebra σ A} {BB : Algebra σ B}
+    (e : ∀ s, relation (A s)) {R : ∀ s, is_mere_relation _ (e s)}
+    {C : Congruence σ e}
+    (g : ∀ s, carrier σ e s → B s) {G : HomoMorphism σ (carrier σ e) B g}
+    : ∀ s, A s → B s :=
+  λ s, (quotient_ump (e s) (BuildhSet (B s)) (g s)).1.
+
+Lemma quotient_factor_homomorphism_is_factor `{Funext} {σ : Signature}
+  {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+  {AA : Algebra σ A} {BB : Algebra σ B}
+  (e : ∀ s, relation (A s)) {R : ∀ s, is_mere_relation _ (e s)}
+  {C : Congruence σ e}
+  (g : ∀ s, carrier σ e s → B s) {G : HomoMorphism σ (carrier σ e) B g}
+  : quotient_factor_homomorphism e g = λ s, g s ∘ quotient_homomorphism e s.
+Proof. reflexivity. Defined.
+
+Global Instance quotient_factor_is_homomorphism `{Funext} {σ : Signature}
+  {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+  {AA : Algebra σ A} {BB : Algebra σ B}
+  (e : ∀ s, relation (A s)) {R : ∀ s, is_mere_relation _ (e s)}
+  {C : Congruence σ e}
+  (g : ∀ s, carrier σ e s → B s) {G : HomoMorphism σ (carrier σ e) B g}
+  : HomoMorphism σ A B (quotient_factor_homomorphism e g).
+Proof.
+  refine (transport (λ h, HomoMorphism σ A B h)
+          ((quotient_factor_homomorphism_is_factor e g)^)
+          (compose_homomorphisms _ _ _ _ _ _)).
+Defined.
+
 Lemma quotient_property_lr `{Funext} {σ : Signature}
   {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
   {AA : Algebra σ A} {BB : Algebra σ B}
@@ -273,23 +285,42 @@ Lemma quotient_property_lr `{Funext} {σ : Signature}
     ∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
       ∀ s x y, e s x y → f s x = f s y.
 Proof.
-  refine (λ '(g;G), (λ s, g s ∘ quotient_homomorphism e s; _;
-    λ s x y E, transport (λ z, g s (class_of (e s) x) = g s z)
-                (related_classes_eq (e s) E) idpath)).
+  refine (λ '(g;G),
+    (quotient_factor_homomorphism e g ;
+     quotient_factor_is_homomorphism e g ;
+     λ s x y E, transport (λ z, g s (class_of (e s) x) = g s z)
+                 (related_classes_eq (e s) E) idpath)).
 Defined.
 
-Lemma quotient_property_lr_correct `{Funext} {σ : Signature}
+Lemma quotient_property_sect_lr `{Funext} {σ : Signature}
   {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
   {AA : Algebra σ A} {BB : Algebra σ B}
   (e : ∀ s, relation (A s)) {R : ∀ s, is_mere_relation _ (e s)}
   {C : Congruence σ e}
-  (g : ∀ s, carrier σ e s → B s) {G : HomoMorphism σ (carrier σ e) B g}
-  : ∀ s, ((quotient_property_lr e (g;G)).1 s;
-          (quotient_property_lr e (g;G)).2.2 s) = 
-    quotient_ump (e s) (BuildhSet (B s)) (g s).
+  (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}
+  : Sect (quotient_property_lr e) (quotient_property_rl e).
 Proof.
-  intro s.
+  intros [g G].
   apply path_sigma_hprop.
+  apply path_forall.
+  intro s.
+  apply (eissect (quotient_ump (e s) (BuildhSet (B s)))).
+Defined.
+
+Lemma quotient_property_sect_rl `{Funext} {σ : Signature}
+  {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+  {AA : Algebra σ A} {BB : Algebra σ B}
+  (e : ∀ s, relation (A s)) {R : ∀ s, is_mere_relation _ (e s)}
+  {C : Congruence σ e}
+  (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}
+  : Sect (quotient_property_rl e) (quotient_property_lr e).
+Proof.
+  intros [h [H0 H1]].
+  apply path_sigma_hprop.
+  apply path_forall.
+  intro s.
+  apply path_forall.
+  intro x.
   reflexivity.
 Defined.
 
@@ -306,24 +337,9 @@ Lemma quotient_property `{Funext} {σ : Signature}
     ∃ (g : ∀ s, carrier σ e s → B s), HomoMorphism σ (carrier σ e) B g.
 Proof.
   apply (equiv_adjointify (quotient_property_rl e) (quotient_property_lr e)).
-  intros [g G].
-  apply path_sigma_hprop.
-  apply path_forall.
-  intro s.
-  unfold quotient_property_rl, quotient_mapout_homomorphism.
-  pose (quotient_property_lr_correct e g s) as p.
-  simpl in *.
-  rewrite p.
-  pose proof (eissect (quotient_ump (e s) (BuildhSet (B s)))).
-  apply X.
-  intros [h [H0 H1]].
-  apply path_sigma_hprop.
-  apply path_forall.
-  intro s.
-  apply path_forall.
-  intro x.
-  reflexivity.
-Qed.
+  apply (quotient_property_sect_lr e f).
+  apply (quotient_property_sect_rl e f).
+Defined.
 
 Section in_domain.
 

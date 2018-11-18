@@ -12,7 +12,7 @@ Section algebras.
     (sig: Signature) (I: Type) (carriers: I → sorts sig → Type)
     `{F : Funext}
     `{∀ i, AlgebraOps sig (carriers i)}
-    `{∀ i, Algebra sig (carriers i)}.
+    `{AA : ∀ i, Algebra sig (carriers i)}.
 
   Definition carrier: sorts sig → Type := λ sort, ∀ i: I, carriers i sort.
 
@@ -40,8 +40,8 @@ Section algebras.
   Qed.
 
   Lemma algebra_projection_morphisms i
-    : @HomoMorphism sig carrier (carriers i) _ _ (λ a v, v i).
-  Proof. constructor; try apply _. apply preservation. Qed.
+    : HomoMorphism sig carrier (carriers i) (λ a v, v i).
+  Proof. intro u. apply preservation. Qed.
 End algebras.
 
 Section varieties.
