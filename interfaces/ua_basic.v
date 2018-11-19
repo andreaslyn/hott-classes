@@ -55,5 +55,4 @@ Class AlgebraOps (σ: Signature) (A: sorts σ → Type) := algebra_op: ∀ u, op
 Class Algebra
   (σ: Signature)
   (carriers: sorts σ → Type)
-  `{AlgebraOps σ carriers}: Type :=
-    { algebra_set:> ∀ a, IsHSet (carriers a) }.
+  `{AlgebraOps σ carriers}: Type := algebra_set:> ∀ a, IsHSet (carriers a).

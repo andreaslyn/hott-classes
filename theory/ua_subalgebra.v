@@ -54,7 +54,7 @@ Section subalgebras.
   Qed.
 
   Global Instance subalgebra: Algebra sign carrier.
-  Proof. constructor. apply _. Qed.
+  Proof. intro s. apply _. Qed.
 
   (* And we have the obvious projection morphism: *)
 

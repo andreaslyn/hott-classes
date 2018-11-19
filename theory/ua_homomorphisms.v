@@ -22,8 +22,18 @@ Section contents.
       | ne_list.cons x y => λ oA oB, ∀ x, Preservation (oA x) (oB (f _ x))
       end.
 
+    Global Instance Preservation_hprop `{Funext}
+      {AA : Algebra σ A} {BB : Algebra σ B}
+      {n : OpType} (a : op_type A n) (b : op_type B n)
+      : IsHProp (Preservation a b).
+    Proof. intros. induction n; apply _. Defined.
+
     Class HomoMorphism {dom : Algebra σ A} {cod : Algebra σ B} : Type :=
       preserves: ∀ (u: σ), Preservation (A_ops u) (B_ops u).
+
+    Global Instance HomoMorphism_hprop `{Funext}
+        {AA : Algebra σ A} {BB : Algebra σ B} : IsHProp HomoMorphism.
+    Proof. intros. apply trunc_forall. Defined.
   End homo.
 
   Global Instance id_homomorphism A
@@ -65,17 +75,3 @@ Section contents.
     exact (transport (λ y, Preservation A B f _ (o0 y)) (X0 x) (X (_^-1 x))).
   Qed.
 End contents.
-
-Global Instance Preservation_hprop : ∀ `{Funext} {σ : Signature}
-    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
-    {AA : Algebra σ A} {BB : Algebra σ B}
-  (f : ∀ s, A s → B s) {n : OpType (sorts σ)}
-  (a : op_type A n) (b : op_type B n),
-    IsHProp (Preservation σ A B f a b).
-Proof. intros. induction n; apply _. Defined.
-
-Global Instance HomoMorphism_hprop `{Funext} : ∀ {σ : Signature}
-    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
-    {AA : Algebra σ A} {BB : Algebra σ B}
-    (f : ∀ s, A s → B s), IsHProp (HomoMorphism σ A B f).
-Proof. intros. apply trunc_forall. Defined.
