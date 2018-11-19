@@ -89,14 +89,14 @@ Section quotient_algebra.
 
   Global Instance quotient_op_type_hset `{Funext}
     : ∀ l : ne_list (sorts σ), IsHSet (op_type carrier l).
-  Proof. induction l; apply _. Qed.
+  Proof. induction l; apply _. Defined.
 
   Lemma argprod_for_all_2_reflexive
       : ∀ w (a : argprod σ v w), argprod_for_all_2 σ Φ a a.
   Proof with try reflexivity; auto.
     induction w; intros...
     destruct a0. split...
-  Qed.
+  Defined.
 
   (** Specialization of [quotient_ind_prop]. *)
   Fixpoint argprod_quotient_ind_prop `{Funext} {w : list (sorts σ)}
@@ -112,16 +112,6 @@ Section quotient_algebra.
         (fst a) (snd a)
     end.
 
-  Lemma quotient_argprod_apply_hprop :
-    ∀ w (f f' : op_type carrier w)
-      (a : argprod σ carrier (ne_list.front w)),
-    IsHProp (argprod_apply σ f a = argprod_apply σ f' a).
-  Proof.
-    induction w; intros.
-    exact (quotient_set (Φ t) f f').
-    apply IHw.
-  Defined.
-
   Definition quotient_ops_property {w : OpType (sorts σ)}
     (f : op_type v w) (g : op_type carrier w) :=
     ∀ (a : argprod σ v (ne_list.front w)),
@@ -136,7 +126,7 @@ Section quotient_algebra.
   Defined.
 
   (** Operations induced from congruence Φ. These operations satisfy the
-      quotient_ops_property *)
+      [quotient_ops_property] *)
   Fixpoint rec_impl `{Funext} {w : OpType (sorts σ)} :
     congruence_property w ->
     ∀ (f : op_type v w), ∃ (g : op_type carrier w), quotient_ops_property f g.
@@ -154,7 +144,7 @@ Section quotient_algebra.
     intros x y E.
     apply (argprod_apply_forall _ _).
     apply argprod_quotient_ind_prop.
-    apply quotient_argprod_apply_hprop.
+    apply _.
     intros a.
     destruct (rec_impl _ w' (congruence_property_from_cons P x) (f x)) as [g1 P1].
     destruct (rec_impl _ w' (congruence_property_from_cons P y) (f y)) as [g2 P2].
