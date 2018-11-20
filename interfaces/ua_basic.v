@@ -28,16 +28,13 @@ Section with_sorts.
     | ne_list.cons a g => carrier a → op_type g
     end.
 
-  (* This is just:
-
-      Definition op_type: OpType → Type := ne_list.foldr1 (→) ∘ ne_list.map carrier.
-
-    Unfortunately, in that formulation [simpl] never reduces it, which is extremely annoying...
-  *)
-
+  Global Instance op_type_hset `{Funext} `{∀ s, IsHSet (carrier s)}
+    : ∀ (u : OpType), IsHSet (op_type u).
+  Proof. induction u; apply _. Defined.
 End with_sorts.
 
-Arguments op_type {Sorts} _ _.
+Arguments op_type {Sorts}.
+Arguments op_type_hset {Sorts}.
 
 Inductive Signature: Type :=
   { sorts: Type0
@@ -50,9 +47,9 @@ Definition single_sorted_signature {Op: Type0} (arities: Op → nat): Signature 
 (* An implementation of a signature for a given realization of the sorts is simply a
  function (of the right type) for each operation: *)
 
-Class AlgebraOps (σ: Signature) (A: sorts σ → Type) := algebra_op: ∀ u, op_type A (σ u).
+Class AlgebraOps (σ: Signature) (A: sorts σ → Type) :=
+  algebra_op: ∀ u, op_type A (σ u).
 
-Class Algebra
-  (σ: Signature)
-  (carriers: sorts σ → Type)
-  `{AlgebraOps σ carriers}: Type := algebra_set:> ∀ a, IsHSet (carriers a).
+Class Algebra (σ: Signature) (carriers: sorts σ → Type)
+    `{AlgebraOps σ carriers} : Type :=
+  algebra_set:> ∀ a, IsHSet (carriers a).

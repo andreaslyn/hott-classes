@@ -11,53 +11,82 @@ Require Import
   HoTT.Spaces.Nat
   HoTT.Basics.Equivalences
   HoTT.Types.Sigma
-  HoTT.Types.Universe.
+  HoTT.Types.Universe
+  HoTTClasses.interfaces.ua_basic.
 
 Import ne_list.notations.
+
+(** The following section implements a datatype [argprod] intended to represent
+    a product/tuple of algebra operation arguments. Suppose [σ : Signature] is
+    a signature and [A : sorts σ → Type] an algebra. An algebra operation
+    [f := algebra_op u] has type [f : op_type A (σ u)], for [u : operation σ] a
+    function symbol. The type [op_type A (σ u)] is a curried function type (or
+    type of a constant). The [argprod_apply] function below can be used to
+    uncurry [f], so that
+
+      [argprod_apply f (x1,x2,...,xn) = f x1 x2 ... xn]. *)
 
 Section argprod.
   Context (σ : Signature).
 
-  Fixpoint argprod (c : sorts σ → Type) (w : list (sorts σ)) : Type :=
+  (** A product type [argprod A [s1,s2,...,sn] = A s1 * A s2 * ... * A sn]. *)
+
+  Fixpoint argprod (A : sorts σ → Type) (w : list (sorts σ)) : Type :=
     match w with
     | nil => Unit
-    | s :: w' => c s * argprod c w'
+    | s :: w' => A s * argprod A w'
     end.
 
-  Fixpoint argprod_map {c1 : sorts σ → Type} {c2 : sorts σ → Type}
-      {w : list (sorts σ)} (f : ∀ s, c1 s → c2 s)
-      : argprod c1 w → argprod c2 w :=
+  (** Map function for [argprod]
+
+        [argprod_map f (x1,x2,...,xn) = (f x1, f x2, ..., f xn)].
+  *)
+
+  Fixpoint argprod_map {A : sorts σ → Type} {B : sorts σ → Type}
+      {w : list (sorts σ)} (f : ∀ s, A s → B s)
+      : argprod A w → argprod B w :=
     match w with
     | nil => const tt
     | s :: w' => λ '(x,l), (f s x, argprod_map f l)
     end.
 
-  Fixpoint argprod_for_all {c : sorts σ → Type} {w : list (sorts σ)}
-      (P : ∀ s, c s -> Type) : argprod c w → Type :=
+  (** Test whether [P s1 x1 * P s2 x2 * ... * P sn xn] holds, where
+      [(x1,...,xn) : argprod A [s1,s2,...,sn]]. *)
+
+  Fixpoint argprod_for_all {A : sorts σ → Type} {w : list (sorts σ)}
+      (P : ∀ s, A s -> Type) : argprod A w → Type :=
     match w with
     | nil => λ _, True
     | s :: w' => λ '(x,l), P s x * argprod_for_all P l
     end.
 
-  Fixpoint argprod_for_all_2 {c1 c2 : sorts σ → Type} {w : list (sorts σ)}
-      (R : ∀ s, c1 s -> c2 s -> Type) : argprod c1 w → argprod c2 w → Type :=
+  (** Test whether [R s1 x1 y1 * R s2 x2 y2 * ... * P sn xn yn] holds, where
+      [(x1,...,xn) : argprod A [s1,s2,...,sn]] and
+      [(y1,...,yn) : argprod B [s1,s2,...,sn]] *)
+
+  Fixpoint argprod_for_all_2 {A B : sorts σ → Type} {w : list (sorts σ)}
+      (R : ∀ s, A s -> B s -> Type) : argprod A w → argprod B w → Type :=
     match w with
     | nil => λ _ _, True
     | s :: w' => λ '(x1,l1) '(x2,l2), R s x1 x2 * argprod_for_all_2 R l1 l2
     end.
 
-  (** Uncurry of [op_type]. *)
-  Fixpoint argprod_apply {c : sorts σ → Type} {w : OpType (sorts σ)}
-      : op_type c w → argprod c (ne_list.front w) → c (result _ w) :=
+  (** Uncurry of [op_type], such that
+
+      [argprod_apply f (x1,x2,...,xn) = f x1 x2 ... xn]. *)
+
+  Fixpoint argprod_apply {A : sorts σ → Type} {w : OpType (sorts σ)}
+      : op_type A w → argprod A (ne_list.front w) → A (result _ w) :=
     match w with
     | neone s => λ a _, a
     | s ::: w' => λ f '(x, l), argprod_apply (f x) l
     end.
 
   (** Funext for uncurried [op_type]s. *)
+
   Fixpoint argprod_apply_forall `{Funext}
-      {c : sorts σ → Type} {w : OpType (sorts σ)}
-      : ∀ (f g : op_type c w), (∀ a : argprod c (ne_list.front w),
+      {A : sorts σ → Type} {w : OpType (sorts σ)}
+      : ∀ (f g : op_type A w), (∀ a : argprod A (ne_list.front w),
             argprod_apply f a = argprod_apply g a) ->
         f = g :=
     match w with
@@ -68,16 +97,28 @@ Section argprod.
     end.
 End argprod.
 
+(** The next section implements the [quotient_algebra] type class. *)
+
 Section quotient_algebra.
   Context
     (σ : Signature)
-    {v : sorts σ → Type} {vo : AlgebraOps σ v} {VV : Algebra σ v}
-    (Φ : ∀ s, relation (v s)).
+    {A : sorts σ → Type} {As : AlgebraOps σ A} {AA : Algebra σ A}
+    (Φ : ∀ s, relation (A s)).
+
+  (* The indexed relation [Φ] has the [congruence_property] if, for all
+     operations [f : op_type A ([s1,s2,...,s(n+1)]],
+
+       [Φ s1 x1 y1 * Φ s1 x1 y1 * ... * Φ sn xn yn] implies
+       [Φ (s(n+1)) (f x1 x2 ... xn)) (f y1 y2 ... yn))]. *)
 
   Definition congruence_property (w : OpType (sorts σ)) :=
-    ∀ (f : op_type v w) (a b : argprod σ v (ne_list.front w)),
+    ∀ (f : op_type A w) (a b : argprod σ A (ne_list.front w)),
     argprod_for_all_2 σ Φ a b ->
     Φ (result (sorts σ) w) (argprod_apply σ f a) (argprod_apply σ f b).
+
+  (* The indexed relation [Φ] is a [Congruence] if for each sort [s : sorts σ]
+     [Φ s] is a mere equivalence relation, and for all function symbols [u],
+     [Φ] has the [congruence_property (σ u)]. *)
 
   Class Congruence `{∀ s, is_mere_relation _ (Φ s)} : Type :=
     { congruence_equivalence :> ∀ (s : sorts σ), Equivalence (Φ s)
@@ -85,20 +126,20 @@ Section quotient_algebra.
 
   Context `{Congruence}.
 
+  (* Sets of the quotient algebra indexed by the sorts of the signature. *)
+
   Definition carrier (s : sorts σ) : Type := quotient (Φ s).
 
-  Global Instance quotient_op_type_hset `{Funext}
-    : ∀ l : ne_list (sorts σ), IsHSet (op_type carrier l).
-  Proof. induction l; apply _. Defined.
-
   Lemma argprod_for_all_2_reflexive
-      : ∀ w (a : argprod σ v w), argprod_for_all_2 σ Φ a a.
-  Proof with try reflexivity; auto.
-    induction w; intros...
-    destruct a0. split...
+      : ∀ w (a : argprod σ A w), argprod_for_all_2 σ Φ a a.
+  Proof.
+    induction w; intros.
+    - reflexivity.
+    - by split.
   Defined.
 
   (** Specialization of [quotient_ind_prop]. *)
+
   Fixpoint argprod_quotient_ind_prop `{Funext} {w : list (sorts σ)}
       : ∀ (P : argprod σ carrier w -> Type) {sP : ∀ a, IsHProp (P a)}
           (dclass : ∀ x, P (argprod_map σ (λ s, class_of (Φ s)) x))
@@ -112,61 +153,77 @@ Section quotient_algebra.
         (fst a) (snd a)
     end.
 
+  (* Suppose [f : op_type A w] is an [A] algebra operation and
+     [g : op_type carrier w] is a quotient algebra operation. Then [g] has the
+     [quotient_ops_property] with respect to [f] if
+
+       [g (class_of x1) (class_of x2) ... (class_of xn) =
+       class_of (f x1 x2 .. xn)],
+
+     where [class_of xi] is the equivalence class of [xi] in the quotient
+     algebra. *)
+
   Definition quotient_ops_property {w : OpType (sorts σ)}
-    (f : op_type v w) (g : op_type carrier w) :=
-    ∀ (a : argprod σ v (ne_list.front w)),
+    (f : op_type A w) (g : op_type carrier w) :=
+    ∀ (a : argprod σ A (ne_list.front w)),
       argprod_apply σ g (argprod_map σ (λ s, class_of (Φ s)) a) =
       class_of (Φ (result (sorts σ) w)) (argprod_apply σ f a).
 
   Lemma congruence_property_from_cons {s : sorts σ} {w : OpType (sorts σ)}
-      : congruence_property (s ::: w) → v s → congruence_property w.
+      : congruence_property (s ::: w) → A s → congruence_property w.
   Proof.
     intros P x f' a b h.
     exact (P (λ _, f') (x,a) (x,b) (Equivalence_Reflexive x, h)).
   Defined.
 
-  (** Operations induced from congruence Φ. These operations satisfy the
-      [quotient_ops_property] *)
+  (** Operations induced from congruence [Φ]. For each [A] algebra operation
+      [f : op_type A w], there is a quotient algebra operation [g] satisfying
+      the [quotient_ops_property f g] with respect to f. *)
+
   Fixpoint rec_impl `{Funext} {w : OpType (sorts σ)} :
     congruence_property w ->
-    ∀ (f : op_type v w), ∃ (g : op_type carrier w), quotient_ops_property f g.
+    ∀ (f : op_type A w), ∃ (g : op_type carrier w), quotient_ops_property f g.
   Proof. refine (
       match w with
-      | neone s => λ P f, (class_of (Φ s) f; λ a, 1%path)
+      | neone s => λ P f, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ P f,
-        (* Introduce lambda abstraction for obtaining correct obligations. *)
+        (* Introduce lambda abstraction to obtain the correct obligations. *)
         (λ R, (quotient_rec (Φ s) (λ x, (rec_impl _ w'
                 (congruence_property_from_cons P x) (f x)).1) R; _)) _
       end
     ).
-    intros [x a].
-    apply (rec_impl _ w' (congruence_property_from_cons P x) (f x)).
-    intros x y E.
-    apply (argprod_apply_forall _ _).
-    apply argprod_quotient_ind_prop.
-    apply _.
-    intros a.
-    destruct (rec_impl _ w' (congruence_property_from_cons P x) (f x)) as [g1 P1].
-    destruct (rec_impl _ w' (congruence_property_from_cons P y) (f y)) as [g2 P2].
-    unfold proj1_sig.
-    rewrite P1.
-    rewrite P2.
-    apply related_classes_eq.
-    set (r := argprod_for_all_2_reflexive (ne_list.front w') a).
-    exact (P f (x,a) (y,a) (E,r)).
+    - intros [x a].
+      apply (rec_impl _ w' (congruence_property_from_cons P x) (f x)).
+    - intros x y E.
+      apply (@argprod_apply_forall σ H1).
+      apply argprod_quotient_ind_prop; try apply _.
+      intro a.
+      destruct (rec_impl _ w' (congruence_property_from_cons P x) (f x)) as [g1 P1].
+      destruct (rec_impl _ w' (congruence_property_from_cons P y) (f y)) as [g2 P2].
+      unfold proj1_sig.
+      rewrite P1.
+      rewrite P2.
+      apply related_classes_eq.
+      set (r := argprod_for_all_2_reflexive (ne_list.front w') a).
+      exact (P f (x,a) (y,a) (E,r)).
   Defined.
 
   Global Instance quotient_ops `{Funext} : AlgebraOps σ carrier.
   Proof.
-    intro u.
-    apply rec_impl.
-    apply congruence_respect_ops.
-    apply (algebra_op u).
+    intro u. apply rec_impl.
+    - apply congruence_respect_ops.
+    - apply (algebra_op u).
   Defined.
 
   Global Instance quotient_algebra `{Funext} : Algebra σ carrier.
   Proof. intro s. apply _. Defined.
 End quotient_algebra.
+
+(** This section defines the quotient homomorphism [quotient_map] satisfying
+
+      [quotient_map _ x = class_of x],
+
+    where [class_of x] is the equivalence class of [x] in the quotient algebra. *)
 
 Section quotient_map.
   Context
@@ -185,9 +242,12 @@ Section quotient_map.
     set (ao := As u).
     set (co := congruence_respect_ops _ _ u).
     clearbody ao co.
-    induction (σ u); simpl; intros; auto.
+    induction (σ u); by simpl.
   Qed.
 End quotient_map.
+
+(** This section developes the universal mapping property [quotient_property]
+    of the quotient algebra. *)
 
 Section quotient_property.
   Context
@@ -198,9 +258,10 @@ Section quotient_property.
     {AA : Algebra σ A} {BB : Algebra σ B}
     (Φ : ∀ s, relation (A s)) `{Congruence σ A Φ}.
 
-(** Given a homomorphism [f : ∀ s, A s → B s] there is a homomorphism
-    [g : ∀ s, carrier σ Φ s → B s] out of the quotient algebra. See the
-    [quotient_property] Lemma below. *)
+(** Given a homomorphism [f : ∀ s, A s → B s] respecting the congruence [Φ],
+    there is a homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient
+    algebra. See [quotient_property_mapout_compute] below. *)
+
 Definition quotient_property_mapout (f : ∀ s, A s → B s) `{HomoMorphism σ A B f}
     (R : ∀ s x y, Φ s x y → f s x = f s y)
     : ∀ s, carrier σ Φ s → B s :=
@@ -219,12 +280,36 @@ Proof.
   set (co := congruence_respect_ops _ _ u).
   clearbody ao bo co.
   induction (σ u); intro Q.
-  assumption.
-  refine (quotient_ind_prop (Φ t) _ _).
-  intro x.
-  set (co' := congruence_property_from_cons σ Φ co x).
-  exact (IHo (ao x) (bo (f t x)) co' (Q x)).
+  - assumption.
+  - refine (quotient_ind_prop (Φ t) _ _).
+    intro x.
+    set (co' := congruence_property_from_cons σ Φ co x).
+    exact (IHo (ao x) (bo (f t x)) co' (Q x)).
 Qed.
+
+(** The computation rule for the homomorphism [g : ∀ s, carrier σ Φ s → B s]
+    defined by the [quotient_property_mapout] is
+
+      [g s (class_of x) = f s x],
+
+    where [class_of x] is the equivalence class of [x] in the quotient algebra. *)
+
+Lemma quotient_property_mapout_compute (f : ∀ s, A s → B s)
+    `{HomoMorphism σ A B f} (R : ∀ s x y, Φ s x y → f s x = f s y)
+    : ∀ s (x : A s), quotient_property_mapout f R s (class_of (Φ s) x) = f s x.
+Proof. reflexivity. Defined.
+
+(** Suppose [g : ∀ s, carrier σ Φ s → B s] is a homomorphism out of the quotient
+    algebra. There is a homomorphism [λ s, g s ∘ quotient_map σ Φ s]
+    factoring through the [quotient_map] and [g]. *)
+
+Definition quotient_property_factoring (g : ∀ s, carrier σ Φ s → B s)
+    `{HomoMorphism σ (carrier σ Φ) B g} : ∀ s, A s → B s
+  := λ s, g s ∘ quotient_map σ Φ s.
+
+(** The left to right direction of the quotient algebra universal mapping
+    property [quotient_property]. The resulting homomorphism [g] is given by
+    the [quotient_property_mapout] above. *)
 
 Lemma quotient_property_lr :
   (∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
@@ -236,19 +321,24 @@ Proof.
   apply _.
 Defined.
 
+(** The right to left direction of the quotient algebra universal mapping
+    property [quotient_property]. The resulting homomorphism [f] is given by
+    the [quotient_property_factoring] above. Moreover, the homomorphism [f]
+    respects the congruence [Φ]. *)
+
 Lemma quotient_property_rl
   : (∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g) →
     ∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
       ∀ s x y, Φ s x y → f s x = f s y.
 Proof.
   refine (λ '(g;G),
-    (λ s, g s ∘ quotient_map σ Φ s ;
+    (quotient_property_factoring g ;
      compose_homomorphisms σ A _ B g (quotient_map σ Φ) ;
      λ s x y E, transport (λ z, g s (class_of (Φ s) x) = g s z)
                  (related_classes_eq (Φ s) E) idpath)).
 Defined.
 
-Lemma quotient_property_sect_lr : Sect quotient_property_rl quotient_property_lr.
+Lemma quotient_property_lr_sect : Sect quotient_property_rl quotient_property_lr.
 Proof.
   intros [g G].
   apply path_sigma_hprop.
@@ -257,16 +347,21 @@ Proof.
   apply (eissect (quotient_ump (Φ s) (BuildhSet (B s)))).
 Defined.
 
-Lemma quotient_property_sect_rl : Sect quotient_property_lr quotient_property_rl.
+Lemma quotient_property_rl_sect : Sect quotient_property_lr quotient_property_rl.
 Proof.
   intros [h [H1 H2]].
   apply path_sigma_hprop.
   apply path_forall.
   intro s.
-  apply path_forall.
-  intro x.
-  reflexivity.
+  now apply path_forall.
 Defined.
+
+(** The universal property of the quotient algebra. For each homomorphism
+    [f : ∀ s, A s → B s] respecting the congruence [Φ], there is a unique
+    homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient algebra.
+    In one direction, the homomorphism [g] is given by the
+    [quotient_property_mapout]. In the other direction, the homomorphism [f]
+    is given by the [quotient_property_factoring]. *)
 
 Lemma quotient_property :
     (∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
@@ -275,8 +370,8 @@ Lemma quotient_property :
     ∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g.
 Proof.
   apply (equiv_adjointify quotient_property_lr quotient_property_rl).
-  exact quotient_property_sect_lr.
-  exact quotient_property_sect_rl.
+  exact quotient_property_lr_sect.
+  exact quotient_property_rl_sect.
 Defined.
 
 End quotient_property.
