@@ -210,8 +210,7 @@ Section quotient_algebra.
       destruct (rec_impl _ _ _ (congruence_property_from_cons f x P)) as [g1 P1].
       destruct (rec_impl _ _ _ (congruence_property_from_cons f y P)) as [g2 P2].
       unfold proj1_sig.
-      rewrite P1.
-      rewrite P2.
+      rewrite P1, P2.
       apply related_classes_eq.
       set (v := argprod_for_all_2_reflexive (ne_list.front w') a).
       exact (P (x,a) (y,a) (E,v)).
@@ -235,8 +234,7 @@ Section quotient_map.
     (σ : Signature)
     {A : sorts σ → Type} {As : AlgebraOps σ A} {AA : Algebra σ A}
     (Φ : ∀ s, relation (A s)) {MereRel : ∀ s, is_mere_relation _ (Φ s)}
-    {EqRel : ∀ s, Equivalence (Φ s)}
-    {Cong : Congruence σ Φ}.
+    {EqRel : ∀ s, Equivalence (Φ s)} {Cong : Congruence σ Φ}.
 
   Definition quotient_map : ∀ s, A s → carrier σ Φ s :=
     λ s x, class_of (Φ s) x.
@@ -269,8 +267,7 @@ Section quotient_property.
     {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
     {AA : Algebra σ A} {BB : Algebra σ B}
     (Φ : ∀ s, relation (A s)) {MereRel : ∀ s, is_mere_relation _ (Φ s)}
-    {EqRel : ∀ s, Equivalence (Φ s)}
-    {Cong : Congruence σ Φ}.
+    {EqRel : ∀ s, Equivalence (Φ s)} {Cong : Congruence σ Φ}.
 
 (** Given a homomorphism [f : ∀ s, A s → B s] respecting the congruence [Φ],
     there is a homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient
