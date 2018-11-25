@@ -40,8 +40,7 @@ Section argprod.
 
   (** Map function for [argprod]
 
-        [argprod_map f (x1,x2,...,xn) = (f x1, f x2, ..., f xn)].
-  *)
+        [argprod_map f (x1,x2,...,xn) = (f x1, f x2, ..., f xn)]. *)
 
   Fixpoint argprod_map {A : sorts σ → Type} {B : sorts σ → Type}
       {w : list (sorts σ)} (f : ∀ s, A s → B s)
@@ -99,7 +98,33 @@ Section argprod.
          λ f g h, path_forall f g (λ x,
                    argprod_apply_forall (f x) (g x) (λ a, h (x,a)))
      end.
+
 End argprod.
+
+Section argprod_homomorphism.
+  Context
+    (σ : Signature)
+    {A B  : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+    {AA : Algebra σ A} {BB : Algebra σ B}
+    (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}.
+
+  Lemma argprod_homomorphism_preserves' {w : OpType (sorts σ)}
+    (a : argprod σ A (ne_list.front w)) (ao : op_type A w) (bo : op_type B w)
+    (P : Preservation σ A B f ao bo)
+    : f (result (sorts σ) w) (argprod_apply σ ao a) =
+      argprod_apply σ bo (argprod_map σ f a).
+  Proof.
+    induction w.
+    - assumption.
+    - destruct a as [x a]. apply IHw. apply P.
+  Defined.
+
+  Lemma argprod_homomorphism_preserves :
+      ∀ (u : σ) (a : argprod σ A (ne_list.front (σ u))),
+      f (result (sorts σ) (σ u)) (argprod_apply σ (algebra_op u) a) =
+      argprod_apply σ (algebra_op u) (argprod_map σ f a).
+  Proof. intros u a. now apply argprod_homomorphism_preserves'. Defined.
+End argprod_homomorphism.
 
 (** This section develops the [quotient_algebra] instance of the [Algebra] type
     class. *)
@@ -170,45 +195,44 @@ Section quotient_algebra.
         (fst a) (snd a)
     end.
 
-  (* Suppose [f : A s1 → A s2 → ... → A sn] is an algebra operation and
-     [g : carrier s1 → carrier s2 → ... → carrier sn] is a quotient algebra
-     operation. Then [g] has the [quotient_ops_property] with respect to [f] if
+  (** Suppose [f : A s1 → A s2 → ... → A sn] is an algebra operation and
+      [g : carrier s1 → carrier s2 → ... → carrier sn] is a quotient algebra
+      operation. Then [g] has the [quotient_op_property] with respect to [f] if
 
-       [g (class x1) (class x2) ... (class xn) = class (f x1 x2 .. xn)],
+        [g (class x1) (class x2) ... (class xn) = class (f x1 x2 .. xn)],
 
-     where [class xi] is the quotient algebra equivalence class of [xi]. *)
+      where [class xi] is the quotient algebra equivalence class of [xi]. *)
 
-  Definition quotient_ops_property {w : OpType (sorts σ)}
+  Definition quotient_op_property {w : OpType (sorts σ)}
     (f : op_type A w) (g : op_type carrier w) :=
     ∀ (a : argprod σ A (ne_list.front w)),
       argprod_apply σ g (argprod_map σ (λ s, class_of (Φ s)) a) =
       class_of (Φ (result (sorts σ) w)) (argprod_apply σ f a).
 
-  (** Quotient algebra operations induced from congruence [Φ]. For each [A]
-      algebra operation [f], there is a quotient algebra operation [g]
-      satisfying the [quotient_ops_property f g] with respect to f. *)
+  (** Quotient algebra operations induced from congruence [Φ]. For each
+      operation [algebra_op u] in algebra [A], there is a quotient algebra
+      operation [g] satisfying the [quotient_op_property f g] with respect to f. *)
 
-  Fixpoint rec_impl `{Funext} {w : OpType (sorts σ)} :
+  Fixpoint quotient_op `{Funext} {w : OpType (sorts σ)} :
     ∀ (f : op_type A w),
     congruence_property f ->
-    ∃ (g : op_type carrier w), quotient_ops_property f g.
+    ∃ (g : op_type carrier w), quotient_op_property f g.
   Proof. refine (
       match w with
       | neone s => λ f P, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ f P,
-        (quotient_rec (Φ s) (λ x, (rec_impl _ w' (f x)
+        (quotient_rec (Φ s) (λ x, (quotient_op _ w' (f x)
                 (congruence_property_from_cons f x P)).1) _ ; _)
       end
     ).
     intros [x a].
-    apply (rec_impl _ w' (f x) (congruence_property_from_cons f x P)).
+    apply (quotient_op _ w' (f x) (congruence_property_from_cons f x P)).
     Grab Existential Variables.
       intros x y E.
-      apply (@argprod_apply_forall σ _).
-      apply argprod_quotient_ind_prop; try apply _.
+      apply (@argprod_apply_forall σ _), argprod_quotient_ind_prop; try apply _.
       intro a.
-      destruct (rec_impl _ _ _ (congruence_property_from_cons f x P)) as [g1 P1].
-      destruct (rec_impl _ _ _ (congruence_property_from_cons f y P)) as [g2 P2].
+      destruct (quotient_op _ _ _ (congruence_property_from_cons f x P)) as [g1 P1].
+      destruct (quotient_op _ _ _ (congruence_property_from_cons f y P)) as [g2 P2].
       unfold proj1_sig.
       rewrite P1, P2.
       apply related_classes_eq.
@@ -217,7 +241,7 @@ Section quotient_algebra.
   Defined.
 
   Global Instance quotient_ops `{Funext} : AlgebraOps σ carrier :=
-    λ (u : σ), (rec_impl (algebra_op u) (congruence_respect_ops u)).1.
+    λ (u : σ), (quotient_op (algebra_op u) (congruence_respect_ops u)).1.
 
   Global Instance quotient_algebra `{Funext} : Algebra σ carrier :=
     λ s, quotient_set (Φ s).
@@ -239,20 +263,21 @@ Section quotient_map.
   Definition quotient_map : ∀ s, A s → carrier σ Φ s :=
     λ s x, class_of (Φ s) x.
 
+  Lemma quotient_map_preservation `{Funext} (w : OpType (sorts σ))
+      (g : op_type (carrier σ Φ) w) (ao : op_type A w)
+      (G : quotient_op_property σ Φ ao g)
+      : Preservation σ A (carrier σ Φ) quotient_map ao g.
+    unfold quotient_op_property in G.
+    induction w; simpl in *.
+    - rewrite (G tt). reflexivity.
+    - intro x. apply IHw. intro a. apply (G (x,a)).
+  Qed.
+
   Global Instance quotient_map_homomorphism `{Funext}
     : HomoMorphism σ A (carrier σ Φ) quotient_map.
   Proof.
     intro u.
-    unfold quotient_ops, algebra_op.
-    destruct (rec_impl _ _ _ _) as [g G].
-    generalize dependent G.
-    set (ao := As u).
-    clearbody ao.
-    intro G.
-    unfold quotient_ops_property in G.
-    induction (σ u); simpl in *.
-    - rewrite (G tt). reflexivity.
-    - intro x. apply IHo. intro a. apply (G (x,a)).
+    apply quotient_map_preservation, quotient_op.
   Qed.
 End quotient_map.
 
@@ -273,256 +298,267 @@ Section quotient_property.
     there is a homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient
     algebra satisfynig [quotient_property_mapout_compute] below. *)
 
-Definition quotient_property_mapout (f : ∀ s, A s → B s) `{HomoMorphism σ A B f}
-    (R : ∀ s x y, Φ s x y → f s x = f s y)
-    : ∀ s, carrier σ Φ s → B s :=
-  λ s, (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
+  Section quotient_property_mapout.
+    Context
+      (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}
+      (R : ∀ s x y, Φ s x y → f s x = f s y).
 
-Global Instance quotient_property_mapout_homomorphism
-    (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}
-    (R : ∀ s x y, Φ s x y → f s x = f s y)
-    : HomoMorphism σ (carrier σ Φ) B (quotient_property_mapout f R).
-Proof.
-  intro u.
-  unfold quotient_ops, algebra_op.
-  generalize (preserves σ A B f u).
-  destruct (rec_impl _ _ _ _) as [g G].
-  generalize dependent G.
-  set (ao := As u).
-  set (bo := Bs u).
-  clearbody ao bo.
-  induction (σ u); intros G Q; unfold quotient_ops_property in G; simpl in *.
-  - rewrite (G tt). apply Q.
-  - refine (quotient_ind_prop (Φ t) _ _).
-    intro x.
-    apply (IHo (g (class_of (Φ t) x)) (ao x) (bo (f t x))).
-    + intro a. apply (G (x,a)).
-    + apply Q.
-Qed.
+    Definition quotient_property_mapout : ∀ s, carrier σ Φ s → B s :=
+      λ s, (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
 
-(** The computation rule for the homomorphism [g : ∀ s, carrier σ Φ s → B s]
-    defined by the [quotient_property_mapout] is
+    Lemma quotient_property_mapout_preservation {w : OpType (sorts σ)}
+        (g : op_type (carrier σ Φ) w) (ao : op_type A w) (bo : op_type B w)
+        (G : quotient_op_property σ Φ ao g) (P : Preservation σ A B f ao bo)
+        : Preservation σ (carrier σ Φ) B quotient_property_mapout g bo.
+    Proof.
+      unfold quotient_op_property in G.
+      induction w; simpl in *.
+      - rewrite (G tt). apply P.
+      - refine (quotient_ind_prop (Φ t) _ _).
+        intro x.
+        apply (IHw (g (class_of (Φ t) x)) (ao x) (bo (f t x))).
+        + intro a. apply (G (x,a)).
+        + apply P.
+    Qed.
 
-      [g s (class x) = f s x],
+    Global Instance quotient_property_mapout_homomorphism
+      : HomoMorphism σ (carrier σ Φ) B quotient_property_mapout.
+    Proof.
+      intro u.
+      eapply quotient_property_mapout_preservation.
+      - apply quotient_op.
+      - apply F.
+    Qed.
 
-    where [class x] is the quotient algebra equivalence class of [x]. *)
+    (** The computation rule for the homomorphism [g : ∀ s, carrier σ Φ s → B s]
+        defined by the [quotient_property_mapout] is
 
-Lemma quotient_property_mapout_compute (f : ∀ s, A s → B s)
-    `{HomoMorphism σ A B f} (R : ∀ s x y, Φ s x y → f s x = f s y)
-    : ∀ s (x : A s), quotient_property_mapout f R s (class_of (Φ s) x) = f s x.
-Proof. reflexivity. Defined.
+          [g s (class x) = f s x],
 
-(** Suppose [g : ∀ s, carrier σ Φ s → B s] is a homomorphism out of the quotient
-    algebra. There is a homomorphism [λ s, g s ∘ quotient_map σ Φ s]
-    factoring through the [quotient_map] and [g]. *)
+        where [class x] is the quotient algebra equivalence class of [x]. *)
 
-Definition quotient_property_factoring (g : ∀ s, carrier σ Φ s → B s)
-    `{HomoMorphism σ (carrier σ Φ) B g} : ∀ s, A s → B s
-  := λ s, g s ∘ quotient_map σ Φ s.
+    Lemma quotient_property_mapout_compute
+      : ∀ s (x : A s), quotient_property_mapout s (class_of (Φ s) x) = f s x.
+    Proof. reflexivity. Defined.
 
-(** The left to right direction of the quotient algebra universal mapping
-    property [quotient_property]. The resulting homomorphism [g] is given by
-    the [quotient_property_mapout] above. *)
+  End quotient_property_mapout.
 
-Lemma quotient_property_lr :
-  (∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
-    ∀ s x y, Φ s x y → f s x = f s y) →
-   ∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g.
-Proof.
-  intros [f [F P]].
-  exists (quotient_property_mapout f P).
-  apply _.
-Defined.
+  (** Suppose [g : ∀ s, carrier σ Φ s → B s] is a homomorphism out of the
+      quotient algebra. There is a homomorphism [λ s, g s ∘ quotient_map σ Φ s]
+      factoring through the [quotient_map] and [g]. *)
 
-(** The right to left direction of the quotient algebra universal mapping
-    property [quotient_property]. The resulting homomorphism [f] is given by
-    the [quotient_property_factoring] above. The homomorphism [f] respects the
-    congruence [Φ]. *)
+  Definition quotient_property_factoring (g : ∀ s, carrier σ Φ s → B s)
+      `{HomoMorphism σ (carrier σ Φ) B g} : ∀ s, A s → B s
+    := λ s, g s ∘ quotient_map σ Φ s.
 
-Lemma quotient_property_rl
-  : (∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g) →
-    ∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
-      ∀ s x y, Φ s x y → f s x = f s y.
-Proof.
-  refine (λ '(g;G),
-    (quotient_property_factoring g ;
-     compose_homomorphisms σ A _ B g (quotient_map σ Φ) ;
-     λ s x y E, transport (λ z, g s (class_of (Φ s) x) = g s z)
-                 (related_classes_eq (Φ s) E) idpath)).
-Defined.
+  (** The left to right direction of the quotient algebra universal mapping
+      property [quotient_property]. The resulting homomorphism [g] is given by
+      the [quotient_property_mapout] above. *)
 
-Lemma quotient_property_lr_sect : Sect quotient_property_rl quotient_property_lr.
-Proof.
-  intros [g G].
-  apply path_sigma_hprop.
-  apply path_forall.
-  intro s.
-  apply (eissect (quotient_ump (Φ s) (BuildhSet (B s)))).
-Defined.
-
-Lemma quotient_property_rl_sect : Sect quotient_property_lr quotient_property_rl.
-Proof.
-  intros [h [H1 H2]].
-  apply path_sigma_hprop.
-  apply path_forall.
-  intro s.
-  now apply path_forall.
-Defined.
-
-(** The universal property of the quotient algebra. For each homomorphism
-    [f : ∀ s, A s → B s] respecting the congruence [Φ], there is a unique
-    homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient algebra.
-    In one direction, the homomorphism [g] is given by the
-    [quotient_property_mapout]. In the other direction, the homomorphism [f]
-    is given by the [quotient_property_factoring]. *)
-
-Lemma quotient_property :
+  Lemma quotient_property_lr :
     (∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
-     ∀ s (x y : A s), Φ s x y → f s x = f s y)
-  <~>
-    ∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g.
-Proof.
-  apply (equiv_adjointify quotient_property_lr quotient_property_rl).
-  exact quotient_property_lr_sect.
-  exact quotient_property_rl_sect.
-Defined.
-
-End quotient_property.
-
-Section in_domain.
-
-  Context {A B} (f: A → B).
-
-  Definition in_domain : relation A := λ x y, f x = f y.
-
-  Global Instance in_domain_equivalence: Equivalence in_domain.
+      ∀ s x y, Φ s x y → f s x = f s y) →
+     ∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g.
   Proof.
-   unfold in_domain.
-   constructor.
-   constructor.
-   intros x y h. by symmetry.
-   intros x y z h1 h2.
-   exact (h1 @ h2).
-  Qed.
-
-End in_domain.
-
-Section first_iso.
-
-(* "If A and B are algebras, and f is a homomorphism from A to B, then
- the equivalence relation Φ on A defined by a~b if and only if f(a)=f(b) is
- a congruence on A, and the algebra A/Φ is isomorphic to the image
- of f, which is a subalgebra of B." *)
-
-  Context σ `{Algebra σ A} `{Algebra σ B} `{!HomoMorphism σ A B f}.
-
-  Notation Φ := (λ s, in_domain (f s)).
-
-  Lemma square o0 x x' y y':
-    Preservation σ A B f x x' →
-    Preservation σ A B f y y' →
-    op_type_equiv (sorts σ) B o0 x' y' →
-    @op_type_equiv (sorts σ) A (λ s: sorts σ, @in_domain (A s) (B s) (e0 s) (f s)) o0 x y.
-  Proof.
-   induction o0.
-    simpl.
-    intros.
-    unfold in_domain.
-    rewrite H3, H4.
-    assumption.
-   simpl in *.
-   repeat intro.
-   unfold in_domain in H6.
-   unfold respectful in H5.
-   simpl in *.
-   pose proof (H3 x0).
-   pose proof (H3 y0). clear H3.
-   pose proof (H4 x0).
-   pose proof (H4 y0). clear H4.
-   apply (IHo0 (x x0) (x' (f _ x0)) (y y0) (y' (f _ y0)) H7 H9).
-   apply H5.
-   assumption.
-  Qed.
-
-  Instance co: Congruence σ Φ.
-  Proof with intuition.
-   constructor.
-    repeat intro.
-    unfold in_domain.
-    rewrite H3, H4...
-   constructor; intro.
-    unfold abstract_algebra.Setoid. apply _.
-   unfold algebra_op.
-   generalize (preserves σ A B f o).
-   generalize (@algebra_propers σ B _ _ _ o).
-   unfold algebra_op.
-   generalize (H o), (H1 o).
-   induction (σ o); simpl in *; repeat intro.
+    intros [f [F P]].
+    exists (quotient_property_mapout f P).
     apply _.
-   apply (square _ _ _ _ _ (H4 x) (H4 y))...
-  Qed.
-
-  Definition image s (b: B s): Type := sigT (λ a, f s a = b).
-
-  Lemma image_proper: ∀ s (x0 x' : B s), x0 = x' → iffT (image s x0) (image s x').
-  Proof. intros ??? E. split; intros [v ?]; exists v; rewrite E in *; assumption. Qed.
-
-  Instance: ClosedSubset image.
-  Proof with intuition.
-   constructor; repeat intro.
-    split; intros [q p]; exists q; rewrite p...
-   generalize (preserves σ A B f o).
-   generalize (@algebra_propers σ B _ _ _ o).
-   unfold algebra_op.
-   generalize (H1 o), (H o).
-   induction (σ o); simpl; intros.
-    exists o1...
-   destruct X.
-   apply (@op_closed_proper σ B _ _ _ image image_proper _ (o1 z) (o1 (f _ x))).
-    apply H3...
-   apply IHo0 with (o2 x)...
-   apply _.
-  Qed.
-
-  Definition quot_obj: algebras.Object σ := algebras.object σ A (algebra_equiv:=Φ). (* A/Φ *)
-  Definition subobject: algebras.Object σ := algebras.object σ (ua_subalgebraT.carrier image).
-
-  Program Definition back: subobject ⟶ quot_obj := λ _ X, projT1 (projT2 X).
-
-  Next Obligation. Proof with try apply _; intuition.
-   repeat constructor...
-    intros [x [i E']] [y [j E'']] E.
-    change (x = y) in E.
-    change (f a i = f a j).
-    rewrite E', E''...
-   unfold ua_subalgebraT.impl.
-   generalize (subset_closed image o).
-   unfold algebra_op.
-   generalize (H o) (H1 o) (preserves σ A B f o)
-     (_: Proper (=) (H o)) (_: Proper (=) (H1 o)).
-   induction (σ o); simpl; intros ? ? ? ? ?.
-    intros [? E]. change (f _ x = f _ o0). rewrite E...
-   intros ? [x [? E]]. apply IHo0... simpl in *. rewrite <- E...
   Defined.
 
-  Program Definition forth: quot_obj ⟶ subobject :=
-    λ a X, existT _ (f a X) (existT _ X (reflexivity _)).
+  (** The right to left direction of the quotient algebra universal mapping
+      property [quotient_property]. The resulting homomorphism [f] is given by
+      the [quotient_property_factoring] above. The homomorphism [f] respects the
+      congruence [Φ]. *)
 
-  Next Obligation. Proof with try apply _; intuition.
-   repeat constructor...
-   unfold ua_subalgebraT.impl.
-   generalize (subset_closed image o).
-   unfold algebra_op.
-   generalize (H o) (H1 o) (preserves σ A B f o)
-     (_: Proper (=) (H o)) (_: Proper (=) (H1 o)).
-   induction (σ o); simpl...
-   apply IHo0...
-  Qed.
-
-  Theorem first_iso: categories.iso_arrows back forth.
+  Lemma quotient_property_rl
+    : (∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g) →
+      ∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
+        ∀ s x y, Φ s x y → f s x = f s y.
   Proof.
-   split. intro. reflexivity.
-   intros ? [? [? ?]]. assumption.
+    intros [g G].
+    exact (( quotient_property_factoring g
+           ; compose_homomorphisms σ A _ B g (quotient_map σ Φ)
+           ; λ s x y E, transport (λ z, g s (class_of (Φ s) x) = g s z)
+                          (related_classes_eq (Φ s) E) idpath)).
+  Defined.
+
+  Lemma quotient_property_lr_sect : Sect quotient_property_rl quotient_property_lr.
+  Proof.
+    intros [g G].
+    apply path_sigma_hprop, path_forall.
+    intro s.
+    apply (eissect (quotient_ump (Φ s) (BuildhSet (B s)))).
+  Defined.
+
+  Lemma quotient_property_rl_sect : Sect quotient_property_lr quotient_property_rl.
+  Proof.
+    intros [h [H1 H2]].
+    apply path_sigma_hprop, path_forall.
+    intro s.
+    now apply path_forall.
+  Defined.
+
+  (** The universal property of the quotient algebra. For each homomorphism
+      [f : ∀ s, A s → B s] respecting the congruence [Φ], there is a unique
+      homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient algebra.
+      In one direction, the homomorphism [g] is given by the
+      [quotient_property_mapout]. In the other direction, the homomorphism [f]
+      is given by the [quotient_property_factoring]. *)
+
+  Lemma quotient_property
+    : (∃ (f : ∀ s, A s → B s) (F : HomoMorphism σ A B f),
+       ∀ s (x y : A s), Φ s x y → f s x = f s y)
+      <~>
+       ∃ (g : ∀ s, carrier σ Φ s → B s), HomoMorphism σ (carrier σ Φ) B g.
+  Proof.
+    apply (equiv_adjointify quotient_property_lr quotient_property_rl).
+    - exact quotient_property_lr_sect.
+    - exact quotient_property_rl_sect.
+  Defined.
+End quotient_property.
+
+Section first_isomorphism_theorem.
+  Context
+    {U : Univalence}
+    (σ : Signature)
+    {A B : sorts σ → Type} {As : AlgebraOps σ A} {Bs : AlgebraOps σ B}
+    {AA : Algebra σ A} {BB : Algebra σ B}
+    (f : ∀ s, A s → B s) {F : HomoMorphism σ A B f}.
+
+  Definition kernel (s : sorts σ) : relation (A s) := λ x y, f s x = f s y.
+
+  Global Instance kernel_equivalence (s : sorts σ) : Equivalence (kernel s).
+  Proof.
+   unfold kernel.
+   repeat constructor.
+   - intros x y h. by symmetry.
+   - intros x y z h1 h2. exact (h1 @ h2).
+  Defined.
+
+  Lemma kernel_congruence' {w : OpType (sorts σ)}
+    (bo : op_type B w) (a b : argprod σ A (ne_list.front w))
+    (R : argprod_for_all_2 σ kernel a b)
+    : argprod_apply σ bo (argprod_map σ f a) =
+      argprod_apply σ bo (argprod_map σ f b).
+  Proof.
+    induction w.
+    - reflexivity.
+    - destruct a as [x a], b as [y b], R as [r R].
+      simpl.
+      unfold kernel in r.
+      rewrite r.
+      now apply IHw.
   Qed.
 
-End first_iso.
+  Instance kernel_congruence : Congruence σ kernel.
+  Proof.
+    intros u a b R.
+    unfold kernel.
+    rewrite (argprod_homomorphism_preserves σ f u a).
+    rewrite (argprod_homomorphism_preserves σ f u b).
+    now apply kernel_congruence'.
+  Qed.
+
+  Definition in_image (s : sorts σ) (y : B s) : Type := merely (hfiber (f s) y).
+
+  Lemma image_subalgebra' {w : OpType (sorts σ)}
+    (ao : op_type A w) (bo : op_type B w) (P : Preservation σ A B f ao bo)
+    : op_closed σ in_image bo.
+  Proof.
+    induction w.
+    - exact (tr (ao; P)).
+    - intro y.
+      refine (Trunc_rec _).
+      intros [x p].
+      apply (IHw (ao x)).
+      now refine (transport (λ y, Preservation σ A B f (ao x) (bo y)) p _).
+  Defined.
+
+  Global Instance image_subalgebra : ClosedSubset σ in_image.
+  Proof. intro u. eapply image_subalgebra', F. Defined.
+
+  Definition first_isomorphism (s : sorts σ)
+    : carrier σ kernel s → ua_subalgebra.carrier σ in_image s.
+  Proof.
+    refine (quotient_rec (kernel s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
+    intros x y H.
+    now apply path_sigma_hprop.
+  Defined.
+
+  Lemma first_isomorphism_preservation {w : OpType (sorts σ)}
+    (g : op_type (carrier σ kernel) w)
+    (ao : op_type A w) (bo : op_type B w)
+    (P : Preservation σ A B f ao bo)
+    (G : quotient_op_property σ kernel ao g)
+    : Preservation σ (carrier σ kernel) (ua_subalgebra.carrier σ in_image)
+        first_isomorphism g (close_op σ in_image bo (image_subalgebra' ao bo P)).
+  Proof.
+    unfold quotient_op_property in G.
+    induction w.
+    - apply path_sigma_hprop.
+      generalize dependent g.
+      refine (quotient_ind_prop (kernel t) _ _).
+      intros x G.
+      rewrite <- P.
+      apply (classes_eq_related (kernel t) _ _ (G tt)).
+    - refine (quotient_ind_prop (kernel t) _ _).
+      intro x.
+      apply (IHw (g (class_of (kernel t) x)) (ao x) (bo (f t x)) (P x)).
+      intro a.
+      apply (G (x,a)).
+  Qed.
+
+  Global Instance first_isomorphism_homomorphism
+    : HomoMorphism σ (carrier σ kernel) (ua_subalgebra.carrier σ in_image)
+          first_isomorphism.
+  Proof.
+    intro u.
+    apply first_isomorphism_preservation.
+    apply (quotient_op σ kernel (As u) (congruence_respect_ops σ kernel u)).
+  Qed.
+
+  Global Instance first_isomorphism_is_embedding (s : sorts σ)
+    : IsEmbedding (first_isomorphism s).
+  Proof.
+    intros [y H].
+    apply ishprop_sigma_disjoint.
+    refine (quotient_ind_prop (kernel s) _ _).
+    intro x1.
+    refine (quotient_ind_prop (kernel s) _ _).
+    intros x2 h1 h2.
+    apply related_classes_eq.
+    exact ((pr1_path h1) @ (pr1_path h2)^).
+  Qed.
+
+  Global Instance first_isomorphism_is_surjection (s : sorts σ)
+    : IsSurjection (first_isomorphism s).
+  Proof.
+    apply BuildIsSurjection.
+    intros [x X].
+    refine (Trunc_rec _ X).
+    intros [y Y].
+    apply tr.
+    exists (class_of _ y).
+    now apply path_sigma_hprop.
+  Qed.
+
+  Global Instance first_isomorphism_is_equiv (s : sorts σ)
+    : IsEquiv (first_isomorphism s).
+  Proof.
+    apply isequiv_surj_emb.
+    apply first_isomorphism_is_surjection.
+    apply first_isomorphism_is_embedding.
+  Qed.
+
+  Theorem first_isomorphism_theorem (s : sorts σ)
+    : carrier σ kernel s <~> ua_subalgebra.carrier σ in_image s.
+  Proof. apply (BuildEquiv _ _ (first_isomorphism s)), _. Defined.
+
+  Theorem first_identification_theorem
+    : carrier σ kernel = ua_subalgebra.carrier σ in_image.
+  Proof.
+    apply path_forall.
+    intro s.
+    apply equiv_path_universe, first_isomorphism_theorem.
+  Defined.
+End first_isomorphism_theorem.

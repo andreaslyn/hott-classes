@@ -10,7 +10,7 @@ Require Import
   MathClasses.categories.algebras MathClasses.theory.forget_algebra.*)
 
 Section subalgebras.
-  Context {sign : Signature} `{Algebra sign A} (P: ∀ s, A s → Type).
+  Context (sign : Signature) `{Algebra sign A} (P: ∀ s, A s → Type).
 
   (* We begin by describing what it means for P to be a proper closed subset: *)
 
@@ -26,6 +26,10 @@ Section subalgebras.
   (* Now suppose P is closed in this way. *)
 
   Context `{ClosedSubset}.
+
+  Global Instance op_closed_hprop `{Funext} (u : OpType (sorts sign))
+      (bo : op_type A u) : IsHProp (op_closed bo).
+  Proof. induction u; apply _. Defined.
 
   (* Our new algebra's elements are just those for which P holds: *)
 
@@ -44,7 +48,7 @@ Section subalgebras.
   Lemma close_op_proper `{Funext} d (o0 o1: op_type A d)
     (P': op_closed o0) (Q: op_closed o1): o0 = o1 → close_op o0 P' = close_op o1 Q.
   Proof.
-   induction d. simpl in *...
+   induction d. simpl in *.
    intros. apply path_sigma_hprop. assumption.
    intro.
    apply path_forall.
