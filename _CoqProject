@@ -1,7 +1,5 @@
 -R . HoTTClasses
 
-./misc/workaround_tactics.v
-
 ./implementations/list.v
 ./implementations/ne_list.v
 
@@ -12,8 +10,6 @@
 ./theory/ua_products.v
 ./theory/ua_subalgebra.v
 ./theory/ua_congruence.v
-
-./categories/varieties.v
 
 ./varieties/semigroups.v
 ./varieties/monoids.v

@@ -3,8 +3,6 @@ Require Import
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.universal_algebra
   HoTTClasses.theory.ua_homomorphisms
-  (*MathClasses.theory.categories*)
-  HoTTClasses.categories.varieties
   HoTT.Types.Forall.
 
 Section algebras.
@@ -141,54 +139,3 @@ Section varieties.
    apply laws_hold.
   Qed.
 End varieties.
-
-(*
-Require HoTTClasses.categories.varieties.
-
-Section categorical.
-  Context
-    (et: EquationalTheory).
-
-  Global Instance: Producer (varieties.Object et) := λ I carriers,
-    {| varieties.variety_carriers := λ s, ∀ i, carriers i s
-    ; varieties.variety_proof := product_variety et I _ _ _ (fun H => varieties.variety_proof et (carriers H)) |}.
-      (* todo: clean up *)
-
-  Section for_a_given_c.
-  Context (I: Type) (c: I → varieties.Object et).
-
-  Global Program Instance: ElimProduct c (product c) := λ i _ c, c i.
-
-  Next Obligation.
-   apply (@algebra_projection_morphisms et I c
-     (λ x, @varieties.variety_equiv et (c x)) (λ x, varieties.variety_ops et (c x)) ).
-   intro. apply _.
-  Qed.
-
-  Global Program Instance: IntroProduct c (product c) := λ _ h a X i, h i a X.
-
-  Next Obligation. Proof with intuition.
-   repeat constructor; try apply _.
-     intros ?? E ?. destruct h. simpl. rewrite E...
-    intro.
-    pose proof (λ i, @preserves _ _ _ _ _ _ _ _ (proj2_sig (h i)) u).
-    unfold product_ops, algebra_op.
-    set (λ i, varieties.variety_ops et (c i) u).
-    set (varieties.variety_ops et H u) in *.
-    change (∀i : I, Preservation et H (c i) (` (h i)) o1 (o0 i)) in H0.
-    clearbody o0 o1. revert o0 o1 H0.
-    induction (et u); simpl...
-   apply (@product_algebra et I c)...
-  Qed.
-
-  Global Instance: Product c (product c).
-  Proof.
-   split; repeat intro. reflexivity.
-   symmetry. simpl. apply H.
-  Qed.
-
-  End for_a_given_c.
-
-  Global Instance: HasProducts (varieties.Object et) := {}.
-End categorical.
-*)

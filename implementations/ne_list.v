@@ -1,5 +1,3 @@
-(** This module should be [Require]d but not [Import]ed (except for the notations submodule). *)
-
 Require Import
   Coq.Unicode.Utf8
   HoTTClasses.implementations.list
@@ -94,32 +92,6 @@ Section contents.
 
   Lemma tl_length (l: L): S (length (tl l)) = length l.
   Proof. destruct l; reflexivity. Qed.
-
-(*
-  Notation ListPermutation := (@Permutation.Permutation _).
-
-  Definition Permutation (x y: L): Prop := ListPermutation x y.
-
-  Global Instance: Equivalence Permutation.
-  Proof with intuition.
-   unfold Permutation.
-   split; repeat intro...
-   transitivity y...
-  Qed.
-
-  Global Instance: Proper (Permutation ==> ListPermutation) to_list.
-  Proof. firstorder. Qed.
-
-  Lemma Permutation_ne_tl_length (x y: L):
-    Permutation x y → length (tl x) = length (tl y).
-  Proof.
-   intro H.
-   apply eq_add_S.
-   do 2 rewrite tl_length.
-   rewrite H.
-   reflexivity.
-  Qed.
-*)
 End contents.
 
 Arguments L : clear implicits.
@@ -164,7 +136,6 @@ Module notations.
   Global Notation ne_list := L.
   Global Notation neone := ne_list.one.
   Global Infix ":::" := cons (at level 60, right associativity).
-    (* Todo: Try to get that "[ x ; .. ; y ]" notation working. *)
 
   Fixpoint ne_zip {A B: Type} (l: ne_list A) (m: ne_list B) {struct l} : ne_list (A * B) :=
     match l with

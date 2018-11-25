@@ -4,8 +4,7 @@ Require Import
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Classes.interfaces.canonical_names.
 
-Require Export
-  HoTTClasses.interfaces.ua_basic.
+Require Export HoTTClasses.interfaces.ua_basic.
 
 Section for_signature.
   Variable σ: Signature.
@@ -195,12 +194,6 @@ Class InVariety
   `{!AlgebraOps et carriers}: Type :=
   { variety_algebra:> Algebra et carriers
   ; variety_laws: ∀ s, et_laws et s → ∀ vars, eval_stmt et vars s }.
-
-(*
-Module op_type_notations.
-  Global Infix "-=>" := (ne_list.cons) (at level 95, right associativity).
-End op_type_notations. (* todo: get rid of *)
-*)
 
 Module notations.
   Global Infix "===" := (mkIdentity0 _) (at level 70, no associativity).
