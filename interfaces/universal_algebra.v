@@ -2,16 +2,17 @@ Require Import
   Coq.Unicode.Utf8
   HoTTClasses.implementations.list
   HoTT.Classes.interfaces.abstract_algebra
-  HoTT.Classes.interfaces.canonical_names.
+  (*HoTT.Classes.interfaces.canonical_names*)
+  HoTT.Basics.Equivalences.
 
 Require Export HoTTClasses.interfaces.ua_basic.
+
+Import ne_list.notations.
 
 Section for_signature.
   Variable σ: Signature.
 
-  Notation OpType := (OpType (sorts σ)).
-
-  Inductive Term (V: Type): OpType → Type :=
+  Inductive Term (V : Type) : sig_fn_type σ → Type :=
     | Var: V → ∀ a, Term V (ne_list.one a)
     | App t y: Term V (ne_list.cons y t) → Term V (ne_list.one y) → Term V t
     | Op u: Term V (σ u).
@@ -119,7 +120,7 @@ Section for_signature.
    using the model's implementation and using arbitrary variable assignments: *)
 
   Section Vars.
-    Context (A: sorts σ → Type) (V: Type).
+    Context (A : Carriers σ) (V : Type).
 
     Definition Vars := ∀ a, V → A a.
   End Vars.
@@ -136,12 +137,13 @@ Section for_signature.
     end.
 
   Section eval.
-    Context `{Algebra σ A}.
+    Context {A : Algebra σ}.
 
-    Fixpoint eval {V} {n: OpType} (vars: Vars A V) (t: Term V n) {struct t}: op_type A n :=
+    Fixpoint eval {V} {n : sig_fn_type σ}
+        (vars: Vars A V) (t: Term V n) {struct t}: op_type A n :=
       match t with
       | Var v a => vars a v
-      | Op u => algebra_op u
+      | Op u => algebra_op A u
       | App n a f p => eval vars f (eval vars p)
       end.
 
@@ -188,12 +190,9 @@ Record EquationalTheory :=
   { et_sig:> Signature
   ; et_laws:> EqEntailment et_sig → Type }.
 
-Class InVariety
-  (et: EquationalTheory)
-  (carriers: sorts et → Type)
-  `{!AlgebraOps et carriers}: Type :=
-  { variety_algebra:> Algebra et carriers
-  ; variety_laws: ∀ s, et_laws et s → ∀ vars, eval_stmt et vars s }.
+Class InVariety (et: EquationalTheory) : Type :=
+  { variety_algebra :> Algebra et
+  ; variety_laws : ∀ s, et_laws et s → ∀ vars, eval_stmt et vars s }.
 
 Module notations.
   Global Infix "===" := (mkIdentity0 _) (at level 70, no associativity).

@@ -1,7 +1,7 @@
 Require Import
   Coq.Unicode.Utf8
   HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.universal_algebra
+  HoTTClasses.interfaces.ua_basic
   HoTTClasses.theory.ua_homomorphisms
   HoTT.Types.Forall.
 

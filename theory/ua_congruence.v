@@ -1,6 +1,6 @@
 Require Import
   Coq.Unicode.Utf8
-  HoTTClasses.interfaces.universal_algebra
+  HoTTClasses.interfaces.ua_basic
   HoTTClasses.theory.ua_homomorphisms
   HoTT.Classes.interfaces.canonical_names
   HoTTClasses.theory.ua_subalgebra

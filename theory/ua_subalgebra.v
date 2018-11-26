@@ -1,13 +1,10 @@
 Require Import
   Coq.Unicode.Utf8
-  HoTTClasses.interfaces.universal_algebra
+  HoTTClasses.interfaces.ua_basic
   HoTTClasses.theory.ua_homomorphisms
   HoTT.Classes.interfaces.canonical_names
-  (*MathClasses.theory.categories*)
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Types.Sigma.
-(*Require
-  MathClasses.categories.algebras MathClasses.theory.forget_algebra.*)
 
 Section subalgebras.
   Context (sign : Signature) `{Algebra sign A} (P: ∀ s, A s → Type).
