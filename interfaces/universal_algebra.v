@@ -12,7 +12,7 @@ Import ne_list.notations.
 Section for_signature.
   Variable σ: Signature.
 
-  Inductive Term (V : Type) : sig_fn_type σ → Type :=
+  Inductive Term (V : Type) : sig_op_type σ → Type :=
     | Var: V → ∀ a, Term V (ne_list.one a)
     | App t y: Term V (ne_list.cons y t) → Term V (ne_list.one y) → Term V t
     | Op u: Term V (σ u).
@@ -139,7 +139,7 @@ Section for_signature.
   Section eval.
     Context {A : Algebra σ}.
 
-    Fixpoint eval {V} {n : sig_fn_type σ}
+    Fixpoint eval {V} {n : sig_op_type σ}
         (vars: Vars A V) (t: Term V n) {struct t}: op_type A n :=
       match t with
       | Var v a => vars a v

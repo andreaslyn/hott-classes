@@ -15,13 +15,13 @@ Notation hom_type := (λ (A B : Algebra _), ∀ (s : sig_sort _), A s → B s).
 Section ishomomorphism.
   Context {σ: Signature} {A B : Algebra σ} (f : hom_type A B).
 
-  Fixpoint Preservation {n : sig_fn_type σ}: op_type A n → op_type B n → Type :=
+  Fixpoint Preservation {n : sig_op_type σ}: op_type A n → op_type B n → Type :=
     match n with
     | ne_list.one d => λ oA oB, f _ oA = oB
     | ne_list.cons x y => λ oA oB, ∀ x, Preservation (oA x) (oB (f _ x))
     end.
 
-  Global Instance Preservation_hprop {Fu : Funext} {n : sig_fn_type σ}
+  Global Instance Preservation_hprop {Fu : Funext} {n : sig_op_type σ}
     (a : op_type A n) (b : op_type B n)
     : IsHProp (Preservation a b).
   Proof. intros. induction n; apply _. Defined.
@@ -107,7 +107,7 @@ Proof.
  generalize (algebra_op A u) (algebra_op B u) (algebra_op C u).
  induction (σ u); simpl; intros x y z G F.
  - now rewrite F, G.
- - intro a. now apply (IHf0 _ (y (f _ a))).
+ - intro a. now apply (IHo _ (y (f _ a))).
 Qed.
 
 Definition hom_compose {σ : Signature} {A B C : Algebra σ}
@@ -123,7 +123,7 @@ Proof.
  generalize (algebra_op A u) (algebra_op B u) (hom_preserves f u).
  induction (σ u); intros a b P.
  - rewrite <- P. apply (eissect (f t)).
- - intro. apply IHf0.
+ - intro. apply IHo.
    exact (transport (λ y, Preservation f _ (b y)) (eisretr (f t) x) (P (_^-1 x))).
 Qed.
 
