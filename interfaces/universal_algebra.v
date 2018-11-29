@@ -1,18 +1,21 @@
+
+(* XXX. This file has not been ported yet! *)
+
 Require Import
   Coq.Unicode.Utf8
   HoTTClasses.implementations.list
   HoTT.Classes.interfaces.abstract_algebra
-  (*HoTT.Classes.interfaces.canonical_names*)
   HoTT.Basics.Equivalences.
 
 Require Export HoTTClasses.interfaces.ua_basic.
 
 Import ne_list.notations.
+Import algebra_notations.
 
 Section for_signature.
   Variable σ: Signature.
 
-  Inductive Term (V : Type) : sig_op_type σ → Type :=
+  Inductive Term (V : Type) : op_symbol_type σ → Type :=
     | Var: V → ∀ a, Term V (ne_list.one a)
     | App t y: Term V (ne_list.cons y t) → Term V (ne_list.one y) → Term V t
     | Op u: Term V (σ u).
@@ -139,11 +142,11 @@ Section for_signature.
   Section eval.
     Context {A : Algebra σ}.
 
-    Fixpoint eval {V} {n : sig_op_type σ}
+    Fixpoint eval {V} {n : op_symbol_type σ}
         (vars: Vars A V) (t: Term V n) {struct t}: op_type A n :=
       match t with
       | Var v a => vars a v
-      | Op u => algebra_op A u
+      | Op u => u^^A
       | App n a f p => eval vars f (eval vars p)
       end.
 
