@@ -7,7 +7,8 @@ Require Import
   HoTT.Types.Forall
   HoTT.HSet
   HoTT.Types.Universe
-  HoTT.Basics.PathGroupoids.
+  HoTT.Basics.PathGroupoids
+  HoTT.Tactics.
 
 Import algebra_notations.
 Import ne_list.notations.
@@ -141,32 +142,18 @@ Definition hom_inv {σ} {A B : Algebra σ} (f : Homomorphism A B)
     : Homomorphism B A
   := BuildHomomorphism (λ s, (f s)^-1).
 
-Definition path_carriers_isomorphism `{Univalence} {σ} {A B : Algebra σ}
+Definition path_equiv_carriers `{Univalence} {σ} {A B : Algebra σ}
   (f : ∀ (s : sign_sort σ), A s <~> B s)
   : carriers A = carriers B
   := path_forall A B (λ s : sign_sort σ, path_universe (f s)).
-
-Require Import HoTT.Tactics.
-
-Lemma help `{Univalence} {X X' Y : Type} (Y' : Type) (x : X') (f : X <~> X')
-  (a : X → Y)
-  : transport (λ T : Type, T → Y) (path_universe f) a x = a (f^-1 x).
-Proof.
-  rewrite transport_forall.
-  rewrite transport_const.
-  rewrite (transport_path_universe_V f).
-  induction ((path_universe f.(equiv_fun))).
-  simpl.
-  reflexivity.
-Qed.
 
 Lemma path_transport_carriers_isomorphism' `{Univalence} {σ} {A B : Algebra σ}
   {w : op_symbol_type σ} (f : ∀ (s : sign_sort σ), A s <~> B s)
   (ao : op_type A w) (bo : op_type B w) (P : op_preservation f ao bo)
   : transport (λ s : σ.(sign_sort) → Type, op_type s w)
-      (path_carriers_isomorphism f) ao = bo.
+      (path_equiv_carriers f) ao = bo.
 Proof.
-  unfold path_carriers_isomorphism.
+  unfold path_equiv_carriers.
   induction w; simpl in *.
   transport_path_forall_hammer.
   rewrite <- P.
@@ -178,18 +165,20 @@ Proof.
   pose (IHw (ao ((f t)^-1 x)) (bo x) P') as IHl'.
   transport_path_forall_hammer.
   rewrite transport_forall_constant.
-  rewrite (help (op_type A w) x (f t) ao).
+  rewrite transport_forall.
+  rewrite transport_const.
+  rewrite (transport_path_universe_V (f t)).
+  destruct (path_universe (f t)).
   apply IHl'.
 Qed.
 
 Lemma path_transport_carriers_isomorphism `{Univalence} {σ} {A B : Algebra σ}
   (f : Homomorphism A B) `{!IsIsomorphism f} (u : sign_symbol σ):
   transport (λ s : sign_sort σ → Type, op_type s (σ u))
-    (path_carriers_isomorphism (equiv_forgetful_isomorphism f)) (u ^^ A)
+    (path_equiv_carriers (equiv_forgetful_isomorphism f)) (u ^^ A)
   = u ^^ B.
 Proof.
-  apply path_transport_carriers_isomorphism'.
-  apply (hom_preserves f).
+  apply path_transport_carriers_isomorphism'. apply (hom_preserves f).
 Defined.
 
 Theorem path_isomorphism `{Univalence} {σ} {A B : Algebra σ}
@@ -197,7 +186,7 @@ Theorem path_isomorphism `{Univalence} {σ} {A B : Algebra σ}
   : A = B.
 Proof.
   apply path_pair_algebra_algebra.
-  exists (path_carriers_isomorphism (equiv_forgetful_isomorphism f)).
+  exists (path_equiv_carriers (equiv_forgetful_isomorphism f)).
   funext u.
   refine (transport (λ x : op_type B (σ u), x = u ^^ B)
             (transport_forall_constant _ _ u)^
