@@ -4,48 +4,52 @@ Require Import
   HoTT.Basics.Overture
   HoTT.Spaces.Nat.
 
-Section contents.
+Declare Scope nel_scope.
+Delimit Scope nel_scope with nel.
+
+(** Nonempty list implementation [nel.nel]. *)
+Module nel.
+
+Section with_type.
   Context {T: Type}.
 
-  Inductive L: Type := one: T → L | cons: T → L → L.
+  Inductive nel: Type := one: T → nel | cons: T → nel → nel.
 
-  Fixpoint app (a b: L) {struct a}: L :=
+  Fixpoint app (a b: nel): nel :=
     match a with
     | one x => cons x b
     | cons x y => cons x (app y b)
     end.
 
-  Fixpoint foldr {R} (u: T → R) (f: T → R → R) (a: L): R :=
+  Fixpoint foldr {R} (u: T → R) (f: T → R → R) (a: nel): R :=
     match a with
     | one x => u x
     | cons x y => f x (foldr u f y)
     end.
 
-  Fixpoint foldr1 (f: T → T → T) (a: L): T :=
+  Fixpoint foldr1 (f: T → T → T) (a: nel): T :=
     match a with
     | one x => x
     | cons x y => f x (foldr1 f y)
     end.
 
-  Definition head (l: L): T := match l with one x => x | cons x _ => x end.
+  Definition head (l: nel): T := match l with one x => x | cons x _ => x end.
 
-  Fixpoint to_list (l: L): list T :=
+  Fixpoint to_list (l: nel): list T :=
     match l with
     | one x => x :: nil
     | cons x xs => x :: to_list xs
     end.
 
-  Global Coercion to_list: L >-> list.
-
-  Fixpoint from_list (x: T) (xs: list T): L :=
+  Fixpoint from_list (x: T) (xs: list T): nel :=
     match xs with
     | nil => one x
     | Datatypes.cons h t => cons x (from_list h t)
     end.
 
-  Definition tail (l: L): list T := match l with one _ => nil | cons _ x => to_list x end.
+  Definition tail (l: nel): list T := match l with one _ => nil | cons _ x => to_list x end.
 
-  Lemma decomp_eq (l: L): l = from_list (head l) (tail l).
+  Lemma decomp_eq (l: nel): l = from_list (head l) (tail l).
   Proof with auto.
     induction l...
     destruct l...
@@ -53,27 +57,27 @@ Section contents.
     rewrite IHl...
   Qed. 
 
-  Definition last: L → T := foldr1 (fun x y => y).
+  Definition last: nel → T := foldr1 (fun x y => y).
 
-  Fixpoint replicate_Sn (x: T) (n: nat): L :=
+  Fixpoint replicate_Sn (x: T) (n: nat): nel :=
     match n with
     | 0 => one x
     | S n' => cons x (replicate_Sn x n')
     end.
 
-  Fixpoint take (n: nat) (l: L): L :=
+  Fixpoint take (n: nat) (l: nel): nel :=
     match l, n with
     | cons x xs, S n' => take n' xs
     | _, _ => one (head l)
     end.
 
-  Fixpoint front (l: L) : list T :=
+  Fixpoint front (l: nel) : list T :=
     match l with
     | one _ => nil
     | cons x xs => x :: front xs
     end.
 
-  Lemma two_level_rect (P: L → Type)
+  Lemma two_level_rect (P: nel → Type)
     (Pone: ∀ x, P (one x))
     (Ptwo: ∀ x y, P (cons x (one y)))
     (Pmore: ∀ x y z, P z → (∀ y', P (cons y' z)) → P (cons x (cons y z))):
@@ -90,34 +94,35 @@ Section contents.
    apply Pmore; intros; apply IHl.
   Qed.
 
-  Lemma tl_length (l: L): S (length (tl l)) = length l.
+  Lemma tl_length (l: nel): S (length (tl (to_list l))) = length (to_list l).
   Proof. destruct l; reflexivity. Qed.
-End contents.
+End with_type.
 
-Arguments L : clear implicits.
+Arguments nel : clear implicits.
 
-Fixpoint tails {A} (l: L A): L (L A) :=
+Fixpoint tails {T} (l: nel T): nel (nel T) :=
   match l with
   | one x => one (one x)
   | cons x y => cons l (tails y)
   end.
 
-Lemma tails_are_shorter {A} (y x: L A):
-  In x (tails y) →
-  le (length x) (length y).
+Lemma tails_are_shorter {T} (y x: nel T):
+  InList x (to_list (tails y)) →
+  le (length (to_list x)) (length (to_list y)).
 Proof with auto.
  induction y; simpl.
  intros [[] | C]. constructor. elim C.
  intros [[] | C]...
 Qed.
 
-Fixpoint map {A B} (f: A → B) (l: L A): L B :=
+Fixpoint map {A B} (f: A → B) (l: nel A): nel B :=
   match l with
   | one x => one (f x)
   | cons h t => cons (f h) (map f t)
   end.
 
-Lemma list_map {A B} (f: A → B) (l: L A): to_list (map f l) = list.map f (to_list l).
+Lemma list_map {A B} (f: A → B) (l: nel A)
+  : to_list (map f l) = list.map f (to_list l).
 Proof.
   induction l.
   reflexivity.
@@ -126,24 +131,34 @@ Proof.
   reflexivity.
 Qed.
 
-Fixpoint inits {A} (l: L A): L (L A) :=
+Fixpoint inits {A} (l: nel A): nel (nel A) :=
   match l with
   | one x => one (one x)
   | cons h t => cons (one h) (map (cons h) (inits t))
   end.
 
 Module notations.
-  Global Notation ne_list := L.
-  Global Notation neone := ne_list.one.
-  Global Infix ":::" := cons (at level 60, right associativity).
+  Open Scope nel_scope.
 
-  Fixpoint ne_zip {A B: Type} (l: ne_list A) (m: ne_list B) {struct l} : ne_list (A * B) :=
-    match l with
-    | one a => one (a, head m)
-    | a ::: l =>
-        match m with
-        | one b => one (a, b)
-        | b ::: m => (a, b) ::: ne_zip l m
-        end
-    end.
+  Global Notation nel := nel.
+  Global Notation "[: x :]" := (one x) : nel_scope.
+  Global Notation "[: x ; .. ; y ; z :]"
+      := (cons x .. (cons y (one z)) ..) : nel_scope.
+  Global Infix ":::" := cons (at level 60, right associativity) : nel_scope.
 End notations.
+
+Import notations.
+
+Fixpoint zip {A B: Type} (l: nel A) (m: nel B): nel (A * B) :=
+  match l with
+  | [:a:] => one (a, head m)
+  | a ::: l =>
+      match m with
+      | [:b:] => one (a, b)
+      | b ::: m => (a, b) ::: zip l m
+      end
+  end.
+
+End nel.
+
+Global Coercion nel.to_list: nel.nel >-> list.

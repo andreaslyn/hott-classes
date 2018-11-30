@@ -1,4 +1,3 @@
-Require HoTTClasses.implementations.ne_list.
 Require Import
   Coq.Unicode.Utf8
   Classes.implementations.list
@@ -9,44 +8,45 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Universe
   HoTT.HSet
-  HoTT.Basics.Equivalences.
+  HoTT.Basics.Equivalences
+  HoTTClasses.implementations.ne_list.
 
-Import ne_list.notations.
+Import nel.notations.
 
-(* When canonical_names.v has been removed, this line can be removed as well. *)
-Open Scope type_scope.
+Declare Scope Algebra_scope.
+Delimit Scope Algebra_scope with Algebra.
+
+Definition opsym_type' : Type → Type := @nel.
 
 Record Signature : Type := BuildSignature
-  { sign_sort : Type
-  ; sign_symbol : Type
-  ; sign_symbol_type : sign_symbol → ne_list sign_sort }.
+  { sigsort : Type
+  ; sigsym : Type
+  ; sigsym_type : sigsym → opsym_type' sigsort }.
 
-Global Coercion sign_symbol_type : Signature >-> Funclass.
+Global Coercion sigsym_type : Signature >-> Funclass.
 
 Definition BuildSingleSortedSignature {Op : Type} (arities : Op → nat)
   : Signature
-  := BuildSignature Unit Op (ne_list.replicate_Sn tt ∘ arities).
+  := BuildSignature Unit Op (nel.replicate_Sn tt ∘ arities).
 
-Definition op_symbol_type (σ : Signature) : Type := ne_list (sign_sort σ).
+Definition opsym_type (σ : Signature) : Type := opsym_type' (sigsort σ).
 
-Definition op_symbol_cod {σ} : op_symbol_type σ → sign_sort σ := ne_list.last.
+Definition opsym_cod {σ} : opsym_type σ → sigsort σ := nel.last.
 
-Definition op_symbol_dom {σ} : op_symbol_type σ → list (sign_sort σ)
-  := ne_list.front.
+Definition opsym_dom {σ} : opsym_type σ → list (sigsort σ) := nel.front.
 
-Definition op_symbol_arity {σ} (w : op_symbol_type σ) : nat
-  := length (op_symbol_dom w).
+Definition opsym_arity {σ} : opsym_type σ → nat := length ∘ opsym_dom.
 
-Notation Carriers := (λ (σ : Signature), sign_sort σ → Type).
+Notation Carriers := (λ (σ : Signature), sigsort σ → Type).
 
-Fixpoint op_type {σ : Signature} (A : Carriers σ) (u : op_symbol_type σ) : Type
+Fixpoint op_type {σ : Signature} (A : Carriers σ) (u : opsym_type σ) : Type
   := match u with
-     | ne_list.one s => A s
-     | ne_list.cons s u' => A s → op_type A u'
+     | [:s:] => A s
+     | s ::: u' => A s → op_type A u'
      end.
 
-Global Instance trunc_op_type {Fu : Funext} {σ : Signature} (A : Carriers σ)
-    `{Is : ∀ s, IsHSet (A s)} (w : op_symbol_type σ)
+Global Instance hset_op_type {Fu : Funext} {σ : Signature} (A : Carriers σ)
+    `{Is : ∀ s, IsHSet (A s)} (w : opsym_type σ)
     : IsHSet (op_type A w).
 Proof.
   induction w; apply (istrunc_trunctype_type 0).
@@ -54,14 +54,16 @@ Defined.
 
 Definition Algebra (σ : Signature) : Type :=
   ∃ (carriers : Carriers σ)
-    (algebra_op : ∀ (u : sign_symbol σ), op_type carriers (σ u)),
-    ∀ (s : sign_sort σ), IsHSet (carriers s).
+    (algop : ∀ (u : sigsym σ), op_type carriers (σ u)),
+    ∀ (s : sigsort σ), IsHSet (carriers s).
 
 Existing Class Algebra.
 
 Definition carriers {σ} (A : Algebra σ) : Carriers σ := A.1.
 
-Definition algebra_op {σ} (A : Algebra σ) : ∀ u, op_type (carriers A) (σ u)
+Global Coercion carriers : Algebra >-> Funclass.
+
+Definition algop {σ} (A : Algebra σ) : ∀ u, op_type (carriers A) (σ u)
   := A.2.1.
 
 Global Instance hset_algebra_carriers {σ} (A : Algebra σ)
@@ -69,18 +71,22 @@ Global Instance hset_algebra_carriers {σ} (A : Algebra σ)
   := A.2.2.
 
 Definition BuildAlgebra {σ} (carriers : Carriers σ)
-    (algebra_op : ∀ (u : sign_symbol σ), op_type carriers (σ u))
-    {S : ∀ (s : sign_sort σ), IsHSet (carriers s)}
+    (algop : ∀ (u : sigsym σ), op_type carriers (σ u))
+    {S : ∀ (s : sigsort σ), IsHSet (carriers s)}
   : Algebra σ
-  := (carriers; (algebra_op; S)).
+  := (carriers; (algop; S)).
 
-Global Coercion carriers : Algebra >-> Funclass.
+Module algebra_notations.
+  Global Notation "u ^^ A" := (algop A u) (at level 15, no associativity)
+    : Algebra_scope.
+  Global Open Scope Algebra_scope.
+End algebra_notations.
 
-Definition pair_algebra {σ} (A B : Algebra σ) : Type :=
+Definition sig_path_algebra {σ} (A B : Algebra σ) : Type :=
   ∃ (p : carriers A = carriers B),
-  transport (λ C, ∀ u, op_type C (σ u)) p (algebra_op A) = algebra_op B.
+  transport (λ C, ∀ u, op_type C (σ u)) p (algop A) = algop B.
 
-Local Lemma path_transport_proj1_sig {A : Type} {x y : A} {P Q : A → Type}
+Local Lemma path_transport_pr1 {A : Type} {x y : A} {P Q : A → Type}
   {u : ∃ (_ : P x), Q x} (p : x = y)
   : transport (λ x : A, P x) p u.1 =
     (transport (λ x : A, ∃ (y : P x), Q x) p u).1.
@@ -88,21 +94,17 @@ Proof.
   by path_induction.
 Defined.
 
-Lemma path_pair_algebra_algebra `{Funext} {σ} (A B : Algebra σ)
-  : pair_algebra A B → A = B.
+Lemma path_sig_path_algebra_algebra `{Funext} {σ} (A B : Algebra σ)
+  : sig_path_algebra A B → A = B.
 Proof.
   intros [p q].
   refine (path_sigma _ _ _ p _).
   apply path_sigma_hprop.
-  exact ((path_transport_proj1_sig p)^ @ q).
+  exact ((path_transport_pr1 p)^ @ q).
 Defined.
 
-Lemma path_algebra_path_algebra {σ} (A B : Algebra σ)
-  : A = B → pair_algebra A B.
+Lemma path_algebra_sig_path_algebra {σ} (A B : Algebra σ)
+  : A = B → sig_path_algebra A B.
 Proof.
   path_induction. exact (idpath; idpath).
 Defined.
-
-Module algebra_notations.
-  Notation "u ^^ A" := (algebra_op A u) (at level 15, no associativity).
-End algebra_notations.
