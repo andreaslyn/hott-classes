@@ -1,22 +1,18 @@
-
 (* XXX. This file has not been properly ported yet. *)
 
 Require Import
   Coq.Unicode.Utf8
   HoTTClasses.implementations.list
-  HoTTClasses.implementations.ne_list
   HoTT.Classes.interfaces.abstract_algebra
-  HoTT.Basics.Equivalences.
+  HoTT.Basics.Equivalences
+  HoTTClasses.interfaces.ua_algebra.
 
-Require Export HoTTClasses.interfaces.ua_basic.
-
-Import nel.notations.
 Import algebra_notations.
 
 Section for_signature.
   Variable σ: Signature.
 
-  Inductive Term (V : Type) : opsym_type σ → Type :=
+  Inductive Term (V : Type) : symboltype σ → Type :=
     | Var: V → ∀ a, Term V [:a:]
     | App t y: Term V (y ::: t) → Term V [:y:] → Term V t
     | Op u: Term V (σ u).
@@ -141,9 +137,9 @@ Section for_signature.
     end.
 
   Section eval.
-    Context {A : Algebra σ}.
+    Context (A : Algebra σ).
 
-    Fixpoint eval {V} {n : opsym_type σ}
+    Fixpoint eval {V} {n : symboltype σ}
         (vars: Vars A V) (t: Term V n) {struct t}: op_type A n :=
       match t with
       | Var v a => vars a v
@@ -188,15 +184,14 @@ Section for_signature.
   End eval.
 End for_signature.
 
-(* And with that, we define equational theories and varieties: *)
-
 Record EquationalTheory :=
   { et_sig:> Signature
   ; et_laws:> EqEntailment et_sig → Type }.
 
 Class InVariety (et: EquationalTheory) : Type :=
-  { variety_algebra :> Algebra et
-  ; variety_laws : ∀ s, et_laws et s → ∀ vars, eval_stmt et vars s }.
+  { variety_algebra : Algebra et
+  ; variety_laws : ∀ s, et_laws et s →
+                   ∀ vars, eval_stmt et variety_algebra vars s }.
 
 Module notations.
   Global Infix "===" := (mkIdentity0 _) (at level 70, no associativity).

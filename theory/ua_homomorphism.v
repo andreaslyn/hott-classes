@@ -1,8 +1,7 @@
 Require Import
   Coq.Unicode.Utf8
-  HoTTClasses.implementations.ne_list
   HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_basic
+  HoTTClasses.interfaces.ua_algebra
   HoTT.Basics.Equivalences
   HoTT.Types.Forall
   HoTT.HSet
@@ -10,24 +9,19 @@ Require Import
   HoTT.Basics.PathGroupoids
   HoTT.Tactics.
 
-Import nel.notations.
 Import algebra_notations.
-
-(* TODO Put this next to Injective and rename Injective. *)
-Class IsSetSurjection {A B : Type} (f : A → B) : Type :=
-  is_set_surjection : ∀ (y:B), hfiber f y.
 
 Section ishomomorphism.
   Context {σ : Signature} {A B : Algebra σ} (f : ∀ s, A s → B s).
 
-  Fixpoint OpPreserving {n : opsym_type σ}
+  Fixpoint OpPreserving {n : symboltype σ}
     : op_type A n → op_type B n → Type
     := match n with
        | [:d:] => λ oA oB, f d oA = oB
        | d ::: y => λ oA oB, ∀ x, OpPreserving (oA x) (oB (f d x))
        end.
 
-  Global Instance hprop_op_preservation {Fu : Funext} {n : opsym_type σ}
+  Global Instance hprop_op_preservation {Fu : Funext} {n : symboltype σ}
     (a : op_type A n) (b : op_type B n)
     : IsHProp (OpPreserving a b).
   Proof.
@@ -35,39 +29,50 @@ Section ishomomorphism.
   Defined.
 
   Class IsHomomorphism : Type :=
-    op_preserving : ∀ (u : sigsym σ), OpPreserving (u^^A) (u^^B).
+    op_preserving : ∀ (u : symbol σ), OpPreserving u^^A u^^B.
 
   Global Instance hprop_ishomomorphism {Fu : Funext} : IsHProp IsHomomorphism.
   Proof.
     intros. apply trunc_forall.
   Defined.
 
-  Class IsIsomorphism `{Ho : IsHomomorphism} : Type :=
-    { setinjection_iso : ∀ (s : sigsort σ), Injective (f s)
-    ; setsurjection_iso : ∀ (s : sigsort σ), IsSetSurjection (f s) }.
+  Class IsIsomorphism `{!IsHomomorphism} : Type :=
+    { injection_isomorphism : ∀ (s : sort σ), Injective (f s)
+    ; surjection_isomorphism : ∀ (s : sort σ), IsSurjection (f s) }.
 
-  Global Existing Instance setinjection_iso.
-  Global Existing Instance setsurjection_iso.
+  Global Existing Instance injection_isomorphism.
+  Global Existing Instance surjection_isomorphism.
 End ishomomorphism.
 
-Record Homomorphism {σ} (A B : Algebra σ) : Type := BuildHomomorphism
-  { hom_map : ∀ s, A s → B s
-  ; ishomomorphism_hom : IsHomomorphism hom_map }.
+Definition Homomorphism {σ} (A B : Algebra σ) : Type :=
+  ∃ (hom_def : ∀ s, A s → B s), IsHomomorphism hom_def.
 
-Global Coercion hom_map : Homomorphism >-> Funclass.
-Global Existing Instance ishomomorphism_hom.
+Definition BuildHomomorphism {σ} {A B : Algebra σ}
+  (hom_def : ∀ s, A s → B s) {isisomorphism_hom : IsHomomorphism hom_def}
+  : Homomorphism A B
+  := (hom_def; isisomorphism_hom).
 
-Global Hint Unfold hom_map : typeclass_instances.
+Definition hom_def {σ} {A B : Algebra σ} : Homomorphism A B → ∀ s, A s → B s
+  := pr1.
 
-Arguments BuildHomomorphism {σ} {A} {B} hom_map {ishomomorphism_hom}.
+Global Coercion hom_def : Homomorphism >-> Funclass.
+
+Global Instance ishomomorphism_hom {σ} {A B : Algebra σ}
+  : ∀ (f : Homomorphism A B), IsHomomorphism f
+  := pr2.
+
+Global Instance embedding_isomorphism {σ} {A B : Algebra σ}
+    (f : Homomorphism A B) {Is : IsIsomorphism f}
+  : ∀ s, IsEmbedding (f s).
+Proof.
+  intro s. apply isembedding_isinj_hset. apply Is.
+Defined.
 
 Global Instance isequiv_forgetful_iso {σ} {A B : Algebra σ}
     (f : Homomorphism A B) {Is : IsIsomorphism f}
     : ∀ s, IsEquiv (f s).
 Proof.
-  intro s. apply isequiv_surj_emb.
-  - apply BuildIsSurjection. intro y. apply tr. apply Is.
-  - apply isembedding_isinj_hset. apply Is.
+  intro s. apply isequiv_surj_emb; exact _.
 Defined.
 
 Definition equiv_forgetful_iso {σ} {A B : Algebra σ}
@@ -77,47 +82,52 @@ Proof.
   intro s. rapply (BuildEquiv _ _ (f s)).
 Defined.
 
-Global Instance ishomomorphism_hom_id {σ} (A : Algebra σ)
-  : IsHomomorphism (λ _, idmap).
+Global Instance ishomomorphism_id {σ} (A : Algebra σ)
+  : @IsHomomorphism σ A A (λ _, idmap).
 Proof.
- intro u. generalize (u^^A). intro w. induction (σ u).
+ intro u. generalize u^^A. intro w. induction (σ u).
  - reflexivity.
  - now intro x.
 Qed.
 
-Global Instance isisomorphism_hom_id {σ} (A : Algebra σ)
-  : IsIsomorphism (λ _, idmap).
+Global Instance isisomorphism_id {σ} (A : Algebra σ)
+  : @IsIsomorphism σ A A (λ _, idmap) (ishomomorphism_id A).
 Proof.
   constructor; intro s.
   - intros x y. exact idmap.
-  - intro y. exact (y; idpath).
+  - apply BuildIsSurjection. intro y. exact (tr (y; idpath)).
 Qed.
 
 Definition hom_id {σ} {A : Algebra σ} : Homomorphism A A
   := BuildHomomorphism (λ _, idmap).
 
-Global Instance ishomomorphism_hom_inv {σ} (A B : Algebra σ)
+Global Instance ishomomorphism_inv {σ} (A B : Algebra σ)
   (f : Homomorphism A B) `{!IsIsomorphism f}
   : IsHomomorphism (λ s, (f s)^-1).
 Proof.
  intro u.
- generalize (u^^A) (u^^B) (op_preserving f u).
+ generalize u^^A u^^B (op_preserving f u).
  intros a b P.
  induction (σ u).
  - rewrite <- P. apply (eissect (f t)).
- - intro. apply IHo.
+ - intro. apply IHn.
    exact (
     transport (λ y, OpPreserving f _ (b y)) (eisretr (f t) x) (P (_^-1 x))).
 Qed.
 
-Global Instance isisomorphism_hom_inv {σ} (A B : Algebra σ)
+Global Instance isisomorphism_inv {σ} (A B : Algebra σ)
   (f : Homomorphism A B) `{!IsIsomorphism f}
   : IsIsomorphism (λ s, (f s)^-1).
 Proof.
   constructor.
   - intros s x y p.
     now rewrite <- (eisretr (f s) x), <- (eisretr (f s) y), p.
-  - intros s y. exists (f s y). apply (eissect (f s) y).
+  - intro s.
+    apply BuildIsSurjection.
+    intro y.
+    apply tr.
+    exists (f s y).
+    apply (eissect (f s) y).
 Qed.
 
 Definition hom_inv {σ} {A B : Algebra σ} (f : Homomorphism A B)
@@ -125,7 +135,7 @@ Definition hom_inv {σ} {A B : Algebra σ} (f : Homomorphism A B)
     : Homomorphism B A
   := BuildHomomorphism (λ s, (f s)^-1).
 
-Lemma oppreserving_hom_compose {σ} {A B C : Algebra σ} {w : opsym_type σ}
+Lemma oppreserving_compose {σ} {A B C : Algebra σ} {w : symboltype σ}
   {a : op_type A w} {b : op_type B w} {c : op_type C w}
   (g : Homomorphism B C) (f : Homomorphism A B)
   (G : OpPreserving g b c) (F : OpPreserving f a b)
@@ -136,12 +146,12 @@ Proof.
  - intro x. now apply (IHw _ (b (f _ x))).
 Qed.
 
-Global Instance ishomomorphism_hom_compose {σ} {A B C : Algebra σ}
+Global Instance ishomomorphism_compose {σ} {A B C : Algebra σ}
   (g : Homomorphism B C) (f : Homomorphism A B)
   : IsHomomorphism (λ s, g s ∘ f s).
 Proof.
  intro u.
- exact (oppreserving_hom_compose g f (op_preserving g u) (op_preserving f u)).
+ exact (oppreserving_compose g f (op_preserving g u) (op_preserving f u)).
 Qed.
 
 Definition hom_compose {σ} {A B C : Algebra σ}
@@ -149,26 +159,31 @@ Definition hom_compose {σ} {A B C : Algebra σ}
     : Homomorphism A C
   := BuildHomomorphism (λ s, g s ∘ f s).
 
-Global Instance isisomorphism_hom_compose {σ} {A B C : Algebra σ}
+Global Instance isisomorphism_compose {σ} {A B C : Algebra σ}
   (g : Homomorphism B C) `{!IsIsomorphism g}
   (f : Homomorphism A B) `{!IsIsomorphism f}
   : IsIsomorphism (λ s, g s ∘ f s).
 Proof.
  constructor.
  - intros s x y p.
-   apply (setinjection_iso f).
-   by apply (setinjection_iso g).
- - intros s z. exists ((f s)^-1 ((g s)^-1 z)).
-   unfold Compose. by rewrite (eisretr (f s)), (eisretr (g s)).
+   apply (injection_isomorphism f).
+   by apply (injection_isomorphism g).
+ - intro s.
+   apply BuildIsSurjection.
+   intro z.
+   apply tr.
+   exists ((f s)^-1 ((g s)^-1 z)).
+   unfold Compose.
+   by rewrite (eisretr (f s)), (eisretr (g s)).
 Qed.
 
 Definition path_equiv_carriers `{Univalence} {σ} {A B : Algebra σ}
-  (f : ∀ (s : sigsort σ), A s <~> B s)
-  : carriers A = carriers B
-  := path_forall A B (λ s : sigsort σ, path_universe (f s)).
+  (f : ∀ (s : sort σ), A s <~> B s)
+  : carriers_algebra A = carriers_algebra B
+  := path_forall A B (λ s : sort σ, path_universe (f s)).
 
 Lemma path_transport_carriers_equiv `{Univalence} {σ} {A B : Algebra σ}
-  {w : opsym_type σ} (f : ∀ (s : sigsort σ), A s <~> B s)
+  {w : symboltype σ} (f : ∀ (s : sort σ), A s <~> B s)
   (ao : op_type A w) (bo : op_type B w) (P : OpPreserving f ao bo)
   : transport (λ s : Carriers σ, op_type s w)
       (path_equiv_carriers f) ao = bo.
@@ -191,10 +206,9 @@ Proof.
 Qed.
 
 Lemma path_transport_carriers_isomorphism `{Univalence} {σ} {A B : Algebra σ}
-  (f : Homomorphism A B) `{!IsIsomorphism f} (u : sigsym σ)
+  (f : Homomorphism A B) `{!IsIsomorphism f} (u : symbol σ)
   : transport (λ s : Carriers σ, op_type s (σ u))
-      (path_equiv_carriers (equiv_forgetful_iso f)) (u^^A)
-    = u^^B.
+      (path_equiv_carriers (equiv_forgetful_iso f)) u^^A = u^^B.
 Proof.
   apply path_transport_carriers_equiv. apply (op_preserving f).
 Defined.
@@ -209,12 +223,4 @@ Proof.
   refine (transport (λ x : op_type B (σ u), x = u^^B)
             (transport_forall_constant _ _ u)^
             (path_transport_carriers_isomorphism f u)).
-Defined.
-
-Corollary iff_path_isomorphism `{Univalence} {σ} {A B : Algebra σ}
-  : (∃ (f : Homomorphism A B), IsIsomorphism f) ↔ A = B.
-Proof.
-  split.
-  - intros [f Is]. apply (path_isomorphism f).
-  - intros p. path_induction. exists hom_id. apply _.
 Defined.

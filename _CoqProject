@@ -3,11 +3,12 @@
 ./implementations/list.v
 ./implementations/ne_list.v
 
-./interfaces/ua_basic.v
-./interfaces/universal_algebra.v
+./interfaces/ua_signature.v
+./interfaces/ua_algebra.v
+./interfaces/ua_equational_theory.v
 
-./theory/ua_homomorphisms.v
-./theory/ua_products.v
+./theory/ua_homomorphism.v
+./theory/ua_product.v
 ./theory/ua_subalgebra.v
 ./theory/ua_congruence.v
 
