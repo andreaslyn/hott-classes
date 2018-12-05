@@ -2,6 +2,7 @@ Require Import
   Coq.Unicode.Utf8
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.ua_algebra
+  HoTTClasses.implementations.ua_carrier_product
   HoTT.Basics.Equivalences
   HoTT.Types.Forall
   HoTT.HSet
@@ -15,23 +16,23 @@ Section ishomomorphism.
   Context {σ : Signature} {A B : Algebra σ} (f : ∀ s, A s → B s).
 
   Fixpoint OpPreserving {n : symboltype σ}
-    : op_type A n → op_type B n → Type
+    : Operation A n → Operation B n → Type
     := match n with
-       | [:d:] => λ oA oB, f d oA = oB
-       | d ::: y => λ oA oB, ∀ x, OpPreserving (oA x) (oB (f d x))
+       | [:s] => λ ao bo, f s ao = bo
+       | s ::: y => λ ao bo, ∀ (x : A s), OpPreserving (ao x) (bo (f s x))
        end.
 
-  Global Instance hprop_op_preservation {Fu : Funext} {n : symboltype σ}
-    (a : op_type A n) (b : op_type B n)
+  Global Instance hprop_oppreserving `{Funext} {n : symboltype σ}
+    (a : Operation A n) (b : Operation B n)
     : IsHProp (OpPreserving a b).
   Proof.
     intros. induction n; apply _.
   Defined.
 
   Class IsHomomorphism : Type :=
-    op_preserving : ∀ (u : symbol σ), OpPreserving u^^A u^^B.
+    op_preserving : ∀ (u : symbol σ), OpPreserving (u^^A) (u^^B).
 
-  Global Instance hprop_ishomomorphism {Fu : Funext} : IsHProp IsHomomorphism.
+  Global Instance hprop_ishomomorphism `{Funext} : IsHProp IsHomomorphism.
   Proof.
     intros. apply trunc_forall.
   Defined.
@@ -61,6 +62,30 @@ Global Instance ishomomorphism_hom {σ} {A B : Algebra σ}
   : ∀ (f : Homomorphism A B), IsHomomorphism f
   := pr2.
 
+Section homomorphism_cprod.
+  Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
+
+  Lemma path_homomorphism_apply_cprod' {w : symboltype σ}
+    (a : CProd A (dom_symboltype w)) (ao : Operation A w) (bo : Operation B w)
+    (P : OpPreserving f ao bo)
+    : f (cod_symboltype w) (apply_cprod ao a) = apply_cprod bo (map_cprod f a).
+  Proof.
+    induction w.
+    - assumption.
+    - destruct a as [x a]. apply IHw. apply P.
+  Defined.
+
+  Lemma path_homomorphism_apply_cprod
+    : ∀ (u : symbol σ) (a : CProd A (dom_symboltype (σ u))),
+      f (cod_symboltype (σ u)) (apply_cprod (u^^A) a) =
+       apply_cprod (u^^B) (map_cprod f a).
+  Proof.
+    intros u a.
+    apply path_homomorphism_apply_cprod'.
+    apply f.
+  Defined.
+End homomorphism_cprod.
+
 Global Instance embedding_isomorphism {σ} {A B : Algebra σ}
     (f : Homomorphism A B) {Is : IsIsomorphism f}
   : ∀ s, IsEmbedding (f s).
@@ -69,8 +94,8 @@ Proof.
 Defined.
 
 Global Instance isequiv_forgetful_iso {σ} {A B : Algebra σ}
-    (f : Homomorphism A B) {Is : IsIsomorphism f}
-    : ∀ s, IsEquiv (f s).
+  (f : Homomorphism A B) {Is : IsIsomorphism f}
+  : ∀ s, IsEquiv (f s).
 Proof.
   intro s. apply isequiv_surj_emb; exact _.
 Defined.
@@ -85,7 +110,7 @@ Defined.
 Global Instance ishomomorphism_id {σ} (A : Algebra σ)
   : @IsHomomorphism σ A A (λ _, idmap).
 Proof.
- intro u. generalize u^^A. intro w. induction (σ u).
+ intro u. generalize (u^^A). intro w. induction (σ u).
  - reflexivity.
  - now intro x.
 Qed.
@@ -106,7 +131,7 @@ Global Instance ishomomorphism_inv {σ} (A B : Algebra σ)
   : IsHomomorphism (λ s, (f s)^-1).
 Proof.
  intro u.
- generalize u^^A u^^B (op_preserving f u).
+ generalize (u^^A) (u^^B) (op_preserving f u).
  intros a b P.
  induction (σ u).
  - rewrite <- P. apply (eissect (f t)).
@@ -136,7 +161,7 @@ Definition hom_inv {σ} {A B : Algebra σ} (f : Homomorphism A B)
   := BuildHomomorphism (λ s, (f s)^-1).
 
 Lemma oppreserving_compose {σ} {A B C : Algebra σ} {w : symboltype σ}
-  {a : op_type A w} {b : op_type B w} {c : op_type C w}
+  {a : Operation A w} {b : Operation B w} {c : Operation C w}
   (g : Homomorphism B C) (f : Homomorphism A B)
   (G : OpPreserving g b c) (F : OpPreserving f a b)
   : OpPreserving (λ s (x : A s), g s (f s x)) a c.
@@ -179,36 +204,36 @@ Qed.
 
 Definition path_equiv_carriers `{Univalence} {σ} {A B : Algebra σ}
   (f : ∀ (s : sort σ), A s <~> B s)
-  : carriers_algebra A = carriers_algebra B
+  : carriers A = carriers B
   := path_forall A B (λ s : sort σ, path_universe (f s)).
 
 Lemma path_transport_carriers_equiv `{Univalence} {σ} {A B : Algebra σ}
   {w : symboltype σ} (f : ∀ (s : sort σ), A s <~> B s)
-  (ao : op_type A w) (bo : op_type B w) (P : OpPreserving f ao bo)
-  : transport (λ s : Carriers σ, op_type s w)
+  (ao : Operation A w) (bo : Operation B w) (P : OpPreserving f ao bo)
+  : transport (λ s : Carriers σ, Operation s w)
       (path_equiv_carriers f) ao = bo.
 Proof.
   unfold path_equiv_carriers.
   induction w; simpl in *.
-  transport_path_forall_hammer.
-  rewrite <- P.
-  by rewrite transport_idmap_path_universe.
-  funext y.
-  specialize (P ((f t)^-1 y)).
-  rewrite (eisretr (f t)) in P.
-  transport_path_forall_hammer.
-  rewrite transport_forall_constant.
-  rewrite transport_forall.
-  rewrite transport_const.
-  rewrite (transport_path_universe_V (f t)).
-  destruct (path_universe (f t)).
-  exact (IHw (ao ((f t)^-1 y)) (bo y) P).
+  - transport_path_forall_hammer.
+    rewrite <- P.
+    by rewrite transport_idmap_path_universe.
+  - funext y.
+    specialize (P ((f t)^-1 y)).
+    rewrite (eisretr (f t)) in P.
+    transport_path_forall_hammer.
+    rewrite transport_forall_constant.
+    rewrite transport_forall.
+    rewrite transport_const.
+    rewrite (transport_path_universe_V (f t)).
+    destruct (path_universe (f t)).
+    exact (IHw (ao ((f t)^-1 y)) (bo y) P).
 Qed.
 
 Lemma path_transport_carriers_isomorphism `{Univalence} {σ} {A B : Algebra σ}
   (f : Homomorphism A B) `{!IsIsomorphism f} (u : symbol σ)
-  : transport (λ s : Carriers σ, op_type s (σ u))
-      (path_equiv_carriers (equiv_forgetful_iso f)) u^^A = u^^B.
+  : transport (λ s : Carriers σ, Operation s (σ u))
+      (path_equiv_carriers (equiv_forgetful_iso f)) (u^^A) = u^^B.
 Proof.
   apply path_transport_carriers_equiv. apply (op_preserving f).
 Defined.
@@ -217,10 +242,10 @@ Theorem path_isomorphism `{Univalence} {σ} {A B : Algebra σ}
   (f : Homomorphism A B) `{!IsIsomorphism f}
   : A = B.
 Proof.
-  apply path_sig_path_algebra_algebra.
+  apply path_sig_path_algebra.
   exists (path_equiv_carriers (equiv_forgetful_iso f)).
   funext u.
-  refine (transport (λ x : op_type B (σ u), x = u^^B)
+  refine (transport (λ x : Operation B (σ u), x = u^^B)
             (transport_forall_constant _ _ u)^
             (path_transport_carriers_isomorphism f u)).
 Defined.

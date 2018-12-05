@@ -141,8 +141,8 @@ Module notations.
   Open Scope nel_scope.
 
   Global Notation ne_list := ne_list.
-  Global Notation "[: x :]" := (one x) : nel_scope.
-  Global Notation "[: x ; .. ; y ; z :]"
+  Global Notation "[: x ]" := (one x) : nel_scope.
+  Global Notation "[: x ; .. ; y ; z ]"
       := (cons x .. (cons y (one z)) ..) : nel_scope.
   Global Infix ":::" := cons (at level 60, right associativity) : nel_scope.
 End notations.
@@ -151,10 +151,10 @@ Import notations.
 
 Fixpoint zip {A B: Type} (l: ne_list A) (m: ne_list B): ne_list (A * B) :=
   match l with
-  | [:a:] => one (a, head m)
+  | [:a] => one (a, head m)
   | a ::: l =>
       match m with
-      | [:b:] => one (a, b)
+      | [:b] => one (a, b)
       | b ::: m => (a, b) ::: zip l m
       end
   end.

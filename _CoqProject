@@ -5,12 +5,15 @@
 
 ./interfaces/ua_signature.v
 ./interfaces/ua_algebra.v
+./implementations/ua_carrier_product.v
 ./interfaces/ua_equational_theory.v
+./interfaces/ua_congruence.v
 
 ./theory/ua_homomorphism.v
 ./theory/ua_product.v
 ./theory/ua_subalgebra.v
-./theory/ua_congruence.v
+./theory/ua_quotientalgebra.v
+./theory/ua_isomorphism_theorems.v
 
 ./varieties/semigroups.v
 ./varieties/monoids.v
