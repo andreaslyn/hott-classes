@@ -103,8 +103,13 @@ Section ump_prodalgebra.
   Proof.
     apply (equiv_adjointify
             hom_ump_prodalgebra_factoring hom_ump_prodalgebra_mapin).
-    - intro f. funext i. by apply path_sigma_hprop.
-    - intro f. by apply path_sigma_hprop.
+    - intro f.
+      funext i.
+      apply ((ap (issig_homomorphism X (A i)))^-1).
+      by apply path_sigma_hprop.
+    - intro f.
+      apply ((ap (issig_homomorphism X (ProdAlgebra A)))^-1).
+      by apply path_sigma_hprop.
   Defined.
 
 End ump_prodalgebra.

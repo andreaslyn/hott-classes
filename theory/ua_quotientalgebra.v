@@ -288,13 +288,16 @@ Section ump_quotientalgebra.
       ∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y.
   Proof.
     apply (equiv_adjointify ump_quotientalgebra_lr quotient_peoperty_rl).
-    - intros [[f F] P].
-      repeat apply path_sigma_hprop.
-      funext s.
-      now apply path_forall.
-    - intros [g G].
+    - intros F.
+      apply path_sigma_hprop.
+      apply ((ap (issig_homomorphism A B))^-1).
       apply path_sigma_hprop.
       funext s.
-      refine (eissect (quotient_ump (Φ s) (BuildhSet (B s))) (g s)).
+      now apply path_forall.
+    - intros G.
+      apply ((ap (issig_homomorphism (QuotientAlgebra A Φ) B))^-1).
+      apply path_sigma_hprop.
+      funext s.
+      refine (eissect (quotient_ump (Φ s) (BuildhSet (B s))) (G s)).
   Defined.
 End ump_quotientalgebra.

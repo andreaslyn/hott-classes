@@ -8,7 +8,8 @@ Require Import
   HoTT.HSet
   HoTT.Types.Universe
   HoTT.Basics.PathGroupoids
-  HoTT.Tactics.
+  HoTT.Tactics
+  HoTT.Types.Record.
 
 Import algebra_notations.
 
@@ -45,22 +46,27 @@ Section ishomomorphism.
   Global Existing Instance surjection_isomorphism.
 End ishomomorphism.
 
-Definition Homomorphism {σ} (A B : Algebra σ) : Type :=
-  ∃ (hom_def : ∀ s, A s → B s), IsHomomorphism hom_def.
+Record Homomorphism {σ} {A B : Algebra σ} : Type := BuildHomomorphism
+  { hom_def : ∀ s, A s → B s
+  ; ishomomorphism_hom : IsHomomorphism hom_def }.
 
-Definition BuildHomomorphism {σ} {A B : Algebra σ}
-  (hom_def : ∀ s, A s → B s) {isisomorphism_hom : IsHomomorphism hom_def}
-  : Homomorphism A B
-  := (hom_def; isisomorphism_hom).
-
-Definition hom_def {σ} {A B : Algebra σ} : Homomorphism A B → ∀ s, A s → B s
-  := pr1.
+Arguments Homomorphism {σ} A B.
+Arguments BuildHomomorphism {σ A B} hom_def {ishomomorphism_hom}.
 
 Global Coercion hom_def : Homomorphism >-> Funclass.
 
-Global Instance ishomomorphism_hom {σ} {A B : Algebra σ}
-  : ∀ (f : Homomorphism A B), IsHomomorphism f
-  := pr2.
+Global Existing Instance ishomomorphism_hom.
+
+Definition SigHomomorphism {σ} (A B : Algebra σ) : Type :=
+  {hom_def : ∀ s, A s → B s | IsHomomorphism hom_def}.
+
+Lemma issig_homomorphism {σ} (A B : Algebra σ)
+  : Homomorphism A B <~> SigHomomorphism A B.
+Proof.
+  apply symmetric_equiv.
+  unfold SigHomomorphism.
+  issig (@BuildHomomorphism σ A B) (@hom_def σ A B) (@ishomomorphism_hom σ A B).
+Defined.
 
 Section homomorphism_cprod.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
