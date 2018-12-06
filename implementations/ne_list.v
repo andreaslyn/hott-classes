@@ -33,7 +33,8 @@ Section with_type.
     | cons x y => f x (foldr1 f y)
     end.
 
-  Definition head (l: ne_list): T := match l with one x => x | cons x _ => x end.
+  Definition head (l: ne_list): T
+    := match l with one x => x | cons x _ => x end.
 
   Fixpoint to_list (l: ne_list): list T :=
     match l with
@@ -47,7 +48,8 @@ Section with_type.
     | Datatypes.cons h t => cons x (from_list h t)
     end.
 
-  Definition tail (l: ne_list): list T := match l with one _ => nil | cons _ x => to_list x end.
+  Definition tail (l: ne_list): list T
+    := match l with one _ => nil | cons _ x => to_list x end.
 
   Lemma decomp_eq (l: ne_list): l = from_list (head l) (tail l).
   Proof with auto.
@@ -94,7 +96,8 @@ Section with_type.
    apply Pmore; intros; apply IHl.
   Qed.
 
-  Lemma tl_length (l: ne_list): S (length (tl (to_list l))) = length (to_list l).
+  Lemma tl_length (l: ne_list)
+    : S (length (tl (to_list l))) = length (to_list l).
   Proof. destruct l; reflexivity. Qed.
 End with_type.
 
@@ -137,27 +140,30 @@ Fixpoint inits {A} (l: ne_list A): ne_list (ne_list A) :=
   | cons h t => cons (one h) (map (cons h) (inits t))
   end.
 
-Module notations.
-  Open Scope nel_scope.
-
-  Global Notation ne_list := ne_list.
-  Global Notation "[: x ]" := (one x) : nel_scope.
-  Global Notation "[: x ; .. ; y ; z ]"
-      := (cons x .. (cons y (one z)) ..) : nel_scope.
-  Global Infix ":::" := cons (at level 60, right associativity) : nel_scope.
-End notations.
-
-Import notations.
-
 Fixpoint zip {A B: Type} (l: ne_list A) (m: ne_list B): ne_list (A * B) :=
   match l with
-  | [:a] => one (a, head m)
-  | a ::: l =>
+  | one a => one (a, head m)
+  | cons a l =>
       match m with
-      | [:b] => one (a, b)
-      | b ::: m => (a, b) ::: zip l m
+      | one b => one (a, b)
+      | cons b m => cons (a, b) (zip l m)
       end
   end.
+
+  Module notations.
+
+    Open Scope nel_scope.
+
+    Global Notation ne_list := ne_list.
+
+    Global Notation "[: x ]" := (one x) : nel_scope.
+
+    Global Notation "[: x ; .. ; y ; z ]"
+        := (cons x .. (cons y (one z)) ..) : nel_scope.
+
+    Global Infix ":::" := cons (at level 60, right associativity) : nel_scope.
+
+  End notations.
 
 End ne_list.
 

@@ -242,7 +242,7 @@ Theorem path_isomorphism `{Univalence} {σ} {A B : Algebra σ}
   (f : Homomorphism A B) `{!IsIsomorphism f}
   : A = B.
 Proof.
-  apply path_sig_path_algebra.
+  apply path_algebra.
   exists (path_equiv_carriers (equiv_forgetful_iso f)).
   funext u.
   refine (transport (λ x : Operation B (σ u), x = u^^B)

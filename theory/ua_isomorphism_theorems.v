@@ -117,8 +117,7 @@ Section first_isomorphism_theorem.
   Proof.
     intro u.
     apply oppreserving_first_isomorphism.
-    apply (op_quotientalgebra A hom_kernel (u^^A)
-            (congruence_property_family A hom_kernel u)).
+    apply quotient_op_property_quotientalgebra.
   Qed.
 
   Definition hom_first_isomorphism
@@ -159,4 +158,5 @@ Section first_isomorphism_theorem.
   Proof.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
+
 End first_isomorphism_theorem.

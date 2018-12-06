@@ -55,11 +55,6 @@ Definition BuildAlgebra {σ} (carriers : Carriers σ)
   : Algebra σ
   := (carriers; (ops; S)).
 
-Definition sig_path_algebra {σ} (A B : Algebra σ) : Type :=
-  ∃ (p : carriers A = carriers B),
-  transport (λ (X : Carriers σ), ∀ (u : symbol σ), Operation X (σ u))
-    p (operations A) = operations B.
-
 Lemma path_transport_proj1_sig {A : Type} {x y : A} {P Q : A → Type}
   {u : ∃ (_ : P x), Q x} (p : x = y)
   : transport (λ x : A, P x) p u.1 =
@@ -68,8 +63,10 @@ Proof.
   by path_induction.
 Defined.
 
-Lemma path_sig_path_algebra `{Funext} {σ} (A B : Algebra σ)
-  : sig_path_algebra A B → A = B.
+Lemma path_algebra `{Funext} {σ} (A B : Algebra σ)
+  : (∃ (p : carriers A = carriers B),
+     transport (λ X, ∀ u, Operation X (σ u)) p (operations A) = operations B)
+  → A = B.
 Proof.
   intros [p q].
   refine (path_sigma _ _ _ p _).

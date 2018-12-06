@@ -3,8 +3,9 @@ Require Import
   HoTTClasses.interfaces.ua_algebra
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.theory.ua_homomorphism
+  HoTT.Basics.Equivalences
   HoTT.Types.Forall
-  HoTT.Basics.Overture.
+  HoTT.Types.Sigma.
 
 Import algebra_notations.
 
@@ -25,7 +26,7 @@ Section prodalgebra.
 
   Definition ops_prodalgebra (u : symbol σ)
     : Operation carriers_prodalgebra (σ u)
-    := op_prodalgebra (σ u) (λ i, u^^(A i)).
+    := op_prodalgebra (σ u) (λ (i:I), u ^^ A i).
 
   Definition ProdAlgebra : Algebra σ
     := BuildAlgebra carriers_prodalgebra ops_prodalgebra.
@@ -39,14 +40,12 @@ Section hom_projection_prodalgebra.
     := c i.
 
   Lemma oppreserving_projection_prodalgebra {w : symboltype σ} (i : I)
-    (sel : ∀ i : I, Operation (A i) w) (ao : Operation (A i) w) (P : sel i = ao)
-    : OpPreserving (def_projection_prodalgebra i) (op_prodalgebra A w sel) ao.
+    (v : ∀ i : I, Operation (A i) w) (ao : Operation (A i) w) (P : v i = ao)
+    : OpPreserving (def_projection_prodalgebra i) (op_prodalgebra A w v) ao.
   Proof.
     induction w.
     - exact P.
-    - intro p.
-      apply (IHw (λ i, sel i (p i)) (ao (p i))).
-      exact (apD10 P (p i)).
+    - intro p. apply (IHw (λ i, v i (p i)) (ao (p i))). exact (apD10 P (p i)).
   Qed.
 
   Global Instance ishomomorphism_projection_prodalgebra (i:I)
@@ -61,68 +60,51 @@ Section hom_projection_prodalgebra.
     := BuildHomomorphism (def_projection_prodalgebra i).
 End hom_projection_prodalgebra.
 
-Section prod_property.
+Section ump_prodalgebra.
   Context
-    `{Funext} {σ : Signature} {I : Type}
-    (A : I → Algebra σ) (X : Algebra σ).
+    `{Funext} {σ : Signature} {I : Type} (A : I → Algebra σ) (X : Algebra σ).
 
-  Lemma left_right : Homomorphism X (ProdAlgebra A) → ∀ (i:I), Homomorphism X (A i).
+  Lemma hom_ump_prodalgebra_factoring
+    : Homomorphism X (ProdAlgebra A) → ∀ (i:I), Homomorphism X (A i).
   Proof.
     intros f i.
     exact (BuildHomomorphism (λ s, hom_projection_prodalgebra A i s ∘ f s)).
   Defined.
 
-  Definition def_right_left (f : ∀ (i:I), Homomorphism X (A i))
-    : ∀ s, X s → ProdAlgebra A s
-    := λ s x i, f i s x.
+  Definition def_ump_prodalgebra_mapin (f : ∀ (i:I), Homomorphism X (A i))
+    : ∀ (s : sort σ) , X s → ProdAlgebra A s
+    := λ (s : sort σ) (x : X s) (i : I), f i s x.
 
-  Global Instance ishomomorphism_right_left (f : ∀ (i:I), Homomorphism X (A i))
-    : IsHomomorphism (def_right_left f).
+  Lemma oppreserving_ump_prodalgebra_mapin {w : symboltype σ}
+    (f : ∀ (i:I), Homomorphism X (A i))
+    (xo : Operation X w) (ao : ∀ (i:I), Operation (A i) w)
+    (P : ∀ (i:I), OpPreserving (f i) xo (ao i))
+    : OpPreserving (def_ump_prodalgebra_mapin f) xo
+        (op_prodalgebra A w (λ i : I, ao i)).
   Proof.
-    intro u.
-    generalize (λ i, op_preserving (f i) u).
-    set (test i := u ^^ A i).
-    set (test' u i := u ^^ A i).
-    assert (∀ i, test i = test' u i).
-    reflexivity.
-    assert ((∀ i : I, OpPreserving (f i) (u ^^ X) (u ^^ A i)) =
-              (∀ i : I, OpPreserving (f i) (u ^^ X) (test i))).
-    reflexivity.
-    assert ((λ u0 : symbol σ, op_prodalgebra A (σ u0) (λ i : I, u0 ^^ A i)) =
-              (λ u0 : symbol σ, op_prodalgebra A (σ u0) (λ i : I, test' u0 i))).
-    reflexivity.
-    rewrite X1.
-    clear X1.
-    unfold ProdAlgebra.
-    unfold ops_prodalgebra.
-    unfold BuildAlgebra.
-    rewrite X2.
-    clear X2.
-    clearbody test.
-    clearbody test'.
-    set (xo := u^^X).
-    clearbody xo.
-    intro P.
-    unfold operations.
-    simpl.
-    assert ((λ i : I, test' u i) = λ i, test i).
-    funext i. rewrite X0. reflexivity.
-    rewrite X1.
-    clear X1.
-    clear X0.
-    induction (σ u); simpl in *.
-    - unfold def_right_left. funext i. apply P.
-    - intro x. apply IHn.
-      intro i.
-      apply P.
+    induction w.
+    - funext i. apply P.
+    - intro x. apply IHw. intro i. apply P.
+  Qed.
+
+  Global Instance ishomomorphism_ump_prodalgebra_mapin
+    (f : ∀ (i:I), Homomorphism X (A i))
+    : IsHomomorphism (def_ump_prodalgebra_mapin f).
+  Proof.
+    intro u. apply oppreserving_ump_prodalgebra_mapin. intro i. apply f.
+  Qed.
+
+  Definition hom_ump_prodalgebra_mapin (f : ∀ (i:I), Homomorphism X (A i))
+    : Homomorphism X (ProdAlgebra A)
+    := BuildHomomorphism (def_ump_prodalgebra_mapin f).
+
+ Lemma ump_prodalgebra
+   : Homomorphism X (ProdAlgebra A) <~> ∀ (i:I), Homomorphism X (A i).
+  Proof.
+    apply (equiv_adjointify
+            hom_ump_prodalgebra_factoring hom_ump_prodalgebra_mapin).
+    - intro f. funext i. by apply path_sigma_hprop.
+    - intro f. by apply path_sigma_hprop.
   Defined.
 
-  Lemma right_left : (∀ (i:I), Homomorphism X (A i)) → Homomorphism X (ProdAlgebra A).
-  Proof.
-    intros f.
-    refine (BuildHomomorphism (def_right_left f)).
-  Defined.
-
-  Lemma : Homomorphism X ProdAlgebra <~> ∀ (i:I), Homomorphism X (A i)
-
-End prod_property.
+End ump_prodalgebra.
