@@ -18,7 +18,7 @@ Require Import
 
 Import algebra_notations.
 
-Section quotientalgebra.
+Section quotient_algebra.
   Context
     {σ : Signature}
     (A : Algebra σ)
@@ -27,12 +27,12 @@ Section quotientalgebra.
     `{!∀ s, Equivalence (Φ s)}
     `{!IsCongruence A Φ}.
 
-  (** If a congruence [Φ] satisfies the [congruence_property f] for
+  (** If a congruence [Φ] satisfies the [CongruenceProperty f] for
       [f : A s1 → A s2 → ... → A (s(n+1))], then [Φ] satisfies
-      the [congruence_property (f x)] for any [x : A s1]. *)
-  Lemma congruence_property_cons {s : sort σ} {w : symboltype σ}
+      the [CongruenceProperty (f x)] for any [x : A s1]. *)
+  Lemma congruence_property_cons {s : Sort σ} {w : SymbolType σ}
       : ∀ (f : Operation A (s ::: w)) (x : A s),
-        congruence_property Φ f → congruence_property Φ (f x).
+        CongruenceProperty Φ f → CongruenceProperty Φ (f x).
   Proof.
     intros f x P a b R.
     exact (P (x,a) (x,b) (Equivalence_Reflexive x, R)).
@@ -40,9 +40,9 @@ Section quotientalgebra.
 
   (* The family of sets in the quotient algebra. *)
 
-  Definition carriers_quotientalgebra : Carriers σ := λ s, quotient (Φ s).
+  Definition carriers_quotient_algebra : Carriers σ := λ s, quotient (Φ s).
 
-  Lemma cprod_for_all_2_reflexive : ∀ w (a : CProd A w), for_all_2_cprod Φ a a.
+  Lemma for_all_2_reflexive_cprod : ∀ w (a : CProd A w), for_all_2_cprod Φ a a.
   Proof.
     induction w; intros.
     - reflexivity.
@@ -51,10 +51,10 @@ Section quotientalgebra.
 
   (** Specialization of [quotient_ind_prop]. *)
 
-  Fixpoint cprod_quotient_ind_prop `{Funext} {w : list (sort σ)}
-      : ∀ (P : CProd carriers_quotientalgebra w -> Type) `{!∀ a, IsHProp (P a)}
+  Fixpoint cprod_quotient_ind_prop `{Funext} {w : list (Sort σ)}
+      : ∀ (P : CProd carriers_quotient_algebra w -> Type) `{!∀ a, IsHProp (P a)}
           (dclass : ∀ x, P (map_cprod (λ s, class_of (Φ s)) x))
-          (a : CProd carriers_quotientalgebra w), P a :=
+          (a : CProd carriers_quotient_algebra w), P a :=
     match w with
     | nil => λ P sP dclass 'tt, dclass tt
     | s :: w' => λ P _ dclass a,
@@ -66,63 +66,70 @@ Section quotientalgebra.
 
   (** Suppose [f : A s1 → A s2 → ... → A sn] is an algebra operation and
       [g : carrier s1 → carrier s2 → ... → carrier sn] is a quotient algebra
-      operation. Then [g] has the [quotient_op_property] with respect to [f] if
+      operation. Then [g] has the [QuotientOpProperty] with respect to [f] if
 
         [g (class x1) (class x2) ... (class xn) = class (f x1 x2 .. xn)],
 
       where [class xi] is the quotient algebra equivalence class of [xi]. *)
 
-  Definition quotient_op_property {w : symboltype σ}
-    (f : Operation A w) (g : Operation carriers_quotientalgebra w) :=
-    ∀ (a : CProd A (dom_symboltype w)),
-      apply_cprod g (map_cprod (λ s, class_of (Φ s)) a) =
-      class_of (Φ (cod_symboltype w)) (apply_cprod f a).
+  Definition QuotientOpProperty {w : SymbolType σ}
+    (f : Operation A w) (g : Operation carriers_quotient_algebra w) : Type
+    := ∀ (a : CProd A (dom_symboltype w)),
+         apply_cprod g (map_cprod (λ s, class_of (Φ s)) a) =
+           class_of (Φ (cod_symboltype w)) (apply_cprod f a).
 
   (** Quotient algebra operations induced from congruence [Φ]. For each
       operation [algebra_op u] in algebra [A], there is a quotient algebra
-      operation [g] satisfying the [quotient_op_property f g] with respect to f. *)
+      operation [g] satisfying the [QuotientOpProperty f g] with respect to f. *)
 
-  Fixpoint op_quotientalgebra `{Funext} {w : symboltype σ} :
+  Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ} :
     ∀ (f : Operation A w),
-    congruence_property Φ f ->
-    ∃ (g : Operation carriers_quotientalgebra w), quotient_op_property f g.
+    CongruenceProperty Φ f ->
+    ∃ (g : Operation carriers_quotient_algebra w), QuotientOpProperty f g.
   Proof. refine (
       match w with
       | [:s] => λ f P, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ f P,
-        (quotient_rec (Φ s) (λ x, (op_quotientalgebra _ w' (f x)
+        (quotient_rec (Φ s) (λ x, (op_quotient_algebra _ w' (f x)
                                    (congruence_property_cons f x P)).1) _
         ; _)
       end
     ).
     intros [x a].
-    exact ((op_quotientalgebra _ w' (f x) (congruence_property_cons f x P)).2 a).
+    exact ((op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).2 a).
     Grab Existential Variables.
     intros x y E.
     apply (@path_forall_apply_cprod σ _).
-    apply cprod_quotient_ind_prop; try apply _.
+    apply cprod_quotient_ind_prop; try exact _.
     intro a.
-    destruct (op_quotientalgebra _ _ _ (congruence_property_cons f x P)) as [g1 P1].
-    destruct (op_quotientalgebra _ _ _ (congruence_property_cons f y P)) as [g2 P2].
+    destruct (op_quotient_algebra _ _ _ (congruence_property_cons f x P)) as [g1 P1].
+    destruct (op_quotient_algebra _ _ _ (congruence_property_cons f y P)) as [g2 P2].
     refine ((P1 a) @ _ @ (P2 a)^).
     apply related_classes_eq.
-    exact (P (x, a) (y, a) (E, cprod_for_all_2_reflexive (dom_symboltype w') a)).
+    exact (P (x,a) (y,a) (E, reflexive_for_all_2_cprod A Φ (dom_symboltype w') a)).
   Defined.
 
-  Definition ops_quotientalgebra `{Funext} (u : symbol σ)
-    : Operation carriers_quotientalgebra (σ u)
-    := (op_quotientalgebra (u^^A) (congruence_property_family A Φ u)).1.
+  Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
+    : Operation carriers_quotient_algebra (σ u)
+    := (op_quotient_algebra (u^^A) (congruence_properties A Φ u)).1.
 
   Definition QuotientAlgebra `{Funext} : Algebra σ
-    := BuildAlgebra carriers_quotientalgebra ops_quotientalgebra.
+    := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.
 
-  Lemma quotient_op_property_quotientalgebra `{Funext} (u : symbol σ)
-    : quotient_op_property (u^^A) (operations QuotientAlgebra u).
+  Lemma quotient_op_property_quotient_algebra `{Funext} (u : Symbol σ)
+    : QuotientOpProperty (u^^A) (operations QuotientAlgebra u).
   Proof.
-    apply op_quotientalgebra.
+    apply op_quotient_algebra.
   Defined.
 
-End quotientalgebra.
+End quotient_algebra.
+
+Module quotient_algebra_notations.
+  Global Notation "A / Φ" := (QuotientAlgebra A Φ) (at level 40, left associativity)
+    : Algebra_scope.
+End quotient_algebra_notations.
+
+Import quotient_algebra_notations.
 
 (** This section defines the quotient homomorphism [hom_quotient] satisfying
 
@@ -139,28 +146,28 @@ Section hom_quotient.
     `{!∀ s, is_mere_relation _ (Φ s)}
     `{!∀ s, Equivalence (Φ s)}
     `{!IsCongruence A Φ}.
-
-  Definition def_quotient : ∀ s, A s → QuotientAlgebra A Φ s :=
+  
+  Definition def_quotient : ∀ s, A s → (A/Φ) s :=
     λ s x, class_of (Φ s) x.
 
-  Lemma oppreserving_quotient `{Funext} (w : symboltype σ)
-      (g : Operation (carriers_quotientalgebra A Φ) w) (ao : Operation A w)
-      (G : quotient_op_property A Φ ao g)
+  Lemma oppreserving_quotient `{Funext} (w : SymbolType σ)
+      (g : Operation (A/Φ) w) (ao : Operation A w)
+      (G : QuotientOpProperty A Φ ao g)
       : OpPreserving def_quotient ao g.
-    unfold quotient_op_property in G.
+    unfold QuotientOpProperty in G.
     induction w; simpl in *.
     - rewrite (G tt). reflexivity.
     - intro x. apply IHw. intro a. apply (G (x,a)).
   Qed.
 
-  Global Instance ishomomorphism_quotient `{Funext}
+  Global Instance is_homomorphism_quotient `{Funext}
     : IsHomomorphism def_quotient.
   Proof.
     intro u.
-    apply oppreserving_quotient, quotient_op_property_quotientalgebra.
+    apply oppreserving_quotient, quotient_op_property_quotient_algebra.
   Qed.
 
-  Definition hom_quotient : Homomorphism A (QuotientAlgebra A Φ)
+  Definition hom_quotient : Homomorphism A (A/Φ)
     := BuildHomomorphism def_quotient.
 
   Global Instance surjection_quotient : ∀ s, IsSurjection (hom_quotient s).
@@ -169,10 +176,10 @@ Section hom_quotient.
   Defined.
 End hom_quotient.
 
-(** This section develops the universal mapping property [ump_quotientalgebra]
+(** This section develops the universal mapping property [ump_quotient_algebra]
     of the quotient algebra. *)
 
-Section ump_quotientalgebra.
+Section ump_quotient_algebra.
   Context
     `{Univalence}
     {σ : Signature}
@@ -184,23 +191,23 @@ Section ump_quotientalgebra.
 
 (** Given a homomorphism [f : ∀ s, A s → B s] respecting the congruence [Φ],
     there is a homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient
-    algebra satisfynig [ump_quotientalgebra_mapout_compute] below. *)
+    algebra satisfynig [ump_quotient_algebra_mapout_compute] below. *)
 
-  Section ump_quotientalgebra_mapout.
+  Section ump_quotient_algebra_mapout.
     Context
       (f : Homomorphism A B)
       (R : ∀ s x y, Φ s x y → f s x = f s y).
 
-    Definition def_ump_quotientalgebra_mapout : ∀ s, QuotientAlgebra A Φ s → B s
-      := λ (s : sort σ), (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
+    Definition def_ump_quotient_algebra_mapout : ∀ s, (A/Φ) s → B s
+      := λ (s : Sort σ), (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
 
-    Lemma ump_quotientalgebra_mapout_preservation {w : symboltype σ}
-        (g : Operation (QuotientAlgebra A Φ) w)
+    Lemma ump_quotient_algebra_mapout_preservation {w : SymbolType σ}
+        (g : Operation (A/Φ) w)
         (ao : Operation A w) (bo : Operation B w)
-        (G : quotient_op_property A Φ ao g) (P : OpPreserving f ao bo)
-        : OpPreserving def_ump_quotientalgebra_mapout g bo.
+        (G : QuotientOpProperty A Φ ao g) (P : OpPreserving f ao bo)
+        : OpPreserving def_ump_quotient_algebra_mapout g bo.
     Proof.
-      unfold quotient_op_property in G.
+      unfold QuotientOpProperty in G.
       induction w; simpl in *.
       - rewrite (G tt). apply P.
       - refine (quotient_ind_prop (Φ t) _ _).
@@ -210,66 +217,65 @@ Section ump_quotientalgebra.
         + apply P.
     Qed.
 
-    Global Instance ump_quotientalgebra_mapout_homomorphism
-      : IsHomomorphism def_ump_quotientalgebra_mapout.
+    Global Instance ump_quotient_algebra_mapout_homomorphism
+      : IsHomomorphism def_ump_quotient_algebra_mapout.
     Proof.
       intro u.
-      eapply ump_quotientalgebra_mapout_preservation.
-      - apply quotient_op_property_quotientalgebra.
+      eapply ump_quotient_algebra_mapout_preservation.
+      - apply quotient_op_property_quotient_algebra.
       - apply f.
     Qed.
 
-    Definition hom_ump_quotientalgebra_mapout
-      : Homomorphism (QuotientAlgebra A Φ) B
-      := BuildHomomorphism def_ump_quotientalgebra_mapout.
+    Definition hom_ump_quotient_algebra_mapout
+      : Homomorphism (A/Φ) B
+      := BuildHomomorphism def_ump_quotient_algebra_mapout.
 
     (** The computation rule for the homomorphism [g : ∀ s, carrier σ Φ s → B s]
-        defined by the [ump_quotientalgebra_mapout] is
+        defined by the [ump_quotient_algebra_mapout] is
 
           [g s (class x) = f s x],
 
         where [class x] is the quotient algebra equivalence class of [x]. *)
 
-    Lemma ump_quotientalgebra_mapout_compute
+    Lemma ump_quotient_algebra_mapout_compute
       : ∀ s (x : A s),
-        hom_ump_quotientalgebra_mapout s (class_of (Φ s) x) = f s x.
+        hom_ump_quotient_algebra_mapout s (class_of (Φ s) x) = f s x.
     Proof. reflexivity. Defined.
 
-  End ump_quotientalgebra_mapout.
+  End ump_quotient_algebra_mapout.
 
   (** Suppose [g : ∀ s, carrier σ Φ s → B s] is a homomorphism out of the
       quotient algebra. There is a homomorphism [λ s, g s ∘ hom_quotient σ Φ s]
       factoring through the [hom_quotient] and [g]. *)
 
-  Definition hom_ump_quotientalgebra_factoring
-    (g : Homomorphism (QuotientAlgebra A Φ) B)
+  Definition hom_ump_quotient_algebra_factoring (g : Homomorphism (A/Φ) B)
     : Homomorphism A B
     := BuildHomomorphism (λ s, g s ∘ hom_quotient A Φ s).
 
   (** The left to right direction of the quotient algebra universal mapping
-      property [ump_quotientalgebra]. The resulting homomorphism [g] is given by
-      the [ump_quotientalgebra_mapout] above. *)
+      property [ump_quotient_algebra]. The resulting homomorphism [g] is given by
+      the [ump_quotient_algebra_mapout] above. *)
 
-  Lemma quotient_peoperty_rl :
+  Lemma ump_quotient_algebra_rl :
     (∃ (f : Homomorphism A B), ∀ s x y, Φ s x y → f s x = f s y) →
-    Homomorphism (QuotientAlgebra A Φ) B.
+    Homomorphism (A/Φ) B.
   Proof.
     intros [f P].
-    exists (hom_ump_quotientalgebra_mapout f P).
-    apply _.
+    exists (hom_ump_quotient_algebra_mapout f P).
+    exact _.
   Defined.
 
   (** The right to left direction of the quotient algebra universal mapping
-      property [ump_quotientalgebra]. The resulting homomorphism [f] is given by
-      the [ump_quotientalgebra_factoring] above. The homomorphism [f] respects the
+      property [ump_quotient_algebra]. The resulting homomorphism [f] is given by
+      the [ump_quotient_algebra_factoring] above. The homomorphism [f] respects the
       congruence [Φ]. *)
 
-  Lemma ump_quotientalgebra_lr :
-    Homomorphism (QuotientAlgebra A Φ) B →
+  Lemma ump_quotient_algebra_lr :
+    Homomorphism (A/Φ) B →
     ∃ (f : Homomorphism A B), ∀ s x y, Φ s x y → f s x = f s y.
   Proof.
     intro g.
-    refine ((hom_ump_quotientalgebra_factoring g ; _)).
+    refine ((hom_ump_quotient_algebra_factoring g ; _)).
     intros s x y E.
     exact (transport (λ z, g s (class_of (Φ s) x) = g s z)
             (related_classes_eq (Φ s) E) idpath).
@@ -279,25 +285,23 @@ Section ump_quotientalgebra.
       [f : ∀ s, A s → B s] respecting the congruence [Φ], there is a unique
       homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient algebra.
       In one direction, the homomorphism [g] is given by the
-      [ump_quotientalgebra_mapout]. In the other direction, the homomorphism [f]
-      is given by the [ump_quotientalgebra_factoring]. *)
+      [ump_quotient_algebra_mapout]. In the other direction, the homomorphism [f]
+      is given by the [ump_quotient_algebra_factoring]. *)
 
-  Lemma ump_quotientalgebra
-    : Homomorphism (QuotientAlgebra A Φ) B
+  Lemma ump_quotient_algebra
+    : Homomorphism (A/Φ) B
      <~>
       ∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y.
   Proof.
-    apply (equiv_adjointify ump_quotientalgebra_lr quotient_peoperty_rl).
+    apply (equiv_adjointify ump_quotient_algebra_lr ump_quotient_algebra_rl).
     - intros F.
       apply path_sigma_hprop.
-      apply ((ap (issig_homomorphism A B))^-1).
-      apply path_sigma_hprop.
+      apply path_homomorphism.
       funext s.
       now apply path_forall.
     - intros G.
-      apply ((ap (issig_homomorphism (QuotientAlgebra A Φ) B))^-1).
-      apply path_sigma_hprop.
+      apply path_homomorphism.
       funext s.
       refine (eissect (quotient_ump (Φ s) (BuildhSet (B s))) (G s)).
   Defined.
-End ump_quotientalgebra.
+End ump_quotient_algebra.

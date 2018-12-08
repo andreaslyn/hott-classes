@@ -7,26 +7,26 @@ Require Import
 
 Import ne_list.notations.
 
-Local Notation symboltype_internal := @ne_list.
+Local Notation SymbolType_internal := @ne_list.
 
 Record Signature : Type := Build
-  { sort : Type
-  ; symbol : Type
-  ; symboltype_symbol : symbol → symboltype_internal sort }.
+  { Sort : Type
+  ; Symbol : Type
+  ; symbol_types : Symbol → SymbolType_internal Sort }.
 
-Global Coercion symboltype_symbol : Signature >-> Funclass.
+Global Coercion symbol_types : Signature >-> Funclass.
 
 Definition BuildSingleSorted {Op : Type} (arities : Op → nat)
   : Signature
   := Build Unit Op (ne_list.replicate_Sn tt o arities).
 
-Definition symboltype (σ : Signature) : Type := symboltype_internal (sort σ).
+Definition SymbolType (σ : Signature) : Type := SymbolType_internal (Sort σ).
 
-Definition cod_symboltype {σ} : symboltype σ → sort σ := ne_list.last.
+Definition cod_symboltype {σ} : SymbolType σ → Sort σ := ne_list.last.
 
-Definition dom_symboltype {σ} : symboltype σ → list (sort σ) := ne_list.front.
+Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ) := ne_list.front.
 
-Definition arity_symboltype {σ} : symboltype σ → nat := length o dom_symboltype.
+Definition arity_symboltype {σ} : SymbolType σ → nat := length o dom_symboltype.
 
 Module signature_notations.
   Export ne_list.notations.

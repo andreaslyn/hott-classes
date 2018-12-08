@@ -23,7 +23,7 @@ Section cprod.
 
   (** TODO A product type [CProd A [s1,s2,...,sn] = A s1 * A s2 * ... * A sn]. *)
 
-  Fixpoint CProd (A : Carriers σ) (w : list (sort σ)) : Type :=
+  Fixpoint CProd (A : Carriers σ) (w : list (Sort σ)) : Type :=
     match w with
     | nil => Unit
     | s :: w' => A s * CProd A w'
@@ -34,7 +34,7 @@ Section cprod.
         [map_cprod f (x1,x2,...,xn) = (f x1, f x2, ..., f xn)]. *)
 
   Fixpoint map_cprod {A : Carriers σ} {B : Carriers σ}
-      {w : list (sort σ)} (f : ∀ s, A s → B s)
+      {w : list (Sort σ)} (f : ∀ s, A s → B s)
       : CProd A w → CProd B w :=
     match w with
     | nil => const tt
@@ -44,7 +44,7 @@ Section cprod.
   (** Test whether [P s1 x1 ∧ P s2 x2 ∧ ... ∧ P sn xn] holds, where
       [(x1,...,xn) : A s1 * A s2 * ... * S xn]. *)
 
-  Fixpoint for_all_cprod {A : Carriers σ} {w : list (sort σ)}
+  Fixpoint for_all_cprod {A : Carriers σ} {w : list (Sort σ)}
       (P : ∀ s, A s -> Type) : CProd A w → Type :=
     match w with
     | nil => λ _, True
@@ -55,18 +55,27 @@ Section cprod.
       [(x1,...,xn) : A s1 * A s2 * ... * S xn] and
       [(y1,...,yn) : B s1 * B s2 * ... * B xn] *)
 
-  Fixpoint for_all_2_cprod {A B : Carriers σ} {w : list (sort σ)}
+  Fixpoint for_all_2_cprod {A B : Carriers σ} {w : list (Sort σ)}
       (R : ∀ s, A s -> B s -> Type) : CProd A w → CProd B w → Type :=
     match w with
     | nil => λ _ _, True
     | s :: w' => λ '(x1,l1) '(x2,l2), R s x1 x2 * for_all_2_cprod R l1 l2
     end.
 
+  Lemma reflexive_for_all_2_cprod (A : Carriers σ) (R : ∀ s, relation (A s))
+    `{!∀ s, Reflexive (R s)} (w : list (Sort σ)) (a : CProd A w)
+    : for_all_2_cprod R a a.
+  Proof.
+    induction w.
+    - reflexivity.
+    - by split.
+  Defined.
+
   (** Uncurry of [Operation], such that
 
         [apply_cprod f (x1,x2,...,xn) = f x1 x2 ... xn]. *)
 
-  Fixpoint apply_cprod {A : Carriers σ} {w : symboltype σ}
+  Fixpoint apply_cprod {A : Carriers σ} {w : SymbolType σ}
       : Operation A w → CProd A (dom_symboltype w) → A (cod_symboltype w) :=
     match w with
     | [:s] => λ a _, a
@@ -80,7 +89,7 @@ Section cprod.
       for all [(x1,x2,...,xn) : A s1 * A s2 * ... A sn], then [f = g].
   *)
 
-  Fixpoint path_forall_apply_cprod `{Funext} {A : Carriers σ} {w : symboltype σ}
+  Fixpoint path_forall_apply_cprod `{Funext} {A : Carriers σ} {w : SymbolType σ}
       : ∀ (f g : Operation A w),
         (∀ a : CProd A (dom_symboltype w),
          apply_cprod f a = apply_cprod g a) -> f = g

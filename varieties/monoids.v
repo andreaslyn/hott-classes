@@ -46,11 +46,11 @@ Section encode_variety_and_ops.
   Context A `{Monoid A}.
 
   Global Instance encode_algebra_and_ops: Algebra sig _.
-  Proof. intro. apply _. Qed.
+  Proof. intro. exact _. Qed.
 
   Global Instance encode_variety_and_ops: InVariety theory (const A) | 10.
   Proof.
-   constructor. apply _.
+   constructor. exact _.
    intros ? [] ?; simpl; unfold algebra_op; simpl.
      apply associativity.
     apply left_identity.
@@ -59,7 +59,7 @@ Section encode_variety_and_ops.
 End encode_variety_and_ops.
 
 Lemma encode_algebra_only `{!AlgebraOps theory A} `{!Monoid (A tt)}: Algebra theory A .
-Proof. intros []; apply _. Qed.
+Proof. intros []; exact _. Qed.
 
 Global Instance decode_variety_and_ops `{InVariety theory A}: Monoid (A tt) | 10.
 Proof with simpl; auto.
@@ -67,7 +67,7 @@ Proof with simpl; auto.
  match s with tt => match n with 0 => x | 1 => y | _ => z end end)) as laws.
  constructor.
  constructor.
- apply _.
+ exact _.
  intro. apply (laws _ e_mult_assoc).
  intro. apply (laws _ e_mult_1_l mon_unit y y)...
  intro. apply (laws _ e_mult_1_r x mon_unit x)...

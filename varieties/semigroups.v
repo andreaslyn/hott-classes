@@ -39,24 +39,24 @@ Section encode_variety_and_ops.
   Context A `{SemiGroup A}.
 
   Global Instance encode_algebra_and_ops: Algebra sig (const A).
-  Proof. intros []; simpl; apply _. Qed.
+  Proof. intros []; simpl; exact _. Qed.
 
   Global Instance encode_variety_and_ops: InVariety theory (const A).
   Proof.
-   constructor. apply _.
+   constructor. exact _.
    intros ? [] ?; simpl; unfold algebra_op; simpl.
    apply associativity.
   Qed.
 End encode_variety_and_ops.
 
 Lemma encode_algebra_only `{!AlgebraOps theory A} `{!SemiGroup (A tt)}: Algebra theory A .
-Proof. intros []; simpl in *; try apply _. Qed.
+Proof. intros []; simpl in *; try exact _. Qed.
 
 Global Instance decode_variety_and_ops `{InVariety theory A}: SemiGroup (A tt).
 Proof with simpl; auto.
  pose proof (λ law lawgood x y z, variety_laws law lawgood (λ s n,
  match s with tt => match n with 0 => x | 1 => y | _ => z end end)) as laws.
- constructor; try apply _.
+ constructor; try exact _.
  intro. apply (laws _ e_mult_assoc).
 Qed.
 *)

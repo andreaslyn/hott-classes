@@ -12,7 +12,7 @@ Import algebra_notations.
 Section for_signature.
   Variable σ: Signature.
 
-  Inductive Term (V : Type) : symboltype σ → Type :=
+  Inductive Term (V : Type) : SymbolType σ → Type :=
     | Var: V → ∀ a, Term V [:a]
     | App t y: Term V (y ::: t) → Term V [:y] → Term V t
     | Op u: Term V (σ u).
@@ -30,7 +30,7 @@ Section for_signature.
    types (no surprise there). However, often we want to prove properties that only speak
    of nullary terms: *)
 
-  Definition Term0 v sort := Term v [:sort].
+  Definition Term0 v s := Term v [:s].
 
   Section applications_ind.
     Context V (P: ∀ {a}, Term0 V a → Type).
@@ -139,7 +139,7 @@ Section for_signature.
   Section eval.
     Context (A : Algebra σ).
 
-    Fixpoint eval {V} {n : symboltype σ}
+    Fixpoint eval {V} {n : SymbolType σ}
         (vars: Vars A V) (t: Term V n) {struct t}: Operation A n :=
       match t with
       | Var v a => vars a v
