@@ -4,10 +4,9 @@ Require Import
   HoTTClasses.theory.ua_homomorphism
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Types.Sigma
-  HoTT.Basics.Overture
-  HoTTClasses.implementations.ua_carrier_product.
+  HoTT.Basics.Overture.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section closed_subalgebra.
   Context
@@ -18,7 +17,7 @@ Section closed_subalgebra.
 
   Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
     match w with
-    | [:x] => P x
+    | [:x:] => P x
     | s ::: w' => λ (f : A s → Operation A w'),
                     ∀ (x : A s), P s x → ClosedUnderOp (f x)
     end.
@@ -45,7 +44,7 @@ Section subalgebra.
     : ∀ (a : Operation A w),
       ClosedUnderOp A P a → Operation carriers_subalgebra w
     := match w with
-       | [:_] => λ u c, (u; c)
+       | [:_:] => λ u c, (u; c)
        | _ ::: _ => λ u c x, op_subalgebra (u (pr1 x)) (c (pr1 x) (pr2 x))
        end.
 
@@ -98,11 +97,11 @@ Section hom_inclusion_subalgebra.
     intros s x y p. by apply path_sigma_hprop.
   Qed.
 
-  Lemma path_apply_cprod_inclusion_subalgebra
+  Lemma path_ap_operation_inclusion_subalgebra
     {w : SymbolType σ} a (ao : Operation A w) C
-    : apply_cprod ao (map_cprod hom_inclusion_subalgebra a)
+    : ap_operation ao (map_family_prod hom_inclusion_subalgebra a)
       = hom_inclusion_subalgebra (cod_symboltype w)
-          (apply_cprod (op_subalgebra A P ao C) a).
+          (ap_operation (op_subalgebra A P ao C) a).
   Proof.
     induction w.
     - reflexivity.

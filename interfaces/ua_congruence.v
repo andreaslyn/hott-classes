@@ -1,7 +1,6 @@
 Require Import
   Coq.Unicode.Utf8
   HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.implementations.ua_carrier_product
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Basics.Overture.
 
@@ -24,9 +23,9 @@ Section congruence.
   Definition CongruenceProperty {A : Algebra σ} (Φ : ∀ s, relation (A s))
     {w : SymbolType σ} (f : Operation A w)
     : Type
-    := ∀ (a b : CProd A (dom_symboltype w)),
-       for_all_2_cprod Φ a b ->
-       Φ (cod_symboltype w) (apply_cprod f a) (apply_cprod f b).
+    := ∀ (a b : FamilyProd A (dom_symboltype w)),
+       for_all_2_family_prod A A Φ a b ->
+       Φ (cod_symboltype w) (ap_operation f a) (ap_operation f b).
 
   (** The relation family [Φ] is a [IsCongruence] if [Φ s] it is a family of
       mere equivalence relations and [Φ] has the [CongruenceProperty f]

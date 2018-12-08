@@ -7,14 +7,14 @@ Require Import
   HoTTClasses.implementations.list
   HoTTClasses.interfaces.ua_algebra.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section for_signature.
   Variable σ: Signature.
 
   Inductive Term (V : Type) : SymbolType σ → Type :=
-    | Var: V → ∀ a, Term V [:a]
-    | App t y: Term V (y ::: t) → Term V [:y] → Term V t
+    | Var: V → ∀ a, Term V [:a:]
+    | App t y: Term V (y ::: t) → Term V [:y:] → Term V t
     | Op u: Term V (σ u).
 
   Arguments Var {V} _ _.
@@ -30,7 +30,7 @@ Section for_signature.
    types (no surprise there). However, often we want to prove properties that only speak
    of nullary terms: *)
 
-  Definition Term0 v s := Term v [:s].
+  Definition Term0 v s := Term v [:s:].
 
   Section applications_ind.
     Context V (P: ∀ {a}, Term0 V a → Type).
@@ -44,7 +44,7 @@ Section for_signature.
 
     Fixpoint applications {ot}: Term V ot → Type :=
       match ot with
-      | [:x] => @P x
+      | [:x:] => @P x
       | x ::: y => λ z, ∀ v, P v → applications (App V _ _ z v)
       end.
 
@@ -76,11 +76,11 @@ Section for_signature.
   Definition T0 := Term0 nat.
 
   Definition Identity t := prod (T t) (T t).
-  Definition Identity0 sort := Identity [:sort].
+  Definition Identity0 sort := Identity [:sort:].
     (* While Identity0 is the one we usually have in mind, the generalized version for arbitrary operations
      is required to make induction proofs work. *)
 
-  Definition mkIdentity0 {sort}: T [:sort] → T [:sort] → Identity0 sort := pair.
+  Definition mkIdentity0 {sort}: T [:sort:] → T [:sort:] → Identity0 sort := pair.
 
   (* The laws in an equational theory will be entailments of identities for any of the sorts: *)
 
@@ -129,7 +129,7 @@ Section for_signature.
 
   (* Given an assignment mapping variables to closed terms, we can close open terms: *)
 
-  Fixpoint close {V} {u} (v: Vars (λ x, Term False [:x]) V) (t: Term V u): Term False u :=
+  Fixpoint close {V} {u} (v: Vars (λ x, Term False [:x:]) V) (t: Term V u): Term False u :=
     match t in Term _ u return Term False u with
     | Var x y => v y x
     | App x y z r => App _ x y (close v z) (close v r)
@@ -149,7 +149,7 @@ Section for_signature.
 
     Fixpoint app_tree {V} {u}: Term V u → Operation (Term0 V) u :=
       match u with
-      | [:_] => id
+      | [:_:] => id
       | _ ::: _ => λ x y, app_tree (App _ _ _ x y)
       end.
 

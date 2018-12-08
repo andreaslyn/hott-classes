@@ -9,14 +9,13 @@ Require Import
   HoTT.Types.Arrow
   HoTT.Types.Forall
   HoTT.Classes.implementations.list
-  HoTTClasses.implementations.ua_carrier_product
   HoTT.Spaces.Nat
   HoTT.Basics.Equivalences
   HoTT.Types.Sigma
   HoTT.Types.Universe
   HoTT.Basics.Overture.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section quotient_algebra.
   Context
@@ -42,24 +41,18 @@ Section quotient_algebra.
 
   Definition carriers_quotient_algebra : Carriers σ := λ s, quotient (Φ s).
 
-  Lemma for_all_2_reflexive_cprod : ∀ w (a : CProd A w), for_all_2_cprod Φ a a.
-  Proof.
-    induction w; intros.
-    - reflexivity.
-    - by split.
-  Defined.
-
   (** Specialization of [quotient_ind_prop]. *)
 
-  Fixpoint cprod_quotient_ind_prop `{Funext} {w : list (Sort σ)}
-      : ∀ (P : CProd carriers_quotient_algebra w -> Type) `{!∀ a, IsHProp (P a)}
-          (dclass : ∀ x, P (map_cprod (λ s, class_of (Φ s)) x))
-          (a : CProd carriers_quotient_algebra w), P a :=
+  Fixpoint quotient_ind_prop_family_prod `{Funext} {w : list (Sort σ)}
+      : ∀ (P : FamilyProd carriers_quotient_algebra w -> Type)
+          `{!∀ a, IsHProp (P a)}
+          (dclass : ∀ x, P (map_family_prod (λ s, class_of (Φ s)) x))
+          (a : FamilyProd carriers_quotient_algebra w), P a :=
     match w with
-    | nil => λ P sP dclass 'tt, dclass tt
+    | nil => λ P _ dclass 'tt, dclass tt
     | s :: w' => λ P _ dclass a,
       quotient_ind_prop (Φ s) (λ a0, ∀ a1, P (a0, a1))
-        (λ a0, cprod_quotient_ind_prop
+        (λ a0, quotient_ind_prop_family_prod
                  (λ c, P (class_of (Φ s) a0, c)) (λ c, dclass (a0, c)))
         (fst a) (snd a)
     end.
@@ -74,9 +67,9 @@ Section quotient_algebra.
 
   Definition QuotientOpProperty {w : SymbolType σ}
     (f : Operation A w) (g : Operation carriers_quotient_algebra w) : Type
-    := ∀ (a : CProd A (dom_symboltype w)),
-         apply_cprod g (map_cprod (λ s, class_of (Φ s)) a) =
-           class_of (Φ (cod_symboltype w)) (apply_cprod f a).
+    := ∀ (a : FamilyProd A (dom_symboltype w)),
+         ap_operation g (map_family_prod (λ s, class_of (Φ s)) a) =
+           class_of (Φ (cod_symboltype w)) (ap_operation f a).
 
   (** Quotient algebra operations induced from congruence [Φ]. For each
       operation [algebra_op u] in algebra [A], there is a quotient algebra
@@ -88,7 +81,7 @@ Section quotient_algebra.
     ∃ (g : Operation carriers_quotient_algebra w), QuotientOpProperty f g.
   Proof. refine (
       match w with
-      | [:s] => λ f P, (class_of (Φ s) f; λ a, idpath)
+      | [:s:] => λ f P, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ f P,
         (quotient_rec (Φ s) (λ x, (op_quotient_algebra _ w' (f x)
                                    (congruence_property_cons f x P)).1) _
@@ -99,14 +92,14 @@ Section quotient_algebra.
     exact ((op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).2 a).
     Grab Existential Variables.
     intros x y E.
-    apply (@path_forall_apply_cprod σ _).
-    apply cprod_quotient_ind_prop; try exact _.
+    apply (@path_forall_ap_operation _ σ).
+    apply quotient_ind_prop_family_prod; try exact _.
     intro a.
     destruct (op_quotient_algebra _ _ _ (congruence_property_cons f x P)) as [g1 P1].
     destruct (op_quotient_algebra _ _ _ (congruence_property_cons f y P)) as [g2 P2].
     refine ((P1 a) @ _ @ (P2 a)^).
     apply related_classes_eq.
-    exact (P (x,a) (y,a) (E, reflexive_for_all_2_cprod A Φ (dom_symboltype w') a)).
+    exact (P (x,a) (y,a) (E, reflexive_for_all_2_family_prod A Φ a)).
   Defined.
 
   Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
@@ -121,7 +114,6 @@ Section quotient_algebra.
   Proof.
     apply op_quotient_algebra.
   Defined.
-
 End quotient_algebra.
 
 Module quotient_algebra_notations.

@@ -9,7 +9,6 @@ Require Import
   HoTT.Types.Arrow
   HoTT.Types.Forall
   HoTT.Classes.implementations.list
-  HoTTClasses.implementations.ua_carrier_product
   HoTT.Spaces.Nat
   HoTT.Basics.Equivalences
   HoTT.Types.Sigma
@@ -28,22 +27,22 @@ Section first_isomorphism_theorem.
     {A B : Algebra σ}
     (f : Homomorphism A B).
 
-  Definition hom_kernel (s : Sort σ) : relation (A s)
+  Definition kernel_hom (s : Sort σ) : relation (A s)
     := λ x y, f s x = f s y.
 
   Global Instance equivalence_kernel (s : Sort σ)
-    : Equivalence (hom_kernel s).
+    : Equivalence (kernel_hom s).
   Proof.
-   unfold hom_kernel.
+   unfold kernel_hom.
    repeat constructor.
-   - intros x y h. refine (h^ @ idpath).
+   - intros x y h. exact (h^ @ idpath).
    - intros x y z h1 h2. exact (h1 @ h2).
   Defined.
 
-  Lemma path_kernel_cprod_apply {w : SymbolType σ}
-    (bo : Operation B w) (a b : CProd A (dom_symboltype w))
-    (R : for_all_2_cprod hom_kernel a b)
-    : apply_cprod bo (map_cprod f a) = apply_cprod bo (map_cprod f b).
+  Lemma path_kernel_ap_operation {w : SymbolType σ}
+    (bo : Operation B w) (a b : FamilyProd A (dom_symboltype w))
+    (R : for_all_2_family_prod A A kernel_hom a b)
+    : ap_operation bo (map_family_prod f a) = ap_operation bo (map_family_prod f b).
   Proof.
     induction w.
     - reflexivity.
@@ -53,20 +52,20 @@ Section first_isomorphism_theorem.
       now apply IHw.
   Qed.
 
-  Instance congruence_kernel : IsCongruence A hom_kernel.
+  Instance congruence_kernel : IsCongruence A kernel_hom.
   Proof.
     intros u a b R.
-    unfold hom_kernel.
-    repeat rewrite (path_homomorphism_apply_cprod f).
-    now apply path_kernel_cprod_apply.
+    unfold kernel_hom.
+    repeat rewrite (path_homomorphism_ap_operation f).
+    now apply path_kernel_ap_operation.
   Qed.
 
-  Definition in_hom_image (s : Sort σ) (y : B s) : Type
+  Definition in_image_hom (s : Sort σ) (y : B s) : Type
     := merely (hfiber (f s) y).
 
   Lemma op_closed_subalgebra_image {w : SymbolType σ}
     (ao : Operation A w) (bo : Operation B w) (P : OpPreserving f ao bo)
-    : ClosedUnderOp B in_hom_image bo.
+    : ClosedUnderOp B in_image_hom bo.
   Proof.
     induction w.
     - exact (tr (ao; P)).
@@ -77,39 +76,39 @@ Section first_isomorphism_theorem.
       now refine (transport (λ y, OpPreserving f (ao x) (bo y)) p _).
   Defined.
 
-  Global Instance closedsubalg_image : IsClosedUnderOps B in_hom_image.
+  Global Instance closedsubalg_image : IsClosedUnderOps B in_image_hom.
   Proof.
     intro u. eapply op_closed_subalgebra_image, f.
   Defined.
 
   Definition def_first_isomorphism (s : Sort σ)
-    : (A / hom_kernel) s → (B & in_hom_image) s.
+    : (A / kernel_hom) s → (B & in_image_hom) s.
   Proof.
     refine (
-      quotient_rec (hom_kernel s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
+      quotient_rec (kernel_hom s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
     intros x y ?.
     now apply path_sigma_hprop.
   Defined.
 
   Lemma oppreserving_first_isomorphism {w : SymbolType σ}
-    (g : Operation (A / hom_kernel) w)
+    (g : Operation (A / kernel_hom) w)
     (ao : Operation A w) (bo : Operation B w)
     (P : OpPreserving f ao bo)
-    (G : QuotientOpProperty A hom_kernel ao g)
+    (G : QuotientOpProperty A kernel_hom ao g)
     : OpPreserving def_first_isomorphism g
-        (op_subalgebra B in_hom_image bo (op_closed_subalgebra_image ao bo P)).
+        (op_subalgebra B in_image_hom bo (op_closed_subalgebra_image ao bo P)).
   Proof.
     unfold QuotientOpProperty in G.
     induction w.
     - apply path_sigma_hprop.
       generalize dependent g.
-      refine (quotient_ind_prop (hom_kernel t) _ _).
+      refine (quotient_ind_prop (kernel_hom t) _ _).
       intros x G.
       rewrite <- P.
-      apply (classes_eq_related (hom_kernel t) _ _ (G tt)).
-    - refine (quotient_ind_prop (hom_kernel t) _ _).
+      apply (classes_eq_related (kernel_hom t) _ _ (G tt)).
+    - refine (quotient_ind_prop (kernel_hom t) _ _).
       intro x.
-      apply (IHw (g (class_of (hom_kernel t) x)) (ao x) (bo (f t x)) (P x)).
+      apply (IHw (g (class_of (kernel_hom t) x)) (ao x) (bo (f t x)) (P x)).
       intro a.
       apply (G (x,a)).
   Qed.
@@ -123,15 +122,15 @@ Section first_isomorphism_theorem.
   Qed.
 
   Definition hom_first_isomorphism
-    : Homomorphism (A / hom_kernel) (B & in_hom_image)
+    : Homomorphism (A / kernel_hom) (B & in_image_hom)
     := BuildHomomorphism def_first_isomorphism.
 
   Global Instance injection_first_isomorphism (s : Sort σ)
     : Injective (hom_first_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (hom_kernel s) _ _).
+    refine (quotient_ind_prop (kernel_hom s) _ _).
     intro x.
-    refine (quotient_ind_prop (hom_kernel s) _ _).
+    refine (quotient_ind_prop (kernel_hom s) _ _).
     intros y p.
     apply related_classes_eq.
     exact (pr1_path p).
@@ -149,14 +148,16 @@ Section first_isomorphism_theorem.
     now apply path_sigma_hprop.
   Qed.
 
-  Global Instance is_isomorphism_first_isomorphism
+  Theorem is_isomorphism_first_isomorphism
     : IsIsomorphism hom_first_isomorphism.
   Proof.
     constructor; exact _.
   Defined.
 
+  Global Existing Instance is_isomorphism_first_isomorphism.
+
   Corollary path_first_isomorphism 
-    : A / hom_kernel = B & in_hom_image.
+    : A / kernel_hom = B & in_image_hom.
   Proof.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
@@ -178,13 +179,14 @@ Section second_isomorphism_theorem.
 
   Let i {s} : (A&P) s → A s := def_inclusion_subalgebra A P s.
 
-  Definition trace_cong (s : Sort σ) (x : (A&P) s) (y : (A&P) s) : Type
+  Definition trace_congruence (s : Sort σ) (x : (A&P) s) (y : (A&P) s) : Type
     := Φ s (i x) (i y).
 
-  Lemma for_all_2_cprod_trace_cong {w : SymbolType σ}
-    (a b : CProd (A&P) (dom_symboltype w))
-    (R : for_all_2_cprod trace_cong a b)
-    : for_all_2_cprod Φ (map_cprod (@i) a) (map_cprod (@i) b).
+  Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
+    (a b : FamilyProd (A&P) (dom_symboltype w))
+    (R : for_all_2_family_prod (A&P) (A&P) trace_congruence a b)
+    : for_all_2_family_prod A A Φ
+        (map_family_prod (@i) a) (map_family_prod (@i) b).
   Proof with try assumption.
     induction w...
     destruct a as [x a], b as [y b], R as [C R].
@@ -192,10 +194,10 @@ Section second_isomorphism_theorem.
     apply IHw...
   Defined.
 
-  Global Instance equivalence_trace_cong (s : Sort σ)
-    : Equivalence (trace_cong s).
+  Global Instance equivalence_trace_congruence (s : Sort σ)
+    : Equivalence (trace_congruence s).
   Proof.
-    unfold trace_cong.
+    unfold trace_congruence.
     constructor.
     - intros [y Y].
       apply Equivalence_Reflexive.
@@ -205,16 +207,16 @@ Section second_isomorphism_theorem.
       apply (Equivalence_Transitive _ _ _ S T).
   Defined.
 
-  Global Instance congruence_trace_cong
-    : IsCongruence (A&P) trace_cong.
+  Global Instance congruence_trace_congruence
+    : IsCongruence (A&P) trace_congruence.
   Proof.
     intros u a b R.
-    refine (transport (λ X, Φ _ X (i (apply_cprod (u ^^ A&P) b)))
-              (path_apply_cprod_inclusion_subalgebra A P a (u^^A) _) _).
-    refine (transport (λ X, Φ _ (apply_cprod (u^^A) (map_cprod (@i) a)) X)
-              (path_apply_cprod_inclusion_subalgebra A P b (u^^A) _) _).
+    refine (transport (λ X, Φ _ X (i (ap_operation (u ^^ A&P) b)))
+              (path_ap_operation_inclusion_subalgebra A P a (u^^A) _) _).
+    refine (transport (λ X, Φ _ (ap_operation (u^^A) (map_family_prod (@i) a)) X)
+              (path_ap_operation_inclusion_subalgebra A P b (u^^A) _) _).
     apply (congruence_properties A Φ).
-    exact (for_all_2_cprod_trace_cong a b R).
+    exact (for_all_2_family_prod_trace_congruence a b R).
   Defined.
 
   Definition in_subquotient (s : Sort σ) (x : (A/Φ) s)
@@ -258,8 +260,8 @@ Section second_isomorphism_theorem.
   Qed.
 
   Definition def_second_isomorphism (s : Sort σ)
-    : ((A&P) / trace_cong) s → ((A/Φ) & in_subquotient) s
-  := quotient_rec (trace_cong s)
+    : ((A&P) / trace_congruence) s → ((A/Φ) & in_subquotient) s
+  := quotient_rec (trace_congruence s)
       (λ (x : (A&P) s),
         (class_of (Φ s) (i x); tr (x; Equivalence_Reflexive x)))
       (λ x y T,
@@ -268,12 +270,12 @@ Section second_isomorphism_theorem.
 
   Lemma oppreserving_second_isomorphism {w : SymbolType σ}
     (ao : Operation A w)
-    (bqo : Operation ((A&P) / trace_cong) w)
+    (bqo : Operation ((A&P) / trace_congruence) w)
     (aqo : Operation (A/Φ) w)
     (CB : ClosedUnderOp A P ao)
     (CA : ClosedUnderOp (A/Φ) in_subquotient aqo)
     (QA : QuotientOpProperty A Φ ao aqo)
-    (QB : QuotientOpProperty (A&P) trace_cong (op_subalgebra A P ao CB) bqo)
+    (QB : QuotientOpProperty (A&P) trace_congruence (op_subalgebra A P ao CB) bqo)
     : OpPreserving def_second_isomorphism bqo
         (op_subalgebra (A/Φ) in_subquotient aqo CA).
   Proof.
@@ -282,9 +284,9 @@ Section second_isomorphism_theorem.
     - apply path_sigma_hprop.
       rewrite (QB tt), (QA tt).
       by apply related_classes_eq.
-    - refine (quotient_ind_prop (trace_cong t) _ _).
+    - refine (quotient_ind_prop (trace_congruence t) _ _).
       intro x.
-      apply (IHw (ao (i x)) (bqo (class_of (trace_cong t) x))
+      apply (IHw (ao (i x)) (bqo (class_of (trace_congruence t) x))
                (aqo (class_of (Φ t) (i x))) (CB (i x) x.2)).
       + intro a. exact (QA (i x, a)).
       + intro a. exact (QB (x, a)).
@@ -300,15 +302,15 @@ Section second_isomorphism_theorem.
   Qed.
 
   Definition hom_second_isomorphism
-    : Homomorphism ((A&P) / trace_cong) ((A/Φ) & in_subquotient)
+    : Homomorphism ((A&P) / trace_congruence) ((A/Φ) & in_subquotient)
     := BuildHomomorphism def_second_isomorphism.
 
   Global Instance injection_second_isomorphism (s : Sort σ)
     : Injective (hom_second_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (trace_cong s) _ _).
+    refine (quotient_ind_prop (trace_congruence s) _ _).
     intro x.
-    refine (quotient_ind_prop (trace_cong s) _ _).
+    refine (quotient_ind_prop (trace_congruence s) _ _).
     intros y p.
     apply related_classes_eq.
     exact (classes_eq_related (Φ s) (i x) (i y) (p..1)).
@@ -331,14 +333,16 @@ Section second_isomorphism_theorem.
     by apply related_classes_eq.
   Qed.
 
-  Global Instance is_isomorphism_second_isomorphism
+  Theorem is_isomorphism_second_isomorphism
     : IsIsomorphism hom_second_isomorphism.
   Proof.
     constructor; exact _.
   Qed.
 
+  Global Existing Instance is_isomorphism_second_isomorphism.
+
   Corollary path_second_isomorphism
-    : (A&P) / trace_cong = ((A/Φ) & in_subquotient).
+    : (A&P) / trace_congruence = ((A/Φ) & in_subquotient).
   Proof.
     exact (path_isomorphism hom_second_isomorphism).
   Defined.

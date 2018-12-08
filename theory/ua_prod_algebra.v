@@ -8,7 +8,7 @@ Require Import
   HoTT.Types.Sigma
   HoTT.Types.Prod.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ).
@@ -21,7 +21,7 @@ Section prod_algebra.
     match w
       return (∀ i, Operation (A i) w) → Operation carriers_prod_algebra w
     with
-    | [:_] => idmap
+    | [:_:] => idmap
     | _ ::: g => λ f p, op_prod_algebra g (λ i, f i (p i))
     end.
 

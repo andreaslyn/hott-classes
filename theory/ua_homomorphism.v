@@ -2,7 +2,6 @@ Require Import
   Coq.Unicode.Utf8
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.implementations.ua_carrier_product
   HoTT.Basics.Equivalences
   HoTT.Types.Forall
   HoTT.HSet
@@ -12,7 +11,7 @@ Require Import
   HoTT.Types.Record
   HoTT.Types.Sigma.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section is_homomorphism.
   Context {σ : Signature} {A B : Algebra σ} (f : ∀ s, A s → B s).
@@ -20,7 +19,7 @@ Section is_homomorphism.
   Fixpoint OpPreserving {w : SymbolType σ}
     : Operation A w → Operation B w → Type
     := match w with
-       | [:s] => λ ao bo, f s ao = bo
+       | [:s:] => λ ao bo, f s ao = bo
        | s ::: y => λ ao bo, ∀ (x : A s), OpPreserving (ao x) (bo (f s x))
        end.
 
@@ -131,29 +130,30 @@ Section equiv_forgetful_isomorphism.
   Defined.
 End equiv_forgetful_isomorphism.
 
-Section homomorphism_apply_cprod.
+Section homomorphism_ap_operation.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
 
-  Lemma path_homomorphism_apply_cprod' {w : SymbolType σ}
-    (a : CProd A (dom_symboltype w)) (ao : Operation A w) (bo : Operation B w)
-    (P : OpPreserving f ao bo)
-    : f (cod_symboltype w) (apply_cprod ao a) = apply_cprod bo (map_cprod f a).
+  Lemma path_homomorphism_ap_operation' {w : SymbolType σ}
+    (a : FamilyProd A (dom_symboltype w)) (ao : Operation A w)
+    (bo : Operation B w) (P : OpPreserving f ao bo)
+    : f (cod_symboltype w) (ap_operation ao a) =
+      ap_operation bo (map_family_prod f a).
   Proof.
     induction w.
     - assumption.
     - destruct a as [x a]. apply IHw. apply P.
   Defined.
 
-  Lemma path_homomorphism_apply_cprod
-    : ∀ (u : Symbol σ) (a : CProd A (dom_symboltype (σ u))),
-      f (cod_symboltype (σ u)) (apply_cprod (u^^A) a) =
-       apply_cprod (u^^B) (map_cprod f a).
+  Lemma path_homomorphism_ap_operation
+    : ∀ (u : Symbol σ) (a : FamilyProd A (dom_symboltype (σ u))),
+      f (cod_symboltype (σ u)) (ap_operation (u^^A) a)
+      = ap_operation (u^^B) (map_family_prod f a).
   Proof.
     intros u a.
-    apply path_homomorphism_apply_cprod'.
+    apply path_homomorphism_ap_operation'.
     apply f.
   Defined.
-End homomorphism_apply_cprod.
+End homomorphism_ap_operation.
 
 Section hom_id.
   Context {σ} (A : Algebra σ).

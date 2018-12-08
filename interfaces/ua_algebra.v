@@ -1,4 +1,6 @@
-Require Export HoTTClasses.interfaces.ua_signature.
+Require Export
+  HoTTClasses.implementations.ne_list
+  HoTTClasses.implementations.family_prod.
 
 Require Import
   Coq.Unicode.Utf8
@@ -10,27 +12,79 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Universe
   HoTT.HSet
-  HoTT.Classes.interfaces.abstract_algebra.
+  HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.implementations.list.
 
 Import ne_list.notations.
 
 Declare Scope Algebra_scope.
 Delimit Scope Algebra_scope with Algebra.
 
+Local Notation SymbolType_internal := @ne_list.
+
+Record Signature : Type := Build
+  { Sort : Type
+  ; Symbol : Type
+  ; symbol_types : Symbol → SymbolType_internal Sort }.
+
+Global Coercion symbol_types : Signature >-> Funclass.
+
+Definition BuildSingleSorted {Op : Type} (arities : Op → nat)
+  : Signature
+  := Build Unit Op (ne_list.replicate_Sn tt o arities).
+
+Definition SymbolType (σ : Signature) : Type := SymbolType_internal (Sort σ).
+
+Definition cod_symboltype {σ} : SymbolType σ → Sort σ := ne_list.last.
+
+Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ) := ne_list.front.
+
+Definition arity_symboltype {σ} : SymbolType σ → nat := length o dom_symboltype.
+
 Notation Carriers := (λ (σ : Signature), Sort σ → Type).
 
 Fixpoint Operation {σ : Signature} (A : Carriers σ) (u : SymbolType σ) : Type
   := match u with
-     | [:s] => A s
+     | [:s:] => A s
      | s ::: u' => A s → Operation A u'
      end.
 
-Global Instance hset_operation `{Funext} {σ : Signature} (A : Carriers σ)
-    `{!∀ s, IsHSet (A s)} (w : SymbolType σ)
-    : IsHSet (Operation A w).
+Global Instance trunc_operation `{Funext} {σ : Signature} (A : Carriers σ)
+    {n} `{!∀ s, IsTrunc n (A s)} (w : SymbolType σ)
+    : IsTrunc n (Operation A w).
 Proof.
-  induction w; apply (istrunc_trunctype_type 0).
+  induction w; apply (istrunc_trunctype_type (BuildTruncType n _)).
 Defined.
+
+(** Uncurry of [Operation], such that
+
+      [ap_operation f (x1,x2,...,xn) = f x1 x2 ... xn]. *)
+
+Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
+    : Operation A w → FamilyProd A (dom_symboltype w) → A (cod_symboltype w)
+    := match w with
+       | [:s:] => λ a _, a
+       | s ::: w' => λ f '(x, l), ap_operation (f x) l
+       end.
+
+(** Funext for uncurried [Operation]s. If
+
+      [ap_operation f (x1,x2,...,xn) = ap_operation g (x1,x2,...,xn)],
+
+    for all [(x1,x2,...,xn) : A s1 * A s2 * ... A sn], then [f = g].
+*)
+
+Fixpoint path_forall_ap_operation `{Funext} {σ} {A : Carriers σ}
+    {w : SymbolType σ}
+    : ∀ (f g : Operation A w),
+      (∀ a : FamilyProd A (dom_symboltype w),
+       ap_operation f a = ap_operation g a) -> f = g
+:= match w with
+   | [:s:] => λ f g h, h tt
+   | s ::: w' =>
+       λ f g h, path_forall f g
+                  (λ x, path_forall_ap_operation (f x) (g x) (λ a, h (x,a)))
+   end.
 
 Record Algebra {σ : Signature} : Type := BuildAlgebra
   { carriers : Carriers σ
@@ -57,12 +111,6 @@ Proof.
     (@hset_carriers_algebra σ).
 Defined.
 
-Lemma path_issig_algebra {σ} (A B : Algebra σ)
-  : issig_algebra A = issig_algebra B → A = B.
-Proof.
-  exact ((ap issig_algebra)^-1).
-Defined.
-
 Ltac change_issig_algebra A :=
   match type of A with
   | Algebra ?σ =>
@@ -72,29 +120,21 @@ Ltac change_issig_algebra A :=
   | _ => idtac
   end.
 
-Ltac repeat_change_issig_algebra :=
-  match goal with
-  | [ A : Algebra ?σ |- _] =>
-      progress (change_issig_algebra A); repeat_change_issig_algebra
-  | _ => idtac
-  end.
-
 Lemma path_algebra `{Funext} {σ} (A B : Algebra σ)
   : (∃ (p : carriers A = carriers B),
      transport (λ X, ∀ u, Operation X (σ u)) p (operations A) = operations B)
   → A = B.
 Proof.
   intros [p q].
-  apply path_issig_algebra.
-  repeat_change_issig_algebra.
+  apply ((ap issig_algebra)^-1).
+  change_issig_algebra A.
+  change_issig_algebra B.
   refine (path_sigma _ _ _ p _).
   apply path_sigma_hprop.
   by path_induction.
 Defined.
 
 Module algebra_notations.
-  Export signature_notations.
-
   Global Notation "u ^^ A" := (operations A u) (at level 60, no associativity)
     : Algebra_scope.
 

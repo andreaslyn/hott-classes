@@ -2,10 +2,9 @@
 
 ./implementations/list.v
 ./implementations/ne_list.v
+./implementations/family_prod.v
 
-./interfaces/ua_signature.v
 ./interfaces/ua_algebra.v
-./implementations/ua_carrier_product.v
 ./interfaces/ua_equational_theory.v
 ./interfaces/ua_congruence.v
 
