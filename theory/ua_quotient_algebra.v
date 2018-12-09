@@ -71,35 +71,46 @@ Section quotient_algebra.
          ap_operation g (map_family_prod (λ s, class_of (Φ s)) a) =
            class_of (Φ (cod_symboltype w)) (ap_operation f a).
 
+  Lemma op_quotient_algebra_unique `{Funext}
+    (q : ∀ (w : SymbolType σ) (f : Operation A w),
+         CongruenceProperty Φ f →
+         ∃ g : Operation carriers_quotient_algebra w, QuotientOpProperty f g)
+    (s : Sort σ) (w : SymbolType σ) (f : Operation A (s ::: w))
+    (P : CongruenceProperty Φ f) (x y : A s) (C : Φ s x y)
+    : (q w (f x) (congruence_property_cons f x P)).1
+      = (q w (f y) (congruence_property_cons f y P)).1.
+  Proof.
+    apply (@path_forall_ap_operation _ σ).
+    apply quotient_ind_prop_family_prod; try exact _.
+    intro a.
+    destruct (q _ _ (congruence_property_cons f x P)) as [g1 P1].
+    destruct (q _ _ (congruence_property_cons f y P)) as [g2 P2].
+    refine ((P1 a) @ _ @ (P2 a)^).
+    apply related_classes_eq.
+    exact (P (x,a) (y,a) (C, reflexive_for_all_2_family_prod A Φ a)).
+  Defined.
+
   (** Quotient algebra operations induced from congruence [Φ]. For each
       operation [algebra_op u] in algebra [A], there is a quotient algebra
       operation [g] satisfying the [QuotientOpProperty f g] with respect to f. *)
 
-  Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ} :
-    ∀ (f : Operation A w),
-    CongruenceProperty Φ f ->
-    ∃ (g : Operation carriers_quotient_algebra w), QuotientOpProperty f g.
+  Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ}
+    : ∀ (f : Operation A w),
+      CongruenceProperty Φ f ->
+      ∃ (g : Operation carriers_quotient_algebra w), QuotientOpProperty f g.
   Proof. refine (
       match w with
-      | [:s:] => λ f P, (class_of (Φ s) f; λ a, idpath)
-      | s ::: w' => λ f P,
-        (quotient_rec (Φ s) (λ x, (op_quotient_algebra _ w' (f x)
-                                   (congruence_property_cons f x P)).1) _
+      | [:s:] => λ (f : A s) P, (class_of (Φ s) f; λ a, idpath)
+      | s ::: w' => λ (f : A s → Operation A w') P,
+        (quotient_rec (Φ s)
+          (λ (x : A s),
+            (op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).1)
+          (op_quotient_algebra_unique (op_quotient_algebra _) s w' f P)
         ; _)
       end
     ).
     intros [x a].
-    exact ((op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).2 a).
-    Grab Existential Variables.
-    intros x y E.
-    apply (@path_forall_ap_operation _ σ).
-    apply quotient_ind_prop_family_prod; try exact _.
-    intro a.
-    destruct (op_quotient_algebra _ _ _ (congruence_property_cons f x P)) as [g1 P1].
-    destruct (op_quotient_algebra _ _ _ (congruence_property_cons f y P)) as [g2 P2].
-    refine ((P1 a) @ _ @ (P2 a)^).
-    apply related_classes_eq.
-    exact (P (x,a) (y,a) (E, reflexive_for_all_2_family_prod A Φ a)).
+    apply (op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).
   Defined.
 
   Definition ops_quotient_algebra `{Funext} (u : Symbol σ)

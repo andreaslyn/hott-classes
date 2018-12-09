@@ -5,14 +5,11 @@
 ./implementations/family_prod.v
 
 ./interfaces/ua_algebra.v
-./interfaces/ua_equational_theory.v
 ./interfaces/ua_congruence.v
 
 ./theory/ua_homomorphism.v
 ./theory/ua_prod_algebra.v
 ./theory/ua_subalgebra.v
 ./theory/ua_quotient_algebra.v
-./theory/ua_isomorphism_theorems.v
-
-./varieties/semigroups.v
-./varieties/monoids.v
+./theory/ua_first_isomorphism.v
+./theory/ua_second_isomorphism.v
