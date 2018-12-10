@@ -18,7 +18,10 @@ Require Import
 Import ne_list.notations.
 
 Declare Scope Algebra_scope.
+
 Delimit Scope Algebra_scope with Algebra.
+
+Open Scope Algebra_scope.
 
 Local Notation SymbolType_internal := @ne_list.
 
@@ -135,8 +138,8 @@ Proof.
 Defined.
 
 Module algebra_notations.
+
   Global Notation "u ^^ A" := (operations A u) (at level 60, no associativity)
     : Algebra_scope.
 
-  Global Open Scope Algebra_scope.
 End algebra_notations.

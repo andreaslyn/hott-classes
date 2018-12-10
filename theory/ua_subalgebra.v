@@ -1,8 +1,8 @@
 Require Import
   Coq.Unicode.Utf8
+  HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.ua_algebra
   HoTTClasses.theory.ua_homomorphism
-  HoTT.Classes.interfaces.abstract_algebra
   HoTT.Types.Sigma
   HoTT.Basics.Overture.
 

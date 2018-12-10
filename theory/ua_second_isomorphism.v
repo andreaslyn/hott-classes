@@ -21,25 +21,13 @@ Section trace_congruence.
     (P : ∀ s, A s → Type)
     `{!∀ s (x : A s), IsHProp (P s x)}
     `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, A s → A s → Type)
+    (Φ : ∀ s, relation (A s))
     `{!∀ s, is_mere_relation (A s) (Φ s)}
     `{!∀ s, Equivalence (Φ s)}
     `{!IsCongruence A Φ}.
 
   Definition trace_congruence (s : Sort σ) (x : (A&P) s) (y : (A&P) s) : Type
     := Φ s (i s x) (i s y).
-
-  Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
-    (a b : FamilyProd (A&P) (dom_symboltype w))
-    (R : for_all_2_family_prod (A&P) (A&P) trace_congruence a b)
-    : for_all_2_family_prod A A Φ
-        (map_family_prod i a) (map_family_prod i b).
-  Proof with try assumption.
-    induction w...
-    destruct a as [x a], b as [y b], R as [C R].
-    split...
-    apply IHw...
-  Defined.
 
   Global Instance equivalence_trace_congruence (s : Sort σ)
     : Equivalence (trace_congruence s).
@@ -52,6 +40,18 @@ Section trace_congruence.
       apply Equivalence_Symmetric. assumption.
     - intros [y1 Y1] [y2 Y2] [y3 Y3] S T.
       apply (Equivalence_Transitive _ _ _ S T).
+  Defined.
+
+  Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
+    (a b : FamilyProd (A&P) (dom_symboltype w))
+    (R : for_all_2_family_prod (A&P) (A&P) trace_congruence a b)
+    : for_all_2_family_prod A A Φ
+        (map_family_prod i a) (map_family_prod i b).
+  Proof with try assumption.
+    induction w...
+    destruct a as [x a], b as [y b], R as [C R].
+    split...
+    apply IHw...
   Defined.
 
   Global Instance congruence_trace_congruence
@@ -75,7 +75,7 @@ Section subquotient.
     (P : ∀ s, A s → Type)
     `{!∀ s (x : A s), IsHProp (P s x)}
     `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, A s → A s → Type)
+    (Φ : ∀ s, relation (A s))
     `{!∀ s, is_mere_relation (A s) (Φ s)}
     `{!∀ s, Equivalence (Φ s)}
     `{!IsCongruence A Φ}.
@@ -129,7 +129,7 @@ Section second_isomorphism.
     (P : ∀ s, A s → Type)
     `{!∀ s (x : A s), IsHProp (P s x)}
     `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, A s → A s → Type)
+    (Φ : ∀ s, relation (A s))
     `{!∀ s, is_mere_relation (A s) (Φ s)}
     `{!∀ s, Equivalence (Φ s)}
     `{!IsCongruence A Φ}.

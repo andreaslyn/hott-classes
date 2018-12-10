@@ -1,10 +1,10 @@
 Require Import
   Coq.Unicode.Utf8
+  HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.ua_algebra
   HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_homomorphism
   HoTTClasses.theory.ua_subalgebra
-  HoTT.Classes.interfaces.abstract_algebra
   HoTT.HIT.quotient
   HoTT.Types.Arrow
   HoTT.Types.Forall
@@ -31,7 +31,7 @@ Section quotient_algebra.
       the [CongruenceProperty (f x)] for any [x : A s1]. *)
   Lemma congruence_property_cons {s : Sort σ} {w : SymbolType σ}
       : ∀ (f : Operation A (s ::: w)) (x : A s),
-        CongruenceProperty Φ f → CongruenceProperty Φ (f x).
+        CongruenceProperty A Φ f → CongruenceProperty A Φ (f x).
   Proof.
     intros f x P a b R.
     exact (P (x,a) (x,b) (Equivalence_Reflexive x, R)).
@@ -73,10 +73,10 @@ Section quotient_algebra.
 
   Lemma op_quotient_algebra_unique `{Funext}
     (q : ∀ (w : SymbolType σ) (f : Operation A w),
-         CongruenceProperty Φ f →
+         CongruenceProperty A Φ f →
          ∃ g : Operation carriers_quotient_algebra w, QuotientOpProperty f g)
     (s : Sort σ) (w : SymbolType σ) (f : Operation A (s ::: w))
-    (P : CongruenceProperty Φ f) (x y : A s) (C : Φ s x y)
+    (P : CongruenceProperty A Φ f) (x y : A s) (C : Φ s x y)
     : (q w (f x) (congruence_property_cons f x P)).1
       = (q w (f y) (congruence_property_cons f y P)).1.
   Proof.
@@ -96,7 +96,7 @@ Section quotient_algebra.
 
   Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ}
     : ∀ (f : Operation A w),
-      CongruenceProperty Φ f ->
+      CongruenceProperty A Φ f ->
       ∃ (g : Operation carriers_quotient_algebra w), QuotientOpProperty f g.
   Proof. refine (
       match w with

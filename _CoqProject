@@ -13,3 +13,4 @@
 ./theory/ua_quotient_algebra.v
 ./theory/ua_first_isomorphism.v
 ./theory/ua_second_isomorphism.v
+./theory/ua_third_isomorphism.v

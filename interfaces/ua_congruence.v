@@ -12,7 +12,7 @@ Import algebra_notations.
     class. *)
 
 Section congruence.
-  Context {σ : Signature}.
+  Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
 
   (** The relation family [Φ] satisfies the [CongruenceProperty f] with respect
       to the algebra operation [f : A s1 → A s2 → ... → A (s(n+1))] if
@@ -20,9 +20,7 @@ Section congruence.
         [Φ s1 x1 y1 ∧ Φ s2 x2 y2 ∧ ... ∧ Φ sn xn yn] implies
         [Φ (s(n+1)) (f x1 x2 ... xn) (f y1 y2 ... yn)]. *)
 
-  Definition CongruenceProperty {A : Algebra σ} (Φ : ∀ s, relation (A s))
-    {w : SymbolType σ} (f : Operation A w)
-    : Type
+  Definition CongruenceProperty {w : SymbolType σ} (f : Operation A w) : Type
     := ∀ (a b : FamilyProd A (dom_symboltype w)),
        for_all_2_family_prod A A Φ a b ->
        Φ (cod_symboltype w) (ap_operation f a) (ap_operation f b).
@@ -31,10 +29,9 @@ Section congruence.
       mere equivalence relations and [Φ] has the [CongruenceProperty f]
       for all the algebra operations [f]. *)
 
-  Class IsCongruence (A : Algebra σ) (Φ : ∀ s, relation (A s))
-      {M : ∀ s, is_mere_relation (A s) (Φ s)} {E : ∀ s, Equivalence (Φ s)}
-      : Type
-      := congruence_properties : ∀ (u : Symbol σ), CongruenceProperty Φ (u^^A).
+  Class IsCongruence {M : ∀ s, is_mere_relation (A s) (Φ s)}
+      {E : ∀ s, Equivalence (Φ s)} : Type
+      := congruence_properties : ∀ (u : Symbol σ), CongruenceProperty (u^^A).
 End congruence.
 
 Arguments congruence_properties {σ} A Φ {M} {E} {IsCongruence}.
