@@ -23,7 +23,7 @@ Section closed_subalgebra.
     end.
 
   Global Instance hprop_op_closed_subalgebra `{Funext} (w : SymbolType σ)
-      (bo : Operation A w) : IsHProp (ClosedUnderOp bo).
+      (f : Operation A w) : IsHProp (ClosedUnderOp f).
   Proof. induction w; exact _. Defined.
 
   Class IsClosedUnderOps : Type :=
@@ -41,8 +41,8 @@ Section subalgebra.
   Definition carriers_subalgebra : Carriers σ := λ (s : Sort σ), {x | P s x}.
 
   Fixpoint op_subalgebra {w : SymbolType σ}
-    : ∀ (a : Operation A w),
-      ClosedUnderOp A P a → Operation carriers_subalgebra w
+    : ∀ (f : Operation A w),
+      ClosedUnderOp A P f → Operation carriers_subalgebra w
     := match w with
        | [:_:] => λ u c, (u; c)
        | _ ::: _ => λ u c x, op_subalgebra (u (pr1 x)) (c (pr1 x) (pr2 x))
@@ -74,8 +74,8 @@ Section hom_inclusion_subalgebra.
   Definition def_inclusion_subalgebra (s : Sort σ) : (A&P) s → A s := pr1.
 
   Lemma oppreserving_inclusion_subalgebra {w : SymbolType σ}
-    (ao : Operation A w) (co : ClosedUnderOp A P ao)
-    : OpPreserving def_inclusion_subalgebra (op_subalgebra A P ao co) ao.
+    (f : Operation A w) (C : ClosedUnderOp A P f)
+    : OpPreserving def_inclusion_subalgebra (op_subalgebra A P f C) f.
   Proof.
     induction w.
     - reflexivity.
@@ -98,10 +98,10 @@ Section hom_inclusion_subalgebra.
   Qed.
 
   Lemma path_ap_operation_inclusion_subalgebra
-    {w : SymbolType σ} a (ao : Operation A w) C
-    : ap_operation ao (map_family_prod hom_inclusion_subalgebra a)
+    {w : SymbolType σ} a (f : Operation A w) C
+    : ap_operation f (map_family_prod hom_inclusion_subalgebra a)
       = hom_inclusion_subalgebra (cod_symboltype w)
-          (ap_operation (op_subalgebra A P ao C) a).
+          (ap_operation (op_subalgebra A P f C) a).
   Proof.
     induction w.
     - reflexivity.

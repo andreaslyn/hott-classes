@@ -85,24 +85,23 @@ Section subquotient.
     := hexists (λ (y : (A&P) s), in_class (Φ s) x (i s y)).
 
   Lemma op_closed_subalgebra_in_subquotient {w : SymbolType σ}
-    (qo : Operation (A/Φ) w)
-    (ao : Operation A w)
-    (Q : QuotientOpProperty A Φ ao qo)
-    (C : ClosedUnderOp A P ao)
-    : ClosedUnderOp (A/Φ) in_subquotient qo.
+    (γ : Operation (A/Φ) w)
+    (α : Operation A w)
+    (Q : QuotientOpProperty A Φ α γ)
+    (C : ClosedUnderOp A P α)
+    : ClosedUnderOp (A/Φ) in_subquotient γ.
   Proof.
     induction w.
     - specialize (Q tt). simpl in Q.
       apply tr.
-      exists (ao; C).
+      exists (α; C).
       unfold i, def_inclusion_subalgebra.
       rewrite Q.
-      exact (Equivalence_Reflexive ao).
-    - refine (quotient_ind_prop (Φ t) _ _).
-      intro x.
+      exact (Equivalence_Reflexive α).
+    - refine (quotient_ind_prop (Φ t) _ _). intro x.
       refine (Trunc_rec _).
       intros [y R].
-      apply (IHw (qo (class_of (Φ t) x)) (ao (i t y))).
+      apply (IHw (γ (class_of (Φ t) x)) (α (i t y))).
       intro a.
       rewrite (related_classes_eq (Φ t) R).
       apply (Q (i t y,a)).
@@ -114,7 +113,7 @@ Section subquotient.
     : IsClosedUnderOps (A/Φ) in_subquotient.
   Proof.
     intro u.
-    apply op_closed_subalgebra_in_subquotient with (ao := u^^A).
+    eapply op_closed_subalgebra_in_subquotient.
     apply quotient_op_property_quotient_algebra.
     apply closed_subalgebra.
     exact _.
@@ -147,25 +146,24 @@ Section second_isomorphism.
          (related_classes_eq (Φ s) T)).
 
   Lemma oppreserving_second_isomorphism {w : SymbolType σ}
-    (ao : Operation A w)
-    (aqo : Operation (A/Φ) w)
-    (bqo : Operation ((A&P) / Ψ) w)
-    (CA : ClosedUnderOp (A/Φ) Q aqo)
-    (CB : ClosedUnderOp A P ao)
-    (QA : QuotientOpProperty A Φ ao aqo)
-    (QB : QuotientOpProperty (A&P) Ψ (op_subalgebra A P ao CB) bqo)
-    : OpPreserving def_second_isomorphism bqo
-        (op_subalgebra (A/Φ) Q aqo CA).
+    (α : Operation A w)
+    (γ : Operation (A/Φ) w)
+    (ζ : Operation ((A&P) / Ψ) w)
+    (CA : ClosedUnderOp (A/Φ) Q γ)
+    (CB : ClosedUnderOp A P α)
+    (QA : QuotientOpProperty A Φ α γ)
+    (QB : QuotientOpProperty (A&P) Ψ (op_subalgebra A P α CB) ζ)
+    : OpPreserving def_second_isomorphism ζ
+        (op_subalgebra (A/Φ) Q γ CA).
   Proof.
     unfold QuotientOpProperty in *.
     induction w; simpl in *.
     - apply path_sigma_hprop.
       rewrite (QB tt), (QA tt).
       by apply related_classes_eq.
-    - refine (quotient_ind_prop (Ψ t) _ _).
-      intro x.
-      apply (IHw (ao (i t x)) (aqo (class_of (Φ t) (i t x)))
-              (bqo (class_of (Ψ t) x))
+    - refine (quotient_ind_prop (Ψ t) _ _). intro x.
+      apply (IHw (α (i t x)) (γ (class_of (Φ t) (i t x)))
+              (ζ (class_of (Ψ t) x))
               (CA (class_of (Φ t) (i t x)) (tr (x; Equivalence_Reflexive x)))
               (CB (i t x) x.2)).
       + intro a. exact (QA (i t x, a)).
@@ -187,10 +185,8 @@ Section second_isomorphism.
   Global Instance injection_second_isomorphism (s : Sort σ)
     : Injective (hom_second_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (Ψ s) _ _).
-    intro x.
-    refine (quotient_ind_prop (Ψ s) _ _).
-    intros y p.
+    refine (quotient_ind_prop (Ψ s) _ _). intro x.
+    refine (quotient_ind_prop (Ψ s) _ _). intros y p.
     apply related_classes_eq.
     exact (classes_eq_related (Φ s) (i s x) (i s y) (p..1)).
   Qed.
@@ -202,10 +198,8 @@ Section second_isomorphism.
     intros [y S].
     generalize dependent S.
     generalize dependent y.
-    refine (quotient_ind_prop (Φ s) _ _).
-    intros y S.
-    refine (Trunc_rec _ S).
-    intros [y' S'].
+    refine (quotient_ind_prop (Φ s) _ _). intros y S.
+    refine (Trunc_rec _ S). intros [y' S'].
     apply tr.
     exists (class_of _ y').
     apply path_sigma_hprop.

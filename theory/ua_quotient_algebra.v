@@ -71,7 +71,7 @@ Section quotient_algebra.
          ap_operation g (map_family_prod (λ s, class_of (Φ s)) a) =
            class_of (Φ (cod_symboltype w)) (ap_operation f a).
 
-  Lemma op_quotient_algebra_unique `{Funext}
+  Lemma op_quotient_algebra_well_def `{Funext}
     (q : ∀ (w : SymbolType σ) (f : Operation A w),
          CongruenceProperty A Φ f →
          ∃ g : Operation carriers_quotient_algebra w, QuotientOpProperty f g)
@@ -105,7 +105,7 @@ Section quotient_algebra.
         (quotient_rec (Φ s)
           (λ (x : A s),
             (op_quotient_algebra _ w' (f x) (congruence_property_cons f x P)).1)
-          (op_quotient_algebra_unique (op_quotient_algebra _) s w' f P)
+          (op_quotient_algebra_well_def (op_quotient_algebra _) s w' f P)
         ; _)
       end
     ).
@@ -128,8 +128,8 @@ Section quotient_algebra.
 End quotient_algebra.
 
 Module quotient_algebra_notations.
-  Global Notation "A / Φ" := (QuotientAlgebra A Φ) (at level 40, left associativity)
-    : Algebra_scope.
+  Global Notation "A / Φ" := (QuotientAlgebra A Φ)
+                             (at level 40, left associativity) : Algebra_scope.
 End quotient_algebra_notations.
 
 Import quotient_algebra_notations.
@@ -154,9 +154,9 @@ Section hom_quotient.
     λ s x, class_of (Φ s) x.
 
   Lemma oppreserving_quotient `{Funext} (w : SymbolType σ)
-      (g : Operation (A/Φ) w) (ao : Operation A w)
-      (G : QuotientOpProperty A Φ ao g)
-      : OpPreserving def_quotient ao g.
+      (g : Operation (A/Φ) w) (α : Operation A w)
+      (G : QuotientOpProperty A Φ α g)
+      : OpPreserving def_quotient α g.
     unfold QuotientOpProperty in G.
     induction w; simpl in *.
     - rewrite (G tt). reflexivity.
@@ -206,16 +206,15 @@ Section ump_quotient_algebra.
 
     Lemma ump_quotient_algebra_mapout_preservation {w : SymbolType σ}
         (g : Operation (A/Φ) w)
-        (ao : Operation A w) (bo : Operation B w)
-        (G : QuotientOpProperty A Φ ao g) (P : OpPreserving f ao bo)
-        : OpPreserving def_ump_quotient_algebra_mapout g bo.
+        (α : Operation A w) (β : Operation B w)
+        (G : QuotientOpProperty A Φ α g) (P : OpPreserving f α β)
+        : OpPreserving def_ump_quotient_algebra_mapout g β.
     Proof.
       unfold QuotientOpProperty in G.
       induction w; simpl in *.
       - rewrite (G tt). apply P.
-      - refine (quotient_ind_prop (Φ t) _ _).
-        intro x.
-        apply (IHw (g (class_of (Φ t) x)) (ao x) (bo (f t x))).
+      - refine (quotient_ind_prop (Φ t) _ _). intro x.
+        apply (IHw (g (class_of (Φ t) x)) (α x) (β (f t x))).
         + intro a. apply (G (x,a)).
         + apply P.
     Qed.

@@ -42,12 +42,12 @@ Section hom_projection_prod_algebra.
     := c i.
 
   Lemma oppreserving_projection_prod_algebra {w : SymbolType σ} (i : I)
-    (v : ∀ i : I, Operation (A i) w) (ao : Operation (A i) w) (P : v i = ao)
-    : OpPreserving (def_projection_prod_algebra i) (op_prod_algebra I A w v) ao.
+    (v : ∀ i : I, Operation (A i) w) (α : Operation (A i) w) (P : v i = α)
+    : OpPreserving (def_projection_prod_algebra i) (op_prod_algebra I A w v) α.
   Proof.
     induction w.
     - exact P.
-    - intro p. apply (IHw (λ i, v i (p i)) (ao (p i))). exact (apD10 P (p i)).
+    - intro p. apply (IHw (λ i, v i (p i)) (α (p i))). exact (apD10 P (p i)).
   Qed.
 
   Global Instance is_homomorphism_projection_prod_algebra (i:I)
@@ -79,10 +79,10 @@ Section ump_prod_algebra.
 
   Lemma oppreserving_ump_prod_algebra_mapin {w : SymbolType σ}
     (f : ∀ (i:I), Homomorphism X (A i))
-    (xo : Operation X w) (ao : ∀ (i:I), Operation (A i) w)
-    (P : ∀ (i:I), OpPreserving (f i) xo (ao i))
+    (xo : Operation X w) (α : ∀ (i:I), Operation (A i) w)
+    (P : ∀ (i:I), OpPreserving (f i) xo (α i))
     : OpPreserving (def_ump_prod_algebra_mapin f) xo
-        (op_prod_algebra I A w (λ i : I, ao i)).
+        (op_prod_algebra I A w (λ i : I, α i)).
   Proof.
     induction w.
     - funext i. apply P.

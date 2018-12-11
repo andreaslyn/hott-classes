@@ -32,9 +32,9 @@ Record Signature : Type := Build
 
 Global Coercion symbol_types : Signature >-> Funclass.
 
-Definition BuildSingleSorted {Op : Type} (arities : Op → nat)
+Definition BuildSingleSortedSignature {Op : Type} (arities : Op → nat)
   : Signature
-  := Build Unit Op (ne_list.replicate_Sn tt o arities).
+  := Build Unit Op (ne_list.replicate_Sn tt ∘ arities).
 
 Definition SymbolType (σ : Signature) : Type := SymbolType_internal (Sort σ).
 
@@ -42,7 +42,7 @@ Definition cod_symboltype {σ} : SymbolType σ → Sort σ := ne_list.last.
 
 Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ) := ne_list.front.
 
-Definition arity_symboltype {σ} : SymbolType σ → nat := length o dom_symboltype.
+Definition arity_symboltype {σ} : SymbolType σ → nat := length ∘ dom_symboltype.
 
 Notation Carriers := (λ (σ : Signature), Sort σ → Type).
 
@@ -66,7 +66,7 @@ Defined.
 Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
     : Operation A w → FamilyProd A (dom_symboltype w) → A (cod_symboltype w)
     := match w with
-       | [:s:] => λ a _, a
+       | [:s:] => λ f _, f
        | s ::: w' => λ f '(x, l), ap_operation (f x) l
        end.
 
@@ -77,17 +77,16 @@ Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
     for all [(x1,x2,...,xn) : A s1 * A s2 * ... A sn], then [f = g].
 *)
 
-Fixpoint path_forall_ap_operation `{Funext} {σ} {A : Carriers σ}
-    {w : SymbolType σ}
-    : ∀ (f g : Operation A w),
-      (∀ a : FamilyProd A (dom_symboltype w),
-       ap_operation f a = ap_operation g a) -> f = g
-:= match w with
-   | [:s:] => λ f g h, h tt
-   | s ::: w' =>
-       λ f g h, path_forall f g
-                  (λ x, path_forall_ap_operation (f x) (g x) (λ a, h (x,a)))
-   end.
+Fixpoint path_forall_ap_operation `{Funext} {σ} {A : Carriers σ} {w : SymbolType σ}
+  : ∀ (f g : Operation A w),
+    (∀ a : FamilyProd A (dom_symboltype w), ap_operation f a = ap_operation g a)
+    -> f = g
+  := match w with
+     | [:s:] => λ f g h, h tt
+     | s ::: w' =>
+         λ f g h, path_forall f g
+                    (λ x, path_forall_ap_operation (f x) (g x) (λ a, h (x,a)))
+     end.
 
 Record Algebra {σ : Signature} : Type := BuildAlgebra
   { carriers : Carriers σ
@@ -95,6 +94,7 @@ Record Algebra {σ : Signature} : Type := BuildAlgebra
   ; hset_carriers_algebra : ∀ (s : Sort σ), IsHSet (carriers s) }.
 
 Arguments Algebra : clear implicits.
+
 Arguments BuildAlgebra {σ} carriers operations {hset_carriers_algebra}.
 
 Global Coercion carriers : Algebra >-> Funclass.

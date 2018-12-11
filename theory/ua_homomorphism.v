@@ -19,13 +19,13 @@ Section is_homomorphism.
   Fixpoint OpPreserving {w : SymbolType σ}
     : Operation A w → Operation B w → Type
     := match w with
-       | [:s:] => λ ao bo, f s ao = bo
-       | s ::: y => λ ao bo, ∀ (x : A s), OpPreserving (ao x) (bo (f s x))
+       | [:s:] => λ α β, f s α = β
+       | s ::: y => λ α β, ∀ (x : A s), OpPreserving (α x) (β (f s x))
        end.
 
   Global Instance hprop_oppreserving `{Funext} {w : SymbolType σ}
-    (a : Operation A w) (b : Operation B w)
-    : IsHProp (OpPreserving a b).
+    (α : Operation A w) (β : Operation B w)
+    : IsHProp (OpPreserving α β).
   Proof.
     intros. induction w; exact _.
   Defined.
@@ -64,10 +64,9 @@ Defined.
 
 Ltac change_issig_homomorphism f :=
   match type of f with
-  | @Homomorphism ?σ ?A ?B =>
-      change (@is_homomorphism_hom σ A B f)
-        with (issig_homomorphism A B f).2 in *;
-      change (@def_hom σ A B f) with (issig_homomorphism A B f).1 in *
+  | Homomorphism ?A ?B =>
+      change (is_homomorphism_hom f) with (issig_homomorphism A B f).2 in *;
+      change (def_hom f) with (issig_homomorphism A B f).1 in *
   | _ => idtac
   end.
 
@@ -111,7 +110,7 @@ Proof.
   apply set_path2.
 Defined.
 
-Section equiv_forgetful_isomorphism.
+Section equiv_carriers_isomorphism.
   Context {σ} {A B : Algebra σ} (f : Homomorphism A B) {Is : IsIsomorphism f}.
 
   Global Instance embedding_isomorphism : ∀ s, IsEmbedding (f s).
@@ -119,25 +118,25 @@ Section equiv_forgetful_isomorphism.
     intro s. apply isembedding_isinj_hset. apply Is.
   Defined.
 
-  Global Instance isequiv_forgetful_isomorphism : ∀ s, IsEquiv (f s).
+  Global Instance isequiv_carriers_isomorphism : ∀ s, IsEquiv (f s).
   Proof.
     intro s. apply isequiv_surj_emb; exact _.
   Defined.
 
-  Definition equiv_forgetful_isomorphism : ∀ s, A s <~> B s.
+  Definition equiv_carriers_isomorphism : ∀ s, A s <~> B s.
   Proof.
     intro s. rapply (BuildEquiv _ _ (f s)).
   Defined.
-End equiv_forgetful_isomorphism.
+End equiv_carriers_isomorphism.
 
 Section homomorphism_ap_operation.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
 
   Lemma path_homomorphism_ap_operation' {w : SymbolType σ}
-    (a : FamilyProd A (dom_symboltype w)) (ao : Operation A w)
-    (bo : Operation B w) (P : OpPreserving f ao bo)
-    : f (cod_symboltype w) (ap_operation ao a) =
-      ap_operation bo (map_family_prod f a).
+    (a : FamilyProd A (dom_symboltype w)) (α : Operation A w)
+    (β : Operation B w) (P : OpPreserving f α β)
+    : f (cod_symboltype w) (ap_operation α a) =
+      ap_operation β (map_family_prod f a).
   Proof.
     induction w.
     - assumption.
@@ -216,14 +215,14 @@ Section hom_compose.
   Context {σ} {A B C : Algebra σ}.
 
   Lemma oppreserving_compose {w : SymbolType σ}
-    {a : Operation A w} {b : Operation B w} {c : Operation C w}
+    {α : Operation A w} {β : Operation B w} {γ : Operation C w}
     (g : Homomorphism B C) (f : Homomorphism A B)
-    (G : OpPreserving g b c) (F : OpPreserving f a b)
-    : OpPreserving (λ s (x : A s), g s (f s x)) a c.
+    (G : OpPreserving g β γ) (F : OpPreserving f α β)
+    : OpPreserving (λ s (x : A s), g s (f s x)) α γ.
   Proof.
    induction w; simpl.
    - now rewrite F, G.
-   - intro x. now apply (IHw _ (b (f _ x))).
+   - intro x. now apply (IHw _ (β (f _ x))).
   Qed.
 
   Global Instance is_homomorphism_compose (g : Homomorphism B C)
@@ -259,19 +258,19 @@ End hom_compose.
 Section path_isomorphism.
   Context `{Univalence} {σ} {A B : Algebra σ}.
 
-  Definition path_equiv_carriers (f : ∀ (s : Sort σ), A s <~> B s)
+  Definition path_carriers_equiv (f : ∀ (s : Sort σ), A s <~> B s)
     : carriers A = carriers B
-    := path_forall A B (λ s : Sort σ, path_universe (f s)).
+    := path_forall A B (λ s, path_universe (f s)).
 
-  Lemma path_transport_carriers_equiv (f : ∀ (s : Sort σ), A s <~> B s)
-    {w : SymbolType σ} (ao : Operation A w) (bo : Operation B w)
-    (P : OpPreserving f ao bo)
-    : transport (λ s, Operation s w) (path_equiv_carriers f) ao = bo.
+  Lemma path_operations_equiv (f : ∀ (s : Sort σ), A s <~> B s)
+    {w : SymbolType σ} (α : Operation A w) (β : Operation B w)
+    (P : OpPreserving f α β)
+    : transport (λ s, Operation s w) (path_carriers_equiv f) α = β.
   Proof.
-    unfold path_equiv_carriers.
+    unfold path_carriers_equiv.
     induction w; simpl in *.
     - transport_path_forall_hammer.
-      exact (apD10 (transport_idmap_path_universe (f t)) ao @ P).
+      exact (apD10 (transport_idmap_path_universe (f t)) α @ P).
     - funext y.
       transport_path_forall_hammer.
       specialize (P ((f t)^-1 y)).
@@ -281,24 +280,22 @@ Section path_isomorphism.
       rewrite transport_const.
       rewrite (transport_path_universe_V (f t)).
       destruct (path_universe (f t)).
-      exact (IHw (ao ((f t)^-1 y)) (bo y) P).
+      exact (IHw (α ((f t)^-1 y)) (β y) P).
   Qed.
 
-  Lemma path_transport_carriers_isomorphism (f : Homomorphism A B)
+  Lemma path_operations_isomorphism (f : Homomorphism A B)
     `{!IsIsomorphism f} (u : Symbol σ)
-    : transport (λ s : Carriers σ, Operation s (σ u))
-        (path_equiv_carriers (equiv_forgetful_isomorphism f)) (u^^A) = u^^B.
+    : transport (λ C : Carriers σ, Operation C (σ u))
+        (path_carriers_equiv (equiv_carriers_isomorphism f)) (u^^A) = u^^B.
   Proof.
-    apply path_transport_carriers_equiv. apply (op_preserving f).
+    apply path_operations_equiv. apply (op_preserving f).
   Defined.
 
   Theorem path_isomorphism (f : Homomorphism A B) `{!IsIsomorphism f} : A = B.
   Proof.
     apply path_algebra.
-    exists (path_equiv_carriers (equiv_forgetful_isomorphism f)).
+    exists (path_carriers_equiv (equiv_carriers_isomorphism f)).
     funext u.
-    refine (transport (λ x : Operation B (σ u), x = u^^B)
-              (transport_forall_constant _ _ u)^
-              (path_transport_carriers_isomorphism f u)).
+    exact (transport_forall_constant _ _ u @ path_operations_isomorphism f u).
   Defined.
 End path_isomorphism.

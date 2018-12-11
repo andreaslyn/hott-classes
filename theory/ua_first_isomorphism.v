@@ -29,10 +29,10 @@ Section kernel.
   Defined.
 
   Lemma path_ker_hom_ap_operation {w : SymbolType σ}
-    (bo : Operation B w) (a b : FamilyProd A (dom_symboltype w))
+    (β : Operation B w) (a b : FamilyProd A (dom_symboltype w))
     (R : for_all_2_family_prod A A ker_hom a b)
-    : ap_operation bo (map_family_prod f a)
-      = ap_operation bo (map_family_prod f b).
+    : ap_operation β (map_family_prod f a)
+      = ap_operation β (map_family_prod f b).
   Proof.
     induction w.
     - reflexivity.
@@ -59,16 +59,15 @@ Section is_closed_under_ops_im_hom.
   Context `{Funext} {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
 
   Lemma closed_under_op_subalgebra_im_hom {w : SymbolType σ}
-    (ao : Operation A w) (bo : Operation B w) (P : OpPreserving f ao bo)
-    : ClosedUnderOp B (in_im_hom f) bo.
+    (α : Operation A w) (β : Operation B w) (P : OpPreserving f α β)
+    : ClosedUnderOp B (in_im_hom f) β.
   Proof.
     induction w.
-    - exact (tr (ao; P)).
+    - exact (tr (α; P)).
     - intro y.
-      refine (Trunc_rec _).
-      intros [x p].
-      apply (IHw (ao x)).
-      now refine (transport (λ y, OpPreserving f (ao x) (bo y)) p _).
+      refine (Trunc_rec _). intros [x p].
+      apply (IHw (α x)).
+      now refine (transport (λ y, OpPreserving f (α x) (β y)) p _).
   Defined.
 
   Global Instance is_closed_under_ops_im_hom
@@ -95,25 +94,23 @@ Section first_isomorphism.
   Defined.
 
   Lemma oppreserving_first_isomorphism {w : SymbolType σ}
-    (g : Operation (A / ker_hom f) w)
-    (ao : Operation A w) (bo : Operation B w)
-    (P : OpPreserving f ao bo)
-    (G : QuotientOpProperty A (ker_hom f) ao g)
-    : OpPreserving def_first_isomorphism g
-        (op_subalgebra B (in_im_hom f) bo
-          (closed_under_op_subalgebra_im_hom f ao bo P)).
+    (γ : Operation (A / ker_hom f) w)
+    (α : Operation A w) (β : Operation B w)
+    (P : OpPreserving f α β)
+    (G : QuotientOpProperty A (ker_hom f) α γ)
+    : OpPreserving def_first_isomorphism γ
+        (op_subalgebra B (in_im_hom f) β
+          (closed_under_op_subalgebra_im_hom f α β P)).
   Proof.
     unfold QuotientOpProperty in G.
     induction w.
     - apply path_sigma_hprop.
-      generalize dependent g.
-      refine (quotient_ind_prop (ker_hom f t) _ _).
-      intros x G.
+      generalize dependent γ.
+      refine (quotient_ind_prop (ker_hom f t) _ _). intros x G.
       rewrite <- P.
       apply (classes_eq_related (ker_hom f t) _ _ (G tt)).
-    - refine (quotient_ind_prop (ker_hom f t) _ _).
-      intro x.
-      apply (IHw (g (class_of (ker_hom f t) x)) (ao x) (bo (f t x)) (P x)).
+    - refine (quotient_ind_prop (ker_hom f t) _ _). intro x.
+      apply (IHw (γ (class_of (ker_hom f t) x)) (α x) (β (f t x)) (P x)).
       intro a.
       apply (G (x,a)).
   Qed.
@@ -133,10 +130,8 @@ Section first_isomorphism.
   Global Instance injection_first_isomorphism (s : Sort σ)
     : Injective (hom_first_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (ker_hom f s) _ _).
-    intro x.
-    refine (quotient_ind_prop (ker_hom f s) _ _).
-    intros y p.
+    refine (quotient_ind_prop (ker_hom f s) _ _). intro x.
+    refine (quotient_ind_prop (ker_hom f s) _ _). intros y p.
     apply related_classes_eq.
     exact (pr1_path p).
   Qed.
@@ -146,8 +141,7 @@ Section first_isomorphism.
   Proof.
     apply BuildIsSurjection.
     intros [x X].
-    refine (Trunc_rec _ X).
-    intros [y Y].
+    refine (Trunc_rec _ X). intros [y Y].
     apply tr.
     exists (class_of _ y).
     now apply path_sigma_hprop.
