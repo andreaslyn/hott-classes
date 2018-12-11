@@ -4,6 +4,7 @@
 ./implementations/ne_list.v
 ./implementations/family_prod.v
 
+./interfaces/relation.v
 ./interfaces/ua_algebra.v
 ./interfaces/ua_congruence.v
 

@@ -54,15 +54,15 @@ Section kernel.
     := BuildCongruence relation_ker.
 End kernel.
 
-Section subalgebra_predicate_in_image.
+Section subalgebra_predicate_in_image_hom.
   Context `{Funext} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
-  Definition def_in_image (s : Sort σ) (y : B s) : hProp
+  Definition def_in_image_hom (s : Sort σ) (y : B s) : hProp
     := merely (hfiber (f s) y).
 
-  Lemma closed_under_subalgebra_in_image {w : SymbolType σ}
+  Lemma closed_under_subalgebra_in_image_hom {w : SymbolType σ}
     (α : Operation A w) (β : Operation B w) (P : OpPreserving f α β)
-    : ClosedUnderOp B def_in_image β.
+    : ClosedUnderOp B def_in_image_hom β.
   Proof.
     induction w.
     - exact (tr (α; P)).
@@ -72,36 +72,33 @@ Section subalgebra_predicate_in_image.
       now refine (transport (λ y, OpPreserving f (α x) (β y)) p _).
   Defined.
 
-  Global Instance subalgebra_predicate_in_image
-    : IsClosedUnderOps B def_in_image.
+  Global Instance subalgebra_predicate_in_image_hom
+    : IsClosedUnderOps B def_in_image_hom.
   Proof.
-    intro u. eapply closed_under_subalgebra_in_image, f.
+    intro u. eapply closed_under_subalgebra_in_image_hom, f.
   Defined.
 
-  Definition in_image : SubalgebraPredicate B
-    := BuildSubalgebraPredicate def_in_image.
-End subalgebra_predicate_in_image.
+  Definition in_image_hom : SubalgebraPredicate B
+    := BuildSubalgebraPredicate def_in_image_hom.
+End subalgebra_predicate_in_image_hom.
 
 Section first_isomorphism.
   Context `{Univalence} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
   Definition def_first_isomorphism (s : Sort σ)
-    : (A / cong_ker f) s → (B & in_image f) s.
+    : (A / cong_ker f) s → (B & in_image_hom f) s.
   Proof.
-    refine (
-      quotient_rec (cong_ker f s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
+    refine (quotient_rec (cong_ker f s) (λ x, (f s x; tr (x; idpath))) _).
     intros x y ?.
     now apply path_sigma_hprop.
   Defined.
 
   Lemma oppreserving_first_isomorphism {w : SymbolType σ}
-    (γ : Operation (A / cong_ker f) w)
-    (α : Operation A w) (β : Operation B w)
-    (P : OpPreserving f α β)
-    (G : QuotientOpProperty A (cong_ker f) α γ)
+    (γ : Operation (A / cong_ker f) w) (α : Operation A w) (β : Operation B w)
+    (P : OpPreserving f α β) (G : QuotientOpProperty A (cong_ker f) α γ)
     : OpPreserving def_first_isomorphism γ
-        (op_subalgebra B (in_image f) β
-          (closed_under_subalgebra_in_image f α β P)).
+        (op_subalgebra B (in_image_hom f) β
+          (closed_under_subalgebra_in_image_hom f α β P)).
   Proof.
     unfold QuotientOpProperty in G.
     induction w.
@@ -125,7 +122,7 @@ Section first_isomorphism.
   Qed.
 
   Definition hom_first_isomorphism
-    : Homomorphism (A / cong_ker f) (B & in_image f)
+    : Homomorphism (A / cong_ker f) (B & in_image_hom f)
     := BuildHomomorphism def_first_isomorphism.
 
   Global Instance injection_first_isomorphism (s : Sort σ)
@@ -156,7 +153,7 @@ Section first_isomorphism.
 
   Global Existing Instance is_isomorphism_first_isomorphism.
 
-  Corollary path_first_isomorphism : A / cong_ker f = B & in_image f.
+  Corollary path_first_isomorphism : A / cong_ker f = B & in_image_hom f.
   Proof.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
@@ -168,7 +165,7 @@ Section first_surjective_isomorphism.
     (f : Homomorphism A B) {Su : ∀ s, IsSurjection (f s)}.
 
   Global Instance is_isomorphism_inclusion_first_surjective_isomorphism
-    : IsIsomorphism (hom_inclusion_subalgebra B (in_image f)).
+    : IsIsomorphism (hom_inclusion_subalgebra B (in_image_hom f)).
   Proof.
     apply is_isomorphism_inclusion_subalgebra.
     intros s y.
@@ -180,8 +177,8 @@ Section first_surjective_isomorphism.
   Qed.
 
   Definition hom_first_surjective_isomorphism : Homomorphism (A / cong_ker f) B
-  := BuildHomomorphism (λ s,
-       hom_inclusion_subalgebra B (in_image f) s ∘ hom_first_isomorphism f s).
+  := BuildHomomorphism (λ (s : Sort σ),
+      hom_inclusion_subalgebra B (in_image_hom f) s ∘ hom_first_isomorphism f s).
 
   Corollary path_first_surjective_isomorphism : (A / cong_ker f) = B.
   Proof.

@@ -6,7 +6,8 @@ Require Import
   HoTTClasses.interfaces.ua_algebra
   HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_quotient_algebra
-  HoTTClasses.theory.ua_homomorphism.
+  HoTTClasses.theory.ua_homomorphism
+  HoTTClasses.theory.ua_first_isomorphism.
 
 Import algebra_notations quotient_algebra_notations.
 
@@ -14,7 +15,7 @@ Section cong_quotient.
   Context
     `{Univalence}
     {σ : Signature}
-    (A : Algebra σ)
+    {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
     (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
@@ -76,6 +77,19 @@ Section cong_quotient.
   Definition cong_quotient : Congruence (A/Ψ)
     := BuildCongruence relation_quotient.
 
+End cong_quotient.
+
+Section third_isomorphism.
+  Context
+    `{Univalence}
+    {σ : Signature}
+    {A : Algebra σ}
+    (Φ : Congruence A)
+    (Ψ : Congruence A)
+    (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
+
+  Local Notation Θ := (cong_quotient Φ Ψ is_subrel).
+
   Lemma third_isomorphism_well_def_1 (s : Sort σ)
     (x y : A s) (P : Ψ s x y)
     : class_of (Φ s) x = class_of (Φ s) y.
@@ -84,10 +98,9 @@ Section cong_quotient.
   Defined.
 
   Lemma third_isomorphism_well_def_2 (s : Sort σ) P
-    : ∀ (x y : (A / Ψ) s),
-      cong_quotient s x y →
-      quotient_rec (Ψ s) (class_of (Φ s)) P x
-      = quotient_rec (Ψ s) (class_of (Φ s)) P y.
+    : ∀ (x y : (A/Ψ) s), Θ s x y →
+        quotient_rec (Ψ s) (class_of (Φ s)) P x
+        = quotient_rec (Ψ s) (class_of (Φ s)) P y.
   Proof.
     refine (quotient_ind_prop (Ψ s) _ _).
     intro x.
@@ -97,34 +110,30 @@ Section cong_quotient.
     exact (C x y (Equivalence_Reflexive x) (Equivalence_Reflexive y)).
   Defined.
 
-  Definition def_third_isomorphism (s : Sort σ)
-    : (A/Ψ / cong_quotient) s → (A/Φ) s
-    := quotient_rec (cong_quotient s)
+  Definition def_third_isomorphism (s : Sort σ) : (A/Ψ/Θ) s → (A/Φ) s
+    := quotient_rec (Θ s)
          (quotient_rec (Ψ s) (class_of (Φ s)) (third_isomorphism_well_def_1 s))
          (third_isomorphism_well_def_2 s _).
 
   Lemma oppreserving_third_isomorphism {w : SymbolType σ} (f : Operation A w)
-    : ∀ (α : Operation (A/Φ) w)
-        (Qα : QuotientOpProperty A Φ f α)
-        (β : Operation (A/Ψ) w)
-        (Qβ : QuotientOpProperty A Ψ f β)
-        (γ : Operation (A/Ψ / cong_quotient) w)
-        (Qγ : QuotientOpProperty (A/Ψ) cong_quotient β γ),
+    : ∀ (α : Operation (A/Φ) w) (Qα : QuotientOpProperty A Φ f α)
+        (β : Operation (A/Ψ) w) (Qβ : QuotientOpProperty A Ψ f β)
+        (γ : Operation (A/Ψ/Θ) w) (Qγ : QuotientOpProperty (A/Ψ) Θ β γ),
       OpPreserving def_third_isomorphism γ α.
   Proof.
     induction w.
     - refine (quotient_ind_prop (Φ t) _ _). intros α Qα.
       refine (quotient_ind_prop (Ψ t) _ _). intros β Qβ.
-      refine (quotient_ind_prop (cong_quotient t) _ _).
+      refine (quotient_ind_prop (Θ t) _ _).
       refine (quotient_ind_prop (Ψ t) _ _). intros γ Qγ.
       apply related_classes_eq.
       transitivity f.
-      + apply (classes_eq_related (cong_quotient t) _ _ (Qγ tt)).
+      + apply (classes_eq_related (Θ t) _ _ (Qγ tt)).
         * simpl. reflexivity.
         * apply (classes_eq_related (Ψ t)). exact (Qβ tt).
       + apply (classes_eq_related (Φ t)). symmetry. exact (Qα tt).
     - intros α Qα β Qβ γ Qγ.
-      refine (quotient_ind_prop (cong_quotient t) _ _).
+      refine (quotient_ind_prop (Θ t) _ _).
       refine (quotient_ind_prop (Ψ t) _ _).
       intro x.
       apply (IHw (f x) (α (class_of (Φ t) x)) (λ a, Qα (x,a))
@@ -141,7 +150,7 @@ Section cong_quotient.
   Qed.
 
   Definition hom_third_isomorphism
-    : Homomorphism (A/Ψ / cong_quotient) (A/Φ)
+    : Homomorphism (A/Ψ/Θ) (A/Φ)
     := BuildHomomorphism def_third_isomorphism.
 
   Global Instance surjection_third_isomorphism (s : Sort σ)
@@ -151,15 +160,15 @@ Section cong_quotient.
     refine (quotient_ind_prop (Φ s) _ _).
     intro y.
     apply tr.
-    by exists (class_of (cong_quotient s) (class_of (Ψ s) y)).
+    by exists (class_of (Θ s) (class_of (Ψ s) y)).
   Qed.
 
   Global Instance injection_third_isomorphism (s : Sort σ)
     : Injective (hom_third_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (cong_quotient s) _ _).
+    refine (quotient_ind_prop (Θ s) _ _).
     refine (quotient_ind_prop (Ψ s) _ _). intro x.
-    refine (quotient_ind_prop (cong_quotient s) _ _).
+    refine (quotient_ind_prop (Θ s) _ _).
     refine (quotient_ind_prop (Ψ s) _ _). intros y p.
     apply related_classes_eq.
     intros x' y' P Q.
@@ -178,8 +187,119 @@ Section cong_quotient.
 
   Global Existing Instance is_isomorphism_third_isomorphism.
 
-  Corollary path_third_isomorphism : A/Ψ / cong_quotient = A/Φ.
+  Corollary path_third_isomorphism : A/Ψ/Θ = A/Φ.
   Proof.
     exact (path_isomorphism hom_third_isomorphism).
   Defined.
-End cong_quotient.
+End third_isomorphism.
+
+Section third_isomorphism'.
+  Context
+    `{Univalence}
+    {σ : Signature}
+    {A : Algebra σ}
+    (Φ : Congruence A)
+    (Ψ : Congruence A)
+    (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
+
+  Definition def_third_surjection (s : Sort σ) : (A/Ψ) s → (A/Φ) s
+    := quotient_rec (Ψ s) (class_of (Φ s))
+        (third_isomorphism_well_def_1 Φ Ψ is_subrel s).
+
+  Lemma oppreserving_third_surjection {w : SymbolType σ} (f : Operation A w)
+    : ∀ (α : Operation (A/Φ) w) (Qα : QuotientOpProperty A Φ f α)
+        (β : Operation (A/Ψ) w) (Qβ : QuotientOpProperty A Ψ f β),
+      OpPreserving def_third_surjection β α.
+  Proof.
+    induction w.
+    - refine (quotient_ind_prop (Φ t) _ _). intros α Qα.
+      refine (quotient_ind_prop (Ψ t) _ _). intros β Qβ.
+      apply related_classes_eq.
+      transitivity f.
+      + apply is_subrel. apply (classes_eq_related (Ψ t)). exact (Qβ tt).
+      + apply (classes_eq_related (Φ t)). symmetry. exact (Qα tt).
+    - intros α Qα β Qβ.
+      refine (quotient_ind_prop (Ψ t) _ _).
+      intro x.
+      exact (IHw (f x) (α (class_of (Φ t) x)) (λ a, Qα (x,a))
+               (β (class_of (Ψ t) x)) (λ a, Qβ (x,a))).
+  Qed.
+
+ Global Instance is_homomorphism_third_surjection
+    : IsHomomorphism def_third_surjection.
+  Proof with apply quotient_op_property_quotient_algebra.
+    intro u.
+    eapply oppreserving_third_surjection...
+  Qed.
+
+  Definition hom_third_surjection : Homomorphism (A/Ψ) (A/Φ)
+    := BuildHomomorphism def_third_surjection.
+
+  Global Instance surjection_third_surjection (s : Sort σ)
+    : IsSurjection (hom_third_surjection s).
+  Proof.
+    apply BuildIsSurjection.
+    refine (quotient_ind_prop (Φ s) _ _).
+    intro x.
+    apply tr.
+    by exists (class_of (Ψ s) x).
+  Qed.
+
+  Local Notation Θ := (cong_quotient Φ Ψ is_subrel).
+
+  Lemma iff_third_surjection_cong_ker_quotient (s : Sort σ) (x y : (A/Ψ) s)
+    : cong_ker hom_third_surjection s x y ↔ Θ s x y.
+  Proof.
+    split; generalize dependent y; generalize dependent x;
+           refine (quotient_ind_prop (Ψ s) _ _); intro x;
+           refine (quotient_ind_prop (Ψ s) _ _); intro y.
+    - intros K x' y' Cx Cy.
+      apply is_subrel in Cx. apply is_subrel in Cy.
+      apply (classes_eq_related (Φ s)) in K.
+      transitivity x.
+      + by symmetry.
+      + by transitivity y.
+    - intro T.
+      apply related_classes_eq.
+      exact (T x y (Equivalence_Reflexive x) (Equivalence_Reflexive y)).
+  Qed.
+
+  Lemma path_third_surjection_cong_ker_quotient
+    : cong_ker hom_third_surjection = Θ.
+  Proof.
+    apply path_congruence; try exact _.
+    exact iff_third_surjection_cong_ker_quotient.
+  Qed.
+
+  Definition hom_third_isomorphism' : Homomorphism (A/Ψ/Θ) (A/Φ)
+    := transport (λ C, Homomorphism (A/Ψ/C) (A/Φ))
+          path_third_surjection_cong_ker_quotient
+          (hom_first_surjective_isomorphism hom_third_surjection).
+
+  Theorem is_isomorphism_third_isomorphism'
+    : IsIsomorphism hom_third_isomorphism'.
+  Proof.
+    unfold hom_third_isomorphism'.
+    destruct path_third_surjection_cong_ker_quotient.
+    exact _.
+  Qed.
+
+  Global Existing Instance is_isomorphism_third_isomorphism'.
+
+  Corollary path_third_isomorphism' : A/Ψ/Θ = A/Φ.
+  Proof.
+    exact (path_isomorphism hom_third_isomorphism').
+  Defined.
+
+  Lemma path_hom_third_isomorphisms
+    : hom_third_isomorphism Φ Ψ is_subrel = hom_third_isomorphism'.
+  Proof.
+    apply path_homomorphism.
+    funext s x.
+    generalize dependent x.
+    refine (quotient_ind_prop (Θ s) _ _).
+    refine (quotient_ind_prop (Ψ s) _ _). intro x.
+    unfold hom_third_isomorphism'.
+    by induction path_third_surjection_cong_ker_quotient.
+  Qed.
+End third_isomorphism'.

@@ -8,7 +8,8 @@ Require Import
   HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_homomorphism
   HoTTClasses.theory.ua_subalgebra
-  HoTTClasses.theory.ua_quotient_algebra.
+  HoTTClasses.theory.ua_quotient_algebra
+  HoTTClasses.theory.ua_first_isomorphism.
 
 Import algebra_notations quotient_algebra_notations subalgebra_notations.
 
@@ -17,7 +18,7 @@ Local Notation i := (def_inclusion_subalgebra _ _).
 Section cong_trace.
   Context
     {σ : Signature}
-    (A : Algebra σ)
+    {A : Algebra σ}
     (P : SubalgebraPredicate A)
     (Φ : Congruence A).
 
@@ -29,13 +30,10 @@ Section cong_trace.
   Proof.
     unfold relation_trace.
     constructor.
-    - intros [y Y].
-      apply Equivalence_Reflexive.
-    - intros [y1 Y1] [y2 Y2] S.
-      apply Equivalence_Symmetric. assumption.
-    - intros [y1 Y1] [y2 Y2] [y3 Y3] S T.
-      apply (Equivalence_Transitive _ _ _ S T).
-  Defined.
+    - intros [y Y]. reflexivity.
+    - intros [y1 Y1] [y2 Y2] S. by symmetry.
+    - intros [y1 Y1] [y2 Y2] [y3 Y3] S T. by transitivity y2.
+  Qed.
 
   Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
     (a b : FamilyProd (A&P) (dom_symboltype w))
@@ -47,7 +45,7 @@ Section cong_trace.
     destruct a as [x a], b as [y b], R as [C R].
     split...
     apply IHw...
-  Defined.
+  Qed.
 
   Global Instance has_congruence_property_trace
     : HasCongruenceProperty (A&P) relation_trace.
@@ -59,17 +57,18 @@ Section cong_trace.
               (path_ap_operation_inclusion_subalgebra A P b (u^^A) _) _).
     apply (congruence_property Φ).
     exact (for_all_2_family_prod_trace_congruence a b R).
-  Defined.
+  Qed.
 
   Definition cong_trace : Congruence (A&P)
     := BuildCongruence relation_trace.
+
 End cong_trace.
 
 Section in_subquotient.
   Context
     `{Univalence}
     {σ : Signature}
-    (A : Algebra σ)
+    {A : Algebra σ}
     (P : SubalgebraPredicate A)
     (Φ : Congruence A).
 
@@ -119,13 +118,13 @@ Section second_isomorphism.
   Context
     `{Univalence}
     {σ : Signature}
-    (A : Algebra σ)
+    {A : Algebra σ}
     (P : SubalgebraPredicate A)
     (Φ : Congruence A).
 
-  Local Notation Ψ := (cong_trace A P Φ).
+  Local Notation Ψ := (cong_trace P Φ).
 
-  Local Notation Q := (in_subquotient A P Φ).
+  Local Notation Q := (in_subquotient P Φ).
 
   Definition def_second_isomorphism (s : Sort σ) : ((A&P) / Ψ) s → ((A/Φ) & Q) s
   := quotient_rec (Ψ s)
@@ -209,3 +208,112 @@ Section second_isomorphism.
     exact (path_isomorphism hom_second_isomorphism).
   Defined.
 End second_isomorphism.
+
+Section second_isomorphism'.
+  Context
+    `{Univalence}
+    {σ : Signature}
+    (A : Algebra σ)
+    (P : SubalgebraPredicate A)
+    (Φ : Congruence A).
+
+  Local Notation Ψ := (cong_trace P Φ).
+
+  Local Notation Q := (in_subquotient P Φ).
+
+  Definition def_second_surjection (s : Sort σ) (x : (A&P) s) : ((A/Φ) & Q) s
+    := (class_of (Φ s) (i s x); tr (x; Equivalence_Reflexive x)).
+
+  Lemma oppreserving_second_surjection {w : SymbolType σ}
+    (α : Operation A w)
+    (γ : Operation (A/Φ) w)
+    (Cγ : ClosedUnderOp (A/Φ) Q γ)
+    (Cα : ClosedUnderOp A P α)
+    (R : QuotientOpProperty A Φ α γ)
+    : OpPreserving def_second_surjection (op_subalgebra A P α Cα)
+        (op_subalgebra (A/Φ) Q γ Cγ).
+  Proof.
+    unfold QuotientOpProperty in *.
+    induction w; simpl in *.
+    - apply path_sigma_hprop. symmetry. apply (R tt).
+    - intro x.
+      by specialize (IHw (α (i t x)) (γ (class_of (Φ t) (i t x)))
+              (Cγ (class_of (Φ t) (i t x)) (tr (x; Equivalence_Reflexive x)))
+              (Cα (i t x) x.2) (λ a, R (i t x, a))).
+  Qed.
+
+  Global Instance is_homomorphism_second_surjection
+    : IsHomomorphism def_second_surjection.
+  Proof.
+    intro u.
+    apply oppreserving_second_surjection.
+    apply (quotient_op_property_quotient_algebra A).
+  Qed.
+
+  Definition hom_second_surjection : Homomorphism (A&P) ((A/Φ) & Q)
+    := BuildHomomorphism def_second_surjection.
+
+  Global Instance surjection_second_surjection (s : Sort σ)
+    : IsSurjection (hom_second_surjection s).
+  Proof.
+    apply BuildIsSurjection.
+    intros [y Y].
+    generalize dependent Y.
+    generalize dependent y.
+    refine (quotient_ind_prop (Φ s) _ _).
+    intros y Y.
+    refine (Trunc_rec _ Y).
+    intros [y' Y'].
+    apply tr.
+    exists y'.
+    apply path_sigma_hprop.
+    by apply related_classes_eq.
+  Qed.
+
+  Lemma iff_second_surjection_cong_ker_trace (s : Sort σ) (x y : (A&P) s)
+    : cong_ker hom_second_surjection s x y ↔ Ψ s x y.
+  Proof.
+    split.
+    - intro K. apply (classes_eq_related (Φ s)). apply (K..1).
+    - intro T. apply path_sigma_hprop. by apply related_classes_eq.
+  Qed.
+
+  Lemma path_second_surjection_cong_ker_trace
+    : cong_ker hom_second_surjection = Ψ.
+  Proof.
+    apply path_congruence; try exact _.
+    apply iff_second_surjection_cong_ker_trace.
+  Qed.
+
+  Definition hom_second_isomorphism' : Homomorphism ((A&P) / Ψ) ((A/Φ) & Q)
+    := transport (λ C, Homomorphism ((A&P) / C) (A/Φ & Q))
+          path_second_surjection_cong_ker_trace
+          (hom_first_surjective_isomorphism hom_second_surjection).
+
+  Theorem is_isomorphism_second_isomorphism'
+    : IsIsomorphism hom_second_isomorphism'.
+  Proof.
+    unfold hom_second_isomorphism'.
+    destruct path_second_surjection_cong_ker_trace.
+    exact _.
+  Qed.
+
+  Global Existing Instance is_isomorphism_second_isomorphism'.
+
+  Corollary path_second_isomorphism' : (A&P) / Ψ = (A/Φ) & Q.
+  Proof.
+    exact (path_isomorphism hom_second_isomorphism').
+  Defined.
+
+  Lemma path_hom_second_isomorphisms
+    : hom_second_isomorphism P Φ = hom_second_isomorphism'.
+  Proof.
+    apply path_homomorphism.
+    funext s x.
+    generalize dependent x.
+    refine (quotient_ind_prop (Ψ s) _ _). intros [x E].
+    apply path_sigma_hprop.
+    unfold hom_second_isomorphism'.
+    by induction path_second_surjection_cong_ker_trace.
+  Qed.
+End second_isomorphism'.
