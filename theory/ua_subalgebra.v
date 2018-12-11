@@ -92,10 +92,28 @@ Section hom_inclusion_subalgebra.
     := BuildHomomorphism def_inclusion_subalgebra.
 
   Global Instance injection_inclusion_subalgebra
-    : ∀ (s : Sort σ), Injective (def_inclusion_subalgebra s).
+    : ∀ (s : Sort σ), Injective (hom_inclusion_subalgebra s).
   Proof.
     intros s x y p. by apply path_sigma_hprop.
   Qed.
+
+  Lemma surjection_inclusion_subalgebra (total : ∀ s x, P s x)
+    : ∀ (s : Sort σ), IsSurjection (hom_inclusion_subalgebra s).
+  Proof.
+    intros s.
+    apply BuildIsSurjection.
+    intro y.
+    apply tr.
+    by exists (y; total s y).
+  Qed.
+
+  Lemma is_isomorphism_inclusion_subalgebra (total : ∀ s x, P s x)
+    : IsIsomorphism hom_inclusion_subalgebra.
+  Proof.
+    constructor.
+    - exact _.
+    - by apply surjection_inclusion_subalgebra.
+  Defined.
 
   Lemma path_ap_operation_inclusion_subalgebra
     {w : SymbolType σ} a (f : Operation A w) C

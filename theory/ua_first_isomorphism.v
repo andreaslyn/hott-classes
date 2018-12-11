@@ -160,3 +160,33 @@ Section first_isomorphism.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
 End first_isomorphism.
+
+Section first_surjective_isomorphism.
+  Context
+    `{Univalence}
+    {σ : Signature}
+    {A B : Algebra σ}
+    (f : Homomorphism A B)
+    {Su : ∀ s, IsSurjection (f s)}.
+
+  Global Instance is_isomorphism_inclusion_first_surjective_isomorphism
+    : IsIsomorphism (hom_inclusion_subalgebra B (in_im_hom f)).
+  Proof.
+    apply is_isomorphism_inclusion_subalgebra.
+    intros s y.
+    destruct (Su s y) as [p P].
+    refine (Trunc_rec _ p).
+    intros [y' Y'].
+    apply tr.
+    by exists y'.
+  Qed.
+
+  Definition hom_first_surjective_isomorphism : Homomorphism (A / ker_hom f) B
+  := BuildHomomorphism (λ s,
+       hom_inclusion_subalgebra B (in_im_hom f) s ∘ hom_first_isomorphism f s).
+
+  Corollary path_first_surjective_isomorphism : (A / ker_hom f) = B.
+  Proof.
+    exact (path_isomorphism hom_first_surjective_isomorphism).
+  Defined.
+End first_surjective_isomorphism.

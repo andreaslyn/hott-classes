@@ -34,15 +34,15 @@ Section quotient_congruence.
     constructor.
     - refine (quotient_ind_prop (Ψ s) _ _). intros x y z P Q.
       apply is_subrel.
-      by apply (Equivalence_Transitive y x z).
+      by transitivity x.
     - refine (quotient_ind_prop (Ψ s) _ _). intro x1.
       refine (quotient_ind_prop (Ψ s) _ _). intros x2 C y1 y2 P Q.
-      apply Equivalence_Symmetric.
+      symmetry.
       by apply C.
     - refine (quotient_ind_prop (Ψ s) _ _). intro x1.
       refine (quotient_ind_prop (Ψ s) _ _). intro x2.
       refine (quotient_ind_prop (Ψ s) _ _). intros x3 C D y1 y2 P Q.
-      apply (Equivalence_Transitive y1 x2 y2).
+      transitivity x2.
       + exact (C y1 x2 P (Equivalence_Reflexive x2)).
       + exact (D x2 y2 (Equivalence_Reflexive x2) Q).
   Defined.
@@ -72,9 +72,9 @@ Section quotient_congruence.
     rewrite (quotient_op_property_quotient_algebra A Ψ u b) in Q.
     apply is_subrel in P.
     apply is_subrel in Q.
-    apply (Equivalence_Transitive _ (ap_operation (u^^A) a)).
-    - by apply Equivalence_Symmetric.
-    - apply (Equivalence_Transitive _ (ap_operation (u^^A) b)); try assumption.
+    transitivity (ap_operation (u^^A) a).
+    - by symmetry.
+    - transitivity (ap_operation (u^^A) b); try assumption.
       apply (congruence_properties A Φ u).
       by apply for_all_quotient_congruence.
   Qed.
@@ -121,7 +121,7 @@ Section quotient_congruence.
       refine (quotient_ind_prop (quotient_congruence t) _ _).
       refine (quotient_ind_prop (Ψ t) _ _). intros γ Qγ.
       apply related_classes_eq.
-      apply (Equivalence_Transitive γ f α).
+      transitivity f.
       + apply (classes_eq_related (quotient_congruence t) _ _ (Qγ tt)).
         * simpl. reflexivity.
         * apply (classes_eq_related (Ψ t)). exact (Qβ tt).
@@ -136,10 +136,53 @@ Section quotient_congruence.
       exact (Qγ (class_of (Ψ t) x, a)).
   Qed.
 
- Global Instance ishomomorphism_third_isomorphism
+ Global Instance is_homomorphism_third_isomorphism
     : IsHomomorphism def_third_isomorphism.
   Proof with apply quotient_op_property_quotient_algebra.
     intro u.
     eapply oppreserving_third_isomorphism...
   Qed.
+
+  Definition hom_third_isomorphism
+    : Homomorphism (A/Ψ / quotient_congruence) (A/Φ)
+    := BuildHomomorphism def_third_isomorphism.
+
+  Global Instance surjection_third_isomorphism (s : Sort σ)
+    : IsSurjection (hom_third_isomorphism s).
+  Proof.
+    apply BuildIsSurjection.
+    refine (quotient_ind_prop (Φ s) _ _).
+    intro y.
+    apply tr.
+    by exists (class_of (quotient_congruence s) (class_of (Ψ s) y)).
+  Qed.
+
+  Global Instance injection_third_isomorphism (s : Sort σ)
+    : Injective (hom_third_isomorphism s).
+  Proof.
+    refine (quotient_ind_prop (quotient_congruence s) _ _).
+    refine (quotient_ind_prop (Ψ s) _ _). intro x.
+    refine (quotient_ind_prop (quotient_congruence s) _ _).
+    refine (quotient_ind_prop (Ψ s) _ _). intros y p.
+    apply related_classes_eq.
+    intros x' y' P Q.
+    apply is_subrel in P. apply is_subrel in Q.
+    apply (classes_eq_related (Φ s)) in p.
+    transitivity x.
+    - by symmetry.
+    - by transitivity y.
+  Qed.
+
+  Theorem is_isomorphism_third_isomorphism
+    : IsIsomorphism hom_third_isomorphism.
+  Proof.
+    constructor; exact _.
+  Defined.
+
+  Global Existing Instance is_isomorphism_third_isomorphism.
+
+  Corollary path_third_isomorphism : A/Ψ / quotient_congruence = A/Φ.
+  Proof.
+    exact (path_isomorphism hom_third_isomorphism).
+  Defined.
 End quotient_congruence.
