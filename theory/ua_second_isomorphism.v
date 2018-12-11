@@ -14,25 +14,20 @@ Import algebra_notations quotient_algebra_notations subalgebra_notations.
 
 Local Notation i := (def_inclusion_subalgebra _ _).
 
-Section trace_congruence.
+Section cong_trace.
   Context
     {σ : Signature}
     (A : Algebra σ)
-    (P : ∀ s, A s → Type)
-    `{!∀ s (x : A s), IsHProp (P s x)}
-    `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+    (P : SubalgebraPredicate A)
+    (Φ : Congruence A).
 
-  Definition trace_congruence (s : Sort σ) (x : (A&P) s) (y : (A&P) s) : Type
+  Definition relation_trace (s : Sort σ) (x : (A&P) s) (y : (A&P) s) : Type
     := Φ s (i s x) (i s y).
 
   Global Instance equivalence_trace_congruence (s : Sort σ)
-    : Equivalence (trace_congruence s).
+    : Equivalence (relation_trace s).
   Proof.
-    unfold trace_congruence.
+    unfold relation_trace.
     constructor.
     - intros [y Y].
       apply Equivalence_Reflexive.
@@ -44,7 +39,7 @@ Section trace_congruence.
 
   Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
     (a b : FamilyProd (A&P) (dom_symboltype w))
-    (R : for_all_2_family_prod (A&P) (A&P) trace_congruence a b)
+    (R : for_all_2_family_prod (A&P) (A&P) relation_trace a b)
     : for_all_2_family_prod A A Φ
         (map_family_prod i a) (map_family_prod i b).
   Proof with try assumption.
@@ -54,34 +49,31 @@ Section trace_congruence.
     apply IHw...
   Defined.
 
-  Global Instance congruence_trace_congruence
-    : IsCongruence (A&P) trace_congruence.
+  Global Instance has_congruence_property_trace
+    : HasCongruenceProperty (A&P) relation_trace.
   Proof.
     intros u a b R.
     refine (transport (λ X, Φ _ X (i _ (ap_operation (u ^^ A&P) b)))
               (path_ap_operation_inclusion_subalgebra A P a (u^^A) _) _).
     refine (transport (λ X, Φ _ (ap_operation (u^^A) (map_family_prod i a)) X)
               (path_ap_operation_inclusion_subalgebra A P b (u^^A) _) _).
-    apply (congruence_properties A Φ).
+    apply (congruence_property A Φ).
     exact (for_all_2_family_prod_trace_congruence a b R).
   Defined.
-End trace_congruence.
 
-Section subquotient.
+  Definition cong_trace : Congruence (A&P)
+    := BuildCongruence relation_trace.
+End cong_trace.
+
+Section in_subquotient.
   Context
     `{Univalence}
     {σ : Signature}
     (A : Algebra σ)
-    (P : ∀ s, A s → Type)
-    `{!∀ s (x : A s), IsHProp (P s x)}
-    `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+    (P : SubalgebraPredicate A)
+    (Φ : Congruence A).
 
-  Definition in_subquotient (s : Sort σ) (x : (A/Φ) s)
-    : Type
+  Definition def_in_subquotient (s : Sort σ) (x : (A/Φ) s) : hProp
     := hexists (λ (y : (A&P) s), in_class (Φ s) x (i s y)).
 
   Lemma op_closed_subalgebra_in_subquotient {w : SymbolType σ}
@@ -89,7 +81,7 @@ Section subquotient.
     (α : Operation A w)
     (Q : QuotientOpProperty A Φ α γ)
     (C : ClosedUnderOp A P α)
-    : ClosedUnderOp (A/Φ) in_subquotient γ.
+    : ClosedUnderOp (A/Φ) def_in_subquotient γ.
   Proof.
     induction w.
     - specialize (Q tt). simpl in Q.
@@ -109,31 +101,29 @@ Section subquotient.
       exact y.2.
   Qed.
 
-  Global Instance closed_subalgebra_in_subquotient
-    : IsClosedUnderOps (A/Φ) in_subquotient.
+  Global Instance is_closed_under_ops_in_subquotient
+    : IsClosedUnderOps (A/Φ) def_in_subquotient.
   Proof.
     intro u.
     eapply op_closed_subalgebra_in_subquotient.
     apply quotient_op_property_quotient_algebra.
-    apply closed_subalgebra.
+    apply is_closed_under_ops.
     exact _.
   Qed.
-End subquotient.
+
+  Definition in_subquotient : SubalgebraPredicate (A/Φ)
+    := BuildSubalgebraPredicate def_in_subquotient.
+End in_subquotient.
 
 Section second_isomorphism.
   Context
     `{Univalence}
     {σ : Signature}
     (A : Algebra σ)
-    (P : ∀ s, A s → Type)
-    `{!∀ s (x : A s), IsHProp (P s x)}
-    `{!IsClosedUnderOps A P}
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+    (P : SubalgebraPredicate A)
+    (Φ : Congruence A).
 
-  Local Notation Ψ := (trace_congruence A P Φ).
+  Local Notation Ψ := (cong_trace A P Φ).
 
   Local Notation Q := (in_subquotient A P Φ).
 

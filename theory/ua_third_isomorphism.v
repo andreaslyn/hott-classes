@@ -10,26 +10,20 @@ Require Import
 
 Import algebra_notations quotient_algebra_notations.
 
-Section quotient_congruence.
+Section cong_quotient.
   Context
     `{Univalence}
     {σ : Signature}
     (A : Algebra σ)
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}
-    (Ψ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Ψ s)}
-    `{!∀ s, Equivalence (Ψ s)}
-    `{!IsCongruence A Ψ}
+    (Φ : Congruence A)
+    (Ψ : Congruence A)
     (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
 
-  Definition quotient_congruence (s : Sort σ) (a b : (A/Ψ) s) : Type
+  Definition relation_quotient (s : Sort σ) (a b : (A/Ψ) s) : Type
     := ∀ (x y : A s), in_class (Ψ s) a x → in_class (Ψ s) b y → Φ s x y.
 
-  Global Instance equivalence_quotient_congruence (s : Sort σ)
-    : Equivalence (quotient_congruence s).
+  Global Instance equivalence_relation_quotient (s : Sort σ)
+    : Equivalence (relation_quotient s).
   Proof.
     constructor.
     - refine (quotient_ind_prop (Ψ s) _ _). intros x y z P Q.
@@ -47,8 +41,8 @@ Section quotient_congruence.
       + exact (D x2 y2 (Equivalence_Reflexive x2) Q).
   Defined.
 
-  Lemma for_all_quotient_congruence {w : list (Sort σ)} (a b : FamilyProd A w)
-    : for_all_2_family_prod (A/Ψ) (A/Ψ) quotient_congruence
+  Lemma for_all_relation_quotient {w : list (Sort σ)} (a b : FamilyProd A w)
+    : for_all_2_family_prod (A/Ψ) (A/Ψ) relation_quotient
         (map_family_prod (λ s, class_of (Ψ s)) a)
         (map_family_prod (λ s, class_of (Ψ s)) b) →
       for_all_2_family_prod A A Φ a b.
@@ -62,8 +56,8 @@ Section quotient_congruence.
       + by apply IHw.
   Defined.
 
-  Global Instance congruence_trace_congruence
-    : IsCongruence (A/Ψ) quotient_congruence.
+  Global Instance has_congruence_property_relation_quotient
+    : HasCongruenceProperty (A/Ψ) relation_quotient.
   Proof.
     intros u.
     refine (quotient_ind_prop_family_prod A Ψ _ _). intro a.
@@ -75,9 +69,12 @@ Section quotient_congruence.
     transitivity (ap_operation (u^^A) a).
     - by symmetry.
     - transitivity (ap_operation (u^^A) b); try assumption.
-      apply (congruence_properties A Φ u).
-      by apply for_all_quotient_congruence.
+      apply (congruence_property A Φ u).
+      by apply for_all_relation_quotient.
   Qed.
+
+  Definition cong_quotient : Congruence (A/Ψ)
+    := BuildCongruence relation_quotient.
 
   Lemma third_isomorphism_well_def_1 (s : Sort σ)
     (x y : A s) (P : Ψ s x y)
@@ -88,7 +85,7 @@ Section quotient_congruence.
 
   Lemma third_isomorphism_well_def_2 (s : Sort σ) P
     : ∀ (x y : (A / Ψ) s),
-      quotient_congruence s x y →
+      cong_quotient s x y →
       quotient_rec (Ψ s) (class_of (Φ s)) P x
       = quotient_rec (Ψ s) (class_of (Φ s)) P y.
   Proof.
@@ -101,8 +98,8 @@ Section quotient_congruence.
   Defined.
 
   Definition def_third_isomorphism (s : Sort σ)
-    : (A/Ψ / quotient_congruence) s → (A/Φ) s
-    := quotient_rec (quotient_congruence s)
+    : (A/Ψ / cong_quotient) s → (A/Φ) s
+    := quotient_rec (cong_quotient s)
          (quotient_rec (Ψ s) (class_of (Φ s)) (third_isomorphism_well_def_1 s))
          (third_isomorphism_well_def_2 s _).
 
@@ -111,23 +108,23 @@ Section quotient_congruence.
         (Qα : QuotientOpProperty A Φ f α)
         (β : Operation (A/Ψ) w)
         (Qβ : QuotientOpProperty A Ψ f β)
-        (γ : Operation (A/Ψ / quotient_congruence) w)
-        (Qγ : QuotientOpProperty (A/Ψ) quotient_congruence β γ),
+        (γ : Operation (A/Ψ / cong_quotient) w)
+        (Qγ : QuotientOpProperty (A/Ψ) cong_quotient β γ),
       OpPreserving def_third_isomorphism γ α.
   Proof.
     induction w.
     - refine (quotient_ind_prop (Φ t) _ _). intros α Qα.
       refine (quotient_ind_prop (Ψ t) _ _). intros β Qβ.
-      refine (quotient_ind_prop (quotient_congruence t) _ _).
+      refine (quotient_ind_prop (cong_quotient t) _ _).
       refine (quotient_ind_prop (Ψ t) _ _). intros γ Qγ.
       apply related_classes_eq.
       transitivity f.
-      + apply (classes_eq_related (quotient_congruence t) _ _ (Qγ tt)).
+      + apply (classes_eq_related (cong_quotient t) _ _ (Qγ tt)).
         * simpl. reflexivity.
         * apply (classes_eq_related (Ψ t)). exact (Qβ tt).
       + apply (classes_eq_related (Φ t)). symmetry. exact (Qα tt).
     - intros α Qα β Qβ γ Qγ.
-      refine (quotient_ind_prop (quotient_congruence t) _ _).
+      refine (quotient_ind_prop (cong_quotient t) _ _).
       refine (quotient_ind_prop (Ψ t) _ _).
       intro x.
       apply (IHw (f x) (α (class_of (Φ t) x)) (λ a, Qα (x,a))
@@ -144,7 +141,7 @@ Section quotient_congruence.
   Qed.
 
   Definition hom_third_isomorphism
-    : Homomorphism (A/Ψ / quotient_congruence) (A/Φ)
+    : Homomorphism (A/Ψ / cong_quotient) (A/Φ)
     := BuildHomomorphism def_third_isomorphism.
 
   Global Instance surjection_third_isomorphism (s : Sort σ)
@@ -154,15 +151,15 @@ Section quotient_congruence.
     refine (quotient_ind_prop (Φ s) _ _).
     intro y.
     apply tr.
-    by exists (class_of (quotient_congruence s) (class_of (Ψ s) y)).
+    by exists (class_of (cong_quotient s) (class_of (Ψ s) y)).
   Qed.
 
   Global Instance injection_third_isomorphism (s : Sort σ)
     : Injective (hom_third_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (quotient_congruence s) _ _).
+    refine (quotient_ind_prop (cong_quotient s) _ _).
     refine (quotient_ind_prop (Ψ s) _ _). intro x.
-    refine (quotient_ind_prop (quotient_congruence s) _ _).
+    refine (quotient_ind_prop (cong_quotient s) _ _).
     refine (quotient_ind_prop (Ψ s) _ _). intros y p.
     apply related_classes_eq.
     intros x' y' P Q.
@@ -181,8 +178,8 @@ Section quotient_congruence.
 
   Global Existing Instance is_isomorphism_third_isomorphism.
 
-  Corollary path_third_isomorphism : A/Ψ / quotient_congruence = A/Φ.
+  Corollary path_third_isomorphism : A/Ψ / cong_quotient = A/Φ.
   Proof.
     exact (path_isomorphism hom_third_isomorphism).
   Defined.
-End quotient_congruence.
+End cong_quotient.

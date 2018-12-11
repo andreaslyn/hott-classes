@@ -1,42 +1,69 @@
 Require Import
   Coq.Unicode.Utf8
+  HoTT.Basics.Equivalences
   HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.ua_algebra
   HoTTClasses.theory.ua_homomorphism
   HoTT.Types.Sigma
+  HoTT.Types.Record
   HoTT.Basics.Overture.
 
 Import algebra_notations ne_list.notations.
 
-Section closed_subalgebra.
-  Context
-    {σ : Signature}
-    (A : Algebra σ)
-    (P : ∀ (s : Sort σ), A s → Type)
-    `{!∀ (s : Sort σ) (x : A s), IsHProp (P s x)}.
+Section subalgebra_predicate.
+  Context {σ : Signature} (A : Algebra σ) (P : ∀ (s : Sort σ), A s → hProp).
 
   Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
     match w with
-    | [:x:] => P x
+    | [:s:] => P s
     | s ::: w' => λ (f : A s → Operation A w'),
                     ∀ (x : A s), P s x → ClosedUnderOp (f x)
     end.
 
-  Global Instance hprop_op_closed_subalgebra `{Funext} (w : SymbolType σ)
-      (f : Operation A w) : IsHProp (ClosedUnderOp f).
-  Proof. induction w; exact _. Defined.
+  Global Instance hprop_op_closed_subalgebra `{Funext}
+    {w : SymbolType σ} (f : Operation A w)
+    : IsHProp (ClosedUnderOp f).
+  Proof.
+    induction w; simpl; exact _.
+  Defined.
 
   Class IsClosedUnderOps : Type :=
-    closed_subalgebra : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
-End closed_subalgebra.
+    is_closed_under_ops : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
+End subalgebra_predicate.
+
+Arguments is_closed_under_ops {σ} A P {IsClosedUnderOps}.
+
+Section SubalgebraPredicate.
+  Context {σ : Signature} (A : Algebra σ).
+
+  Record SubalgebraPredicate : Type := BuildSubalgebraPredicate
+    { subalgebra_predicate : ∀ (s : Sort σ), A s → hProp
+    ; is_closed_under_ops_subalgebra_predicate
+        : IsClosedUnderOps A subalgebra_predicate }.
+
+  Global Existing Instance is_closed_under_ops_subalgebra_predicate.
+
+  Global Coercion subalgebra_predicate : SubalgebraPredicate >-> Funclass.
+
+  Definition SigSubalgebraPredicate : Type :=
+    { subalgebra_predicate : ∀ (s : Sort σ), A s → hProp
+    | IsClosedUnderOps A subalgebra_predicate }.
+
+  Lemma issig_subalgebra_predicate
+    : SubalgebraPredicate <~> SigSubalgebraPredicate.
+  Proof.
+    apply symmetric_equiv.
+    unfold SigSubalgebraPredicate.
+    issig BuildSubalgebraPredicate subalgebra_predicate
+            is_closed_under_ops_subalgebra_predicate.
+  Defined.
+End SubalgebraPredicate.
+
+Arguments BuildSubalgebraPredicate {σ} {A} subalgebra_predicate
+            {is_closed_under_ops_subalgebra_predicate}.
 
 Section subalgebra.
-  Context
-    {σ : Signature}
-    (A : Algebra σ)
-    (P : ∀ (s : Sort σ), A s → Type)
-    `{!∀ s (x : A s), IsHProp (P s x)}
-    `{!IsClosedUnderOps A P}.
+  Context {σ : Signature} (A : Algebra σ) (P : SubalgebraPredicate A).
 
   Definition carriers_subalgebra : Carriers σ := λ (s : Sort σ), {x | P s x}.
 
@@ -50,7 +77,7 @@ Section subalgebra.
 
   Definition ops_subalgebra (u : Symbol σ)
     : Operation carriers_subalgebra (σ u)
-    := op_subalgebra (u^^A) (closed_subalgebra A P u).
+    := op_subalgebra (u^^A) (is_closed_under_ops A P u).
   
   Definition Subalgebra : Algebra σ
     := BuildAlgebra carriers_subalgebra ops_subalgebra.
@@ -64,12 +91,7 @@ End subalgebra_notations.
 Import subalgebra_notations.
 
 Section hom_inclusion_subalgebra.
-  Context
-    {σ : Signature}
-    (A : Algebra σ)
-    (P : ∀ (s : Sort σ), A s → Type)
-    `{!∀ s (x : A s), IsHProp (P s x)}
-    `{!IsClosedUnderOps A P}.
+  Context {σ : Signature} (A : Algebra σ) (P : SubalgebraPredicate A).
 
   Definition def_inclusion_subalgebra (s : Sort σ) : (A&P) s → A s := pr1.
 

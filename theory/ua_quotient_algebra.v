@@ -18,13 +18,7 @@ Require Import
 Import algebra_notations ne_list.notations.
 
 Section quotient_algebra.
-  Context
-    {σ : Signature}
-    (A : Algebra σ)
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+  Context {σ : Signature} (A : Algebra σ) (Φ : Congruence A).
 
   (** If a congruence [Φ] satisfies the [CongruenceProperty f] for
       [f : A s1 → A s2 → ... → A (s(n+1))], then [Φ] satisfies
@@ -115,7 +109,7 @@ Section quotient_algebra.
 
   Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
     : Operation carriers_quotient_algebra (σ u)
-    := (op_quotient_algebra (u^^A) (congruence_properties A Φ u)).1.
+    := (op_quotient_algebra (u^^A) (congruence_property A Φ u)).1.
 
   Definition QuotientAlgebra `{Funext} : Algebra σ
     := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.
@@ -141,14 +135,7 @@ Import quotient_algebra_notations.
     where [class x] is the quotient algebra equivalence class of [x]. *)
 
 Section hom_quotient.
-  Context
-    `{Funext}
-    {σ : Signature}
-    (A : Algebra σ)
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation _ (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+  Context `{Funext} {σ : Signature} (A : Algebra σ) (Φ : Congruence A).
   
   Definition def_quotient : ∀ s, A s → (A/Φ) s :=
     λ s x, class_of (Φ s) x.
@@ -183,14 +170,7 @@ End hom_quotient.
     of the quotient algebra. *)
 
 Section ump_quotient_algebra.
-  Context
-    `{Univalence}
-    {σ : Signature}
-    {A B : Algebra σ}
-    (Φ : ∀ s, relation (A s))
-    `{!∀ s, is_mere_relation (A s) (Φ s)}
-    `{!∀ s, Equivalence (Φ s)}
-    `{!IsCongruence A Φ}.
+  Context `{Univalence} {σ : Signature} {A B : Algebra σ} (Φ : Congruence A).
 
 (** Given a homomorphism [f : ∀ s, A s → B s] respecting the congruence [Φ],
     there is a homomorphism [g : ∀ s, carrier σ Φ s → B s] out of the quotient

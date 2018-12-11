@@ -16,13 +16,12 @@ Import algebra_notations quotient_algebra_notations subalgebra_notations.
 Section kernel.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
 
-  Definition ker_hom (s : Sort σ) : relation (A s)
+  Definition relation_ker (s : Sort σ) : relation (A s)
     := λ x y, f s x = f s y.
 
-  Global Instance equivalence_ker_hom (s : Sort σ)
-    : Equivalence (ker_hom s).
+  Global Instance equivalence_ker (s : Sort σ)
+    : Equivalence (relation_ker s).
   Proof.
-   unfold ker_hom.
    repeat constructor.
    - intros x y h. exact (h^ @ idpath).
    - intros x y z h1 h2. exact (h1 @ h2).
@@ -30,7 +29,7 @@ Section kernel.
 
   Lemma path_ker_hom_ap_operation {w : SymbolType σ}
     (β : Operation B w) (a b : FamilyProd A (dom_symboltype w))
-    (R : for_all_2_family_prod A A ker_hom a b)
+    (R : for_all_2_family_prod A A relation_ker a b)
     : ap_operation β (map_family_prod f a)
       = ap_operation β (map_family_prod f b).
   Proof.
@@ -42,25 +41,28 @@ Section kernel.
       now apply IHw.
   Qed.
 
-  Global Instance congruence_ker_hom : IsCongruence A ker_hom.
+  Global Instance has_congruence_property_ker
+    : HasCongruenceProperty A relation_ker.
   Proof.
     intros u a b R.
-    unfold ker_hom.
+    unfold relation_ker.
     repeat rewrite (path_homomorphism_ap_operation f).
     now apply path_ker_hom_ap_operation.
   Qed.
+
+  Definition cong_ker : Congruence A
+    := BuildCongruence relation_ker.
 End kernel.
 
-Definition in_im_hom {σ : Signature} {A B : Algebra σ}
-  (f : Homomorphism A B) (s : Sort σ) (y : B s) : Type
-  := merely (hfiber (f s) y).
+Section subalgebra_predicate_in_image.
+  Context `{Funext} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
-Section is_closed_under_ops_im_hom.
-  Context `{Funext} {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
+  Definition def_in_image (s : Sort σ) (y : B s) : hProp
+    := merely (hfiber (f s) y).
 
-  Lemma closed_under_op_subalgebra_im_hom {w : SymbolType σ}
+  Lemma closed_under_subalgebra_in_image {w : SymbolType σ}
     (α : Operation A w) (β : Operation B w) (P : OpPreserving f α β)
-    : ClosedUnderOp B (in_im_hom f) β.
+    : ClosedUnderOp B def_in_image β.
   Proof.
     induction w.
     - exact (tr (α; P)).
@@ -70,47 +72,46 @@ Section is_closed_under_ops_im_hom.
       now refine (transport (λ y, OpPreserving f (α x) (β y)) p _).
   Defined.
 
-  Global Instance is_closed_under_ops_im_hom
-    : IsClosedUnderOps B (in_im_hom f).
+  Global Instance subalgebra_predicate_in_image
+    : IsClosedUnderOps B def_in_image.
   Proof.
-    intro u. eapply closed_under_op_subalgebra_im_hom, f.
+    intro u. eapply closed_under_subalgebra_in_image, f.
   Defined.
-End is_closed_under_ops_im_hom.
+
+  Definition in_image : SubalgebraPredicate B
+    := BuildSubalgebraPredicate def_in_image.
+End subalgebra_predicate_in_image.
 
 Section first_isomorphism.
-  Context
-    `{Univalence}
-    {σ : Signature}
-    {A B : Algebra σ}
-    (f : Homomorphism A B).
+  Context `{Univalence} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
   Definition def_first_isomorphism (s : Sort σ)
-    : (A / ker_hom f) s → (B & in_im_hom f) s.
+    : (A / cong_ker f) s → (B & in_image f) s.
   Proof.
     refine (
-      quotient_rec (ker_hom f s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
+      quotient_rec (cong_ker f s) (λ x : A s, (f s x ; tr (x ; idpath))) _).
     intros x y ?.
     now apply path_sigma_hprop.
   Defined.
 
   Lemma oppreserving_first_isomorphism {w : SymbolType σ}
-    (γ : Operation (A / ker_hom f) w)
+    (γ : Operation (A / cong_ker f) w)
     (α : Operation A w) (β : Operation B w)
     (P : OpPreserving f α β)
-    (G : QuotientOpProperty A (ker_hom f) α γ)
+    (G : QuotientOpProperty A (cong_ker f) α γ)
     : OpPreserving def_first_isomorphism γ
-        (op_subalgebra B (in_im_hom f) β
-          (closed_under_op_subalgebra_im_hom f α β P)).
+        (op_subalgebra B (in_image f) β
+          (closed_under_subalgebra_in_image f α β P)).
   Proof.
     unfold QuotientOpProperty in G.
     induction w.
     - apply path_sigma_hprop.
       generalize dependent γ.
-      refine (quotient_ind_prop (ker_hom f t) _ _). intros x G.
+      refine (quotient_ind_prop (cong_ker f t) _ _). intros x G.
       rewrite <- P.
-      apply (classes_eq_related (ker_hom f t) _ _ (G tt)).
-    - refine (quotient_ind_prop (ker_hom f t) _ _). intro x.
-      apply (IHw (γ (class_of (ker_hom f t) x)) (α x) (β (f t x)) (P x)).
+      apply (classes_eq_related (cong_ker f t) _ _ (G tt)).
+    - refine (quotient_ind_prop (cong_ker f t) _ _). intro x.
+      apply (IHw (γ (class_of (cong_ker f t) x)) (α x) (β (f t x)) (P x)).
       intro a.
       apply (G (x,a)).
   Qed.
@@ -124,14 +125,14 @@ Section first_isomorphism.
   Qed.
 
   Definition hom_first_isomorphism
-    : Homomorphism (A / ker_hom f) (B & in_im_hom f)
+    : Homomorphism (A / cong_ker f) (B & in_image f)
     := BuildHomomorphism def_first_isomorphism.
 
   Global Instance injection_first_isomorphism (s : Sort σ)
     : Injective (hom_first_isomorphism s).
   Proof.
-    refine (quotient_ind_prop (ker_hom f s) _ _). intro x.
-    refine (quotient_ind_prop (ker_hom f s) _ _). intros y p.
+    refine (quotient_ind_prop (cong_ker f s) _ _). intro x.
+    refine (quotient_ind_prop (cong_ker f s) _ _). intros y p.
     apply related_classes_eq.
     exact (pr1_path p).
   Qed.
@@ -155,7 +156,7 @@ Section first_isomorphism.
 
   Global Existing Instance is_isomorphism_first_isomorphism.
 
-  Corollary path_first_isomorphism : A / ker_hom f = B & in_im_hom f.
+  Corollary path_first_isomorphism : A / cong_ker f = B & in_image f.
   Proof.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
@@ -163,14 +164,11 @@ End first_isomorphism.
 
 Section first_surjective_isomorphism.
   Context
-    `{Univalence}
-    {σ : Signature}
-    {A B : Algebra σ}
-    (f : Homomorphism A B)
-    {Su : ∀ s, IsSurjection (f s)}.
+    `{Univalence} {σ} {A B : Algebra σ}
+    (f : Homomorphism A B) {Su : ∀ s, IsSurjection (f s)}.
 
   Global Instance is_isomorphism_inclusion_first_surjective_isomorphism
-    : IsIsomorphism (hom_inclusion_subalgebra B (in_im_hom f)).
+    : IsIsomorphism (hom_inclusion_subalgebra B (in_image f)).
   Proof.
     apply is_isomorphism_inclusion_subalgebra.
     intros s y.
@@ -181,11 +179,11 @@ Section first_surjective_isomorphism.
     by exists y'.
   Qed.
 
-  Definition hom_first_surjective_isomorphism : Homomorphism (A / ker_hom f) B
+  Definition hom_first_surjective_isomorphism : Homomorphism (A / cong_ker f) B
   := BuildHomomorphism (λ s,
-       hom_inclusion_subalgebra B (in_im_hom f) s ∘ hom_first_isomorphism f s).
+       hom_inclusion_subalgebra B (in_image f) s ∘ hom_first_isomorphism f s).
 
-  Corollary path_first_surjective_isomorphism : (A / ker_hom f) = B.
+  Corollary path_first_surjective_isomorphism : (A / cong_ker f) = B.
   Proof.
     exact (path_isomorphism hom_first_surjective_isomorphism).
   Defined.
