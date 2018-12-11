@@ -109,7 +109,7 @@ Section quotient_algebra.
 
   Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
     : Operation carriers_quotient_algebra (σ u)
-    := (op_quotient_algebra (u^^A) (congruence_property A Φ u)).1.
+    := (op_quotient_algebra (u^^A) (congruence_property Φ u)).1.
 
   Definition QuotientAlgebra `{Funext} : Algebra σ
     := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.

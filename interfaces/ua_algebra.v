@@ -115,13 +115,9 @@ Proof.
 Defined.
 
 Ltac change_issig_algebra A :=
-  match type of A with
-  | Algebra ?σ =>
-      change (@hset_carriers_algebra σ A) with (issig_algebra A).2.2 in *;
-      change (@operations σ A) with (issig_algebra A).2.1 in *;
-      change (@carriers σ A) with (issig_algebra A).1 in *
-  | _ => idtac
-  end.
+  change (hset_carriers_algebra A) with (issig_algebra A).2.2 in *;
+  change (operations A) with (issig_algebra A).2.1 in *;
+  change (carriers A) with (issig_algebra A).1 in *.
 
 Lemma path_algebra `{Funext} {σ} (A B : Algebra σ)
   : (∃ (p : carriers A = carriers B),

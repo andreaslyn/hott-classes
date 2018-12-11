@@ -67,7 +67,7 @@ Ltac change_issig_homomorphism f :=
   | Homomorphism ?A ?B =>
       change (is_homomorphism_hom f) with (issig_homomorphism A B f).2 in *;
       change (def_hom f) with (issig_homomorphism A B f).1 in *
-  | _ => idtac
+  | _ => fail "not homomorphism"
   end.
 
 Lemma path_homomorphism `{Funext} {σ} {A B : Algebra σ}

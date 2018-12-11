@@ -57,7 +57,7 @@ Section cong_trace.
               (path_ap_operation_inclusion_subalgebra A P a (u^^A) _) _).
     refine (transport (λ X, Φ _ (ap_operation (u^^A) (map_family_prod i a)) X)
               (path_ap_operation_inclusion_subalgebra A P b (u^^A) _) _).
-    apply (congruence_property A Φ).
+    apply (congruence_property Φ).
     exact (for_all_2_family_prod_trace_congruence a b R).
   Defined.
 
@@ -107,7 +107,7 @@ Section in_subquotient.
     intro u.
     eapply op_closed_subalgebra_in_subquotient.
     apply quotient_op_property_quotient_algebra.
-    apply is_closed_under_ops.
+    apply closed_under_ops.
     exact _.
   Qed.
 

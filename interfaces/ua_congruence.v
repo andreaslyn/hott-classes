@@ -1,6 +1,7 @@
 Require Import
   Coq.Unicode.Utf8
   HoTT.Basics.Equivalences
+  HoTT.Types.Universe
   HoTT.Types.Forall
   HoTT.Types.Sigma
   HoTT.Types.Record
@@ -8,7 +9,47 @@ Require Import
   HoTT.Classes.interfaces.abstract_algebra
   HoTT.Basics.Overture.
 
+Require Import HSet.
+Require Import HProp.
+
 Import algebra_notations.
+
+Definition SigEquivalence {A:Type} (R : relation A) : Type :=
+  {_ : Reflexive R | { _ : Symmetric R | Transitive R}}.
+
+(* TODO MOVE THIS *)
+Lemma issig_equivalence {A:Type} (R : relation A)
+  : Equivalence R <~> SigEquivalence R.
+Proof.
+  apply symmetric_equiv.
+  unfold SigEquivalence.
+  issig (@Build_Equivalence A R) (@Equivalence_Reflexive A R)
+          (@Equivalence_Symmetric A R) (@Equivalence_Transitive A R).
+Defined.
+
+Ltac change_issig_equivalence E :=
+  change (Equivalence_Transitive E) with (issig_equivalence E).2.2 in *;
+  change (Equivalence_Symmetric E) with (issig_equivalence E).2.1 in *;
+  change (Equivalence_Reflexive E) with (issig_equivalence E).1 in *.
+
+Global Instance trunc_sig_equivalence `{Funext} {A : Type}
+  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
+  :  IsTrunc n (SigEquivalence R).
+Proof.
+  assert (IsTrunc n (Reflexive R)). apply trunc_forall.
+  assert (IsTrunc n (Symmetric R)). apply trunc_forall.
+  assert (IsTrunc n (Transitive R)). apply trunc_forall.
+  assert (IsTrunc n {_ : Symmetric R | Transitive R}).
+  apply trunc_sigma.
+  apply trunc_sigma.
+Qed.
+
+Global Instance trunc_equivalence `{Funext} {A : Type}
+  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
+  : IsTrunc n (Equivalence R).
+Proof.
+  exact (trunc_equiv (SigEquivalence R) (issig_equivalence R)^-1).
+Qed.
 
 (* TODO. Fix doc. *)
 Section congruence_property.
@@ -28,6 +69,13 @@ Section congruence_property.
 
   Class HasCongruenceProperty : Type
     := has_congruence_property : ∀ (u : Symbol σ), CongruenceProperty (u^^A).
+
+  Global Instance trunc_has_congruence_property `{Funext}
+    {n} `{∀ s x y, IsTrunc n (Φ s x y)}
+    : IsTrunc n HasCongruenceProperty.
+  Proof.
+    apply trunc_forall.
+  Defined.
 End congruence_property.
 
 Arguments has_congruence_property {σ} A Φ {HasCongruenceProperty}.
@@ -54,6 +102,18 @@ Section congruence.
   Global Existing Instance congruence_property.
 
   Global Coercion relation_congruence : Congruence >-> Funclass.
+End congruence.
+
+Arguments BuildCongruence {σ} {A} relation_congruence
+  {is_mere_relation_congruence} {equivalence_congruence} {congruence_property}.
+
+Arguments relation_congruence {σ} {A}.
+Arguments is_mere_relation_congruence {σ} {A}.
+Arguments equivalence_congruence {σ} {A}.
+Arguments congruence_property {σ} {A}.
+
+Section path_congruence.
+  Context {σ : Signature} (A : Algebra σ).
 
   Definition SigCongruence : Type :=
     { relation_congruence : ∀ (s : Sort σ), relation (A s)
@@ -61,14 +121,43 @@ Section congruence.
       | { _ : ∀ (s : Sort σ), Equivalence (relation_congruence s)
         | HasCongruenceProperty A relation_congruence }}}.
 
-  Lemma issig_congruence : Congruence <~> SigCongruence.
+  Lemma issig_congruence : Congruence A <~> SigCongruence.
   Proof.
     apply symmetric_equiv.
     unfold SigCongruence.
-    issig BuildCongruence relation_congruence is_mere_relation_congruence
-            equivalence_congruence congruence_property.
+    issig (@BuildCongruence σ A)
+            (@relation_congruence σ A) (@is_mere_relation_congruence σ A)
+            (@equivalence_congruence σ A) (@congruence_property σ A).
   Defined.
-End congruence.
 
-Arguments BuildCongruence {σ} {A} relation_congruence
-  {is_mere_relation_congruence} {equivalence_congruence} {congruence_property}.
+  Ltac change_issig_congruence Φ :=
+    change (congruence_property Φ) with (issig_congruence Φ).2.2.2 in *;
+    change (equivalence_congruence Φ) with (issig_congruence Φ).2.2.1 in *;
+    change (is_mere_relation_congruence Φ) with (issig_congruence Φ).2.1 in *;
+    change (relation_congruence Φ) with (issig_congruence Φ).1 in *.
+
+  Local Instance hprop_pr2_sig_congruence `{Funext} (Φ : ∀ s, relation (A s))
+    : IsHProp
+        { _ : ∀ (s : Sort σ), is_mere_relation (A s) (Φ s)
+        | { _ : ∀ (s : Sort σ), Equivalence (Φ s)
+          | HasCongruenceProperty A Φ }}.
+  Proof.
+    assert ((∀ (s : Sort σ), is_mere_relation (A s) (Φ s)) →
+             IsHProp { _ : ∀ (s : Sort σ), Equivalence (Φ s)
+                     | HasCongruenceProperty A Φ }).
+    intro M.
+    apply trunc_sigma.
+    apply trunc_sigma.
+  Qed.
+
+  Lemma path_congruence `{Univalence} (Φ Ψ : Congruence A)
+    (e : ∀ s x y, Φ s x y <-> Ψ s x y) : Φ = Ψ.
+  Proof.
+    apply (ap issig_congruence)^-1.
+    apply path_sigma_hprop.
+    simpl.
+    funext s x y.
+    pose (equiv_equiv_iff_hprop _ _ (e s x y)).
+    apply (path_universe e0).
+  Defined.
+End path_congruence.

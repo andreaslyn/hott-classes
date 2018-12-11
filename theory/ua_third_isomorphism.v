@@ -69,7 +69,7 @@ Section cong_quotient.
     transitivity (ap_operation (u^^A) a).
     - by symmetry.
     - transitivity (ap_operation (u^^A) b); try assumption.
-      apply (congruence_property A Φ u).
+      apply (congruence_property Φ u).
       by apply for_all_relation_quotient.
   Qed.
 

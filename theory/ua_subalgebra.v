@@ -28,10 +28,10 @@ Section subalgebra_predicate.
   Defined.
 
   Class IsClosedUnderOps : Type :=
-    is_closed_under_ops : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
+    closed_under_ops : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
 End subalgebra_predicate.
 
-Arguments is_closed_under_ops {σ} A P {IsClosedUnderOps}.
+Arguments closed_under_ops {σ} A P {IsClosedUnderOps}.
 
 Section SubalgebraPredicate.
   Context {σ : Signature} (A : Algebra σ).
@@ -77,7 +77,7 @@ Section subalgebra.
 
   Definition ops_subalgebra (u : Symbol σ)
     : Operation carriers_subalgebra (σ u)
-    := op_subalgebra (u^^A) (is_closed_under_ops A P u).
+    := op_subalgebra (u^^A) (closed_under_ops A P u).
   
   Definition Subalgebra : Algebra σ
     := BuildAlgebra carriers_subalgebra ops_subalgebra.
