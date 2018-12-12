@@ -270,7 +270,7 @@ Section path_isomorphism.
     unfold path_carriers_equiv.
     induction w; simpl in *.
     - transport_path_forall_hammer.
-      exact (apD10 (transport_idmap_path_universe (f t)) α @ P).
+      exact (ap10 (transport_idmap_path_universe (f t)) α @ P).
     - funext y.
       transport_path_forall_hammer.
       specialize (P ((f t)^-1 y)).

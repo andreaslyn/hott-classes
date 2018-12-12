@@ -33,7 +33,7 @@ Section cong_trace.
     - intros [y Y]. reflexivity.
     - intros [y1 Y1] [y2 Y2] S. by symmetry.
     - intros [y1 Y1] [y2 Y2] [y3 Y3] S T. by transitivity y2.
-  Qed.
+  Defined.
 
   Lemma for_all_2_family_prod_trace_congruence {w : SymbolType σ}
     (a b : FamilyProd (A&P) (dom_symboltype w))
@@ -55,7 +55,7 @@ Section cong_trace.
               (path_ap_operation_inclusion_subalgebra A P a (u^^A) _) _).
     refine (transport (λ X, Φ _ (ap_operation (u^^A) (map_family_prod i a)) X)
               (path_ap_operation_inclusion_subalgebra A P b (u^^A) _) _).
-    apply (congruence_property Φ).
+    apply (property_congruence Φ).
     exact (for_all_2_family_prod_trace_congruence a b R).
   Qed.
 
@@ -105,13 +105,14 @@ Section in_subquotient.
   Proof.
     intro u.
     eapply op_closed_subalgebra_in_subquotient.
-    apply quotient_op_property_quotient_algebra.
+    apply quotient_op_property.
     apply closed_under_ops.
     exact _.
   Qed.
 
   Definition in_subquotient : SubalgebraPredicate (A/Φ)
     := BuildSubalgebraPredicate def_in_subquotient.
+
 End in_subquotient.
 
 Section second_isomorphism.
@@ -164,8 +165,8 @@ Section second_isomorphism.
   Proof.
     intro u.
     eapply oppreserving_second_isomorphism.
-    apply (quotient_op_property_quotient_algebra A).
-    apply (quotient_op_property_quotient_algebra (A&P)).
+    apply (quotient_op_property A).
+    apply (quotient_op_property (A&P)).
   Qed.
 
   Definition hom_second_isomorphism : Homomorphism ((A&P) / Ψ) ((A/Φ) & Q)
@@ -247,7 +248,7 @@ Section second_isomorphism'.
   Proof.
     intro u.
     apply oppreserving_second_surjection.
-    apply (quotient_op_property_quotient_algebra A).
+    apply (quotient_op_property A).
   Qed.
 
   Definition hom_second_surjection : Homomorphism (A&P) ((A/Φ) & Q)
@@ -276,19 +277,19 @@ Section second_isomorphism'.
     split.
     - intro K. apply (classes_eq_related (Φ s)). apply (K..1).
     - intro T. apply path_sigma_hprop. by apply related_classes_eq.
-  Qed.
+  Defined.
 
   Lemma path_second_surjection_cong_ker_trace
     : cong_ker hom_second_surjection = Ψ.
   Proof.
     apply path_congruence; try exact _.
     apply iff_second_surjection_cong_ker_trace.
-  Qed.
+  Defined.
 
   Definition hom_second_isomorphism' : Homomorphism ((A&P) / Ψ) ((A/Φ) & Q)
     := transport (λ C, Homomorphism ((A&P) / C) (A/Φ & Q))
           path_second_surjection_cong_ker_trace
-          (hom_first_surjective_isomorphism hom_second_surjection).
+          (hom_surjective_first_isomorphism hom_second_surjection).
 
   Theorem is_isomorphism_second_isomorphism'
     : IsIsomorphism hom_second_isomorphism'.
@@ -315,5 +316,5 @@ Section second_isomorphism'.
     apply path_sigma_hprop.
     unfold hom_second_isomorphism'.
     by induction path_second_surjection_cong_ker_trace.
-  Qed.
+  Defined.
 End second_isomorphism'.

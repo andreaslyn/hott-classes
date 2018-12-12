@@ -1,12 +1,11 @@
 Require Import
   Coq.Unicode.Utf8
   HoTT.Basics.Equivalences
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.theory.ua_homomorphism
   HoTT.Types.Sigma
   HoTT.Types.Record
-  HoTT.Basics.Overture.
+  HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.interfaces.ua_algebra
+  HoTTClasses.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
 
@@ -129,13 +128,13 @@ Section hom_inclusion_subalgebra.
     by exists (y; total s y).
   Qed.
 
-  Lemma is_isomorphism_inclusion_subalgebra (total : ∀ s x, P s x)
+  Lemma is_isomorphism_inclusion_subalgebra (total : ∀ s (x : A s), P s x)
     : IsIsomorphism hom_inclusion_subalgebra.
   Proof.
     constructor.
     - exact _.
     - by apply surjection_inclusion_subalgebra.
-  Defined.
+  Qed.
 
   Lemma path_ap_operation_inclusion_subalgebra
     {w : SymbolType σ} a (f : Operation A w) C

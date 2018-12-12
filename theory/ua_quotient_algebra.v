@@ -1,19 +1,19 @@
 Require Import
   Coq.Unicode.Utf8
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.ua_congruence
-  HoTTClasses.theory.ua_homomorphism
-  HoTTClasses.theory.ua_subalgebra
-  HoTT.HIT.quotient
+  HoTT.Basics.Equivalences
   HoTT.Types.Arrow
   HoTT.Types.Forall
-  HoTT.Classes.implementations.list
-  HoTT.Spaces.Nat
-  HoTT.Basics.Equivalences
   HoTT.Types.Sigma
   HoTT.Types.Universe
-  HoTT.Basics.Overture.
+  HoTT.Spaces.Nat
+  HoTT.HIT.quotient
+  HoTT.Classes.implementations.list
+  HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.interfaces.ua_algebra
+  HoTTClasses.interfaces.relation
+  HoTTClasses.interfaces.ua_congruence
+  HoTTClasses.theory.ua_homomorphism
+  HoTTClasses.theory.ua_subalgebra.
 
 Import algebra_notations ne_list.notations.
 
@@ -109,12 +109,12 @@ Section quotient_algebra.
 
   Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
     : Operation carriers_quotient_algebra (σ u)
-    := (op_quotient_algebra (u^^A) (congruence_property Φ u)).1.
+    := (op_quotient_algebra (u^^A) (property_congruence Φ u)).1.
 
   Definition QuotientAlgebra `{Funext} : Algebra σ
     := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.
 
-  Lemma quotient_op_property_quotient_algebra `{Funext} (u : Symbol σ)
+  Lemma quotient_op_property `{Funext} (u : Symbol σ)
     : QuotientOpProperty (u^^A) (operations QuotientAlgebra u).
   Proof.
     apply op_quotient_algebra.
@@ -135,7 +135,7 @@ Import quotient_algebra_notations.
     where [class x] is the quotient algebra equivalence class of [x]. *)
 
 Section hom_quotient.
-  Context `{Funext} {σ : Signature} (A : Algebra σ) (Φ : Congruence A).
+  Context `{Funext} {σ : Signature} {A : Algebra σ} (Φ : Congruence A).
   
   Definition def_quotient : ∀ s, A s → (A/Φ) s :=
     λ s x, class_of (Φ s) x.
@@ -154,7 +154,7 @@ Section hom_quotient.
     : IsHomomorphism def_quotient.
   Proof.
     intro u.
-    apply oppreserving_quotient, quotient_op_property_quotient_algebra.
+    apply oppreserving_quotient, quotient_op_property.
   Qed.
 
   Definition hom_quotient : Homomorphism A (A/Φ)
@@ -163,7 +163,7 @@ Section hom_quotient.
   Global Instance surjection_quotient : ∀ s, IsSurjection (hom_quotient s).
   Proof.
     intro s. apply quotient_surjective.
-  Defined.
+  Qed.
 End hom_quotient.
 
 (** This section develops the universal mapping property [ump_quotient_algebra]
@@ -179,12 +179,12 @@ Section ump_quotient_algebra.
   Section ump_quotient_algebra_mapout.
     Context
       (f : Homomorphism A B)
-      (R : ∀ s x y, Φ s x y → f s x = f s y).
+      (R : ∀ s, RespectsRelation (Φ s) (f s)).
 
     Definition def_ump_quotient_algebra_mapout : ∀ s, (A/Φ) s → B s
       := λ (s : Sort σ), (quotient_ump (Φ s) (BuildhSet (B s)))^-1 (f s; R s).
 
-    Lemma ump_quotient_algebra_mapout_preservation {w : SymbolType σ}
+    Lemma oppreserving_ump_quotient_algebra_mapout {w : SymbolType σ}
         (g : Operation (A/Φ) w)
         (α : Operation A w) (β : Operation B w)
         (G : QuotientOpProperty A Φ α g) (P : OpPreserving f α β)
@@ -199,12 +199,12 @@ Section ump_quotient_algebra.
         + apply P.
     Qed.
 
-    Global Instance ump_quotient_algebra_mapout_homomorphism
+    Global Instance is_homomorphism_ump_quotient_algebra_mapout
       : IsHomomorphism def_ump_quotient_algebra_mapout.
     Proof.
       intro u.
-      eapply ump_quotient_algebra_mapout_preservation.
-      - apply quotient_op_property_quotient_algebra.
+      eapply oppreserving_ump_quotient_algebra_mapout.
+      - apply quotient_op_property.
       - apply f.
     Qed.
 
@@ -219,10 +219,12 @@ Section ump_quotient_algebra.
 
         where [class x] is the quotient algebra equivalence class of [x]. *)
 
-    Lemma ump_quotient_algebra_mapout_compute
+    Lemma compute_ump_quotient_algebra_mapout
       : ∀ s (x : A s),
         hom_ump_quotient_algebra_mapout s (class_of (Φ s) x) = f s x.
-    Proof. reflexivity. Defined.
+    Proof.
+      reflexivity.
+    Defined.
 
   End ump_quotient_algebra_mapout.
 
@@ -232,14 +234,14 @@ Section ump_quotient_algebra.
 
   Definition hom_ump_quotient_algebra_factoring (g : Homomorphism (A/Φ) B)
     : Homomorphism A B
-    := BuildHomomorphism (λ s, g s ∘ hom_quotient A Φ s).
+    := BuildHomomorphism (λ s, g s ∘ hom_quotient Φ s).
 
   (** The left to right direction of the quotient algebra universal mapping
       property [ump_quotient_algebra]. The resulting homomorphism [g] is given by
       the [ump_quotient_algebra_mapout] above. *)
 
   Lemma ump_quotient_algebra_rl :
-    (∃ (f : Homomorphism A B), ∀ s x y, Φ s x y → f s x = f s y) →
+    (∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s)) →
     Homomorphism (A/Φ) B.
   Proof.
     intros [f P].
@@ -254,7 +256,7 @@ Section ump_quotient_algebra.
 
   Lemma ump_quotient_algebra_lr :
     Homomorphism (A/Φ) B →
-    ∃ (f : Homomorphism A B), ∀ s x y, Φ s x y → f s x = f s y.
+    ∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s).
   Proof.
     intro g.
     refine ((hom_ump_quotient_algebra_factoring g ; _)).
@@ -273,7 +275,7 @@ Section ump_quotient_algebra.
   Lemma ump_quotient_algebra
     : Homomorphism (A/Φ) B
      <~>
-      ∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y.
+      ∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s).
   Proof.
     apply (equiv_adjointify ump_quotient_algebra_lr ump_quotient_algebra_rl).
     - intros F.

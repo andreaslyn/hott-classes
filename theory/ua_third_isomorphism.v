@@ -55,7 +55,7 @@ Section cong_quotient.
       split.
       + apply Q; simpl; reflexivity.
       + by apply IHw.
-  Defined.
+  Qed.
 
   Global Instance has_congruence_property_relation_quotient
     : HasCongruenceProperty (A/Ψ) relation_quotient.
@@ -63,14 +63,14 @@ Section cong_quotient.
     intros u.
     refine (quotient_ind_prop_family_prod A Ψ _ _). intro a.
     refine (quotient_ind_prop_family_prod A Ψ _ _). intros b R x y P Q.
-    rewrite (quotient_op_property_quotient_algebra A Ψ u a) in P.
-    rewrite (quotient_op_property_quotient_algebra A Ψ u b) in Q.
+    rewrite (quotient_op_property A Ψ u a) in P.
+    rewrite (quotient_op_property A Ψ u b) in Q.
     apply is_subrel in P.
     apply is_subrel in Q.
     transitivity (ap_operation (u^^A) a).
     - by symmetry.
     - transitivity (ap_operation (u^^A) b); try assumption.
-      apply (congruence_property Φ u).
+      apply (property_congruence Φ u).
       by apply for_all_relation_quotient.
   Qed.
 
@@ -144,7 +144,7 @@ Section third_isomorphism.
 
  Global Instance is_homomorphism_third_isomorphism
     : IsHomomorphism def_third_isomorphism.
-  Proof with apply quotient_op_property_quotient_algebra.
+  Proof with apply quotient_op_property.
     intro u.
     eapply oppreserving_third_isomorphism...
   Qed.
@@ -183,7 +183,7 @@ Section third_isomorphism.
     : IsIsomorphism hom_third_isomorphism.
   Proof.
     constructor; exact _.
-  Defined.
+  Qed.
 
   Global Existing Instance is_isomorphism_third_isomorphism.
 
@@ -227,7 +227,7 @@ Section third_isomorphism'.
 
  Global Instance is_homomorphism_third_surjection
     : IsHomomorphism def_third_surjection.
-  Proof with apply quotient_op_property_quotient_algebra.
+  Proof with apply quotient_op_property.
     intro u.
     eapply oppreserving_third_surjection...
   Qed.
@@ -262,19 +262,19 @@ Section third_isomorphism'.
     - intro T.
       apply related_classes_eq.
       exact (T x y (Equivalence_Reflexive x) (Equivalence_Reflexive y)).
-  Qed.
+  Defined.
 
   Lemma path_third_surjection_cong_ker_quotient
     : cong_ker hom_third_surjection = Θ.
   Proof.
     apply path_congruence; try exact _.
     exact iff_third_surjection_cong_ker_quotient.
-  Qed.
+  Defined.
 
   Definition hom_third_isomorphism' : Homomorphism (A/Ψ/Θ) (A/Φ)
     := transport (λ C, Homomorphism (A/Ψ/C) (A/Φ))
           path_third_surjection_cong_ker_quotient
-          (hom_first_surjective_isomorphism hom_third_surjection).
+          (hom_surjective_first_isomorphism hom_third_surjection).
 
   Theorem is_isomorphism_third_isomorphism'
     : IsIsomorphism hom_third_isomorphism'.
@@ -301,5 +301,5 @@ Section third_isomorphism'.
     refine (quotient_ind_prop (Ψ s) _ _). intro x.
     unfold hom_third_isomorphism'.
     by induction path_third_surjection_cong_ker_quotient.
-  Qed.
+  Defined.
 End third_isomorphism'.

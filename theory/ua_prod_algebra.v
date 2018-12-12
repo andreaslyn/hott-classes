@@ -1,12 +1,12 @@
 Require Import
   Coq.Unicode.Utf8
-  HoTTClasses.interfaces.ua_algebra
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.theory.ua_homomorphism
   HoTT.Basics.Equivalences
   HoTT.Types.Forall
   HoTT.Types.Sigma
-  HoTT.Types.Prod.
+  HoTT.Types.Prod
+  HoTTClasses.interfaces.ua_algebra
+  HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
 
@@ -14,7 +14,7 @@ Section prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ).
 
   Definition carriers_prod_algebra : Carriers σ
-    := λ (s : Sort σ), ∀ (i : I), A i s.
+    := λ (s : Sort σ), ∀ (i:I), A i s.
 
   Fixpoint op_prod_algebra (w : SymbolType σ)
       : (∀ i, Operation (A i) w) → Operation carriers_prod_algebra w :=
@@ -47,7 +47,7 @@ Section hom_projection_prod_algebra.
   Proof.
     induction w.
     - exact P.
-    - intro p. apply (IHw (λ i, v i (p i)) (α (p i))). exact (apD10 P (p i)).
+    - intro p. apply (IHw (λ i, v i (p i)) (α (p i))). f_ap.
   Qed.
 
   Global Instance is_homomorphism_projection_prod_algebra (i:I)
@@ -66,12 +66,10 @@ Section ump_prod_algebra.
   Context
     `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ) (X : Algebra σ).
 
-  Lemma hom_ump_prod_algebra_factoring
-    : Homomorphism X (ProdAlgebra I A) → ∀ (i:I), Homomorphism X (A i).
-  Proof.
-    intros f i.
-    exact (BuildHomomorphism (λ s, hom_projection_prod_algebra I A i s ∘ f s)).
-  Defined.
+  Definition hom_ump_prod_algebra_factoring
+    (f : Homomorphism X (ProdAlgebra I A)) (i:I)
+    : Homomorphism X (A i)
+    := BuildHomomorphism (λ s, hom_projection_prod_algebra I A i s ∘ f s).
 
   Definition def_ump_prod_algebra_mapin (f : ∀ (i:I), Homomorphism X (A i))
     : ∀ (s : Sort σ) , X s → ProdAlgebra I A s
@@ -82,7 +80,7 @@ Section ump_prod_algebra.
     (xo : Operation X w) (α : ∀ (i:I), Operation (A i) w)
     (P : ∀ (i:I), OpPreserving (f i) xo (α i))
     : OpPreserving (def_ump_prod_algebra_mapin f) xo
-        (op_prod_algebra I A w (λ i : I, α i)).
+        (op_prod_algebra I A w (λ (i:I), α i)).
   Proof.
     induction w.
     - funext i. apply P.
@@ -119,10 +117,10 @@ Section bin_prod_algebra.
   Definition BinProdAlgebra : Algebra σ :=
     ProdAlgebra Bool bin_prod_algebras.
 
-  Definition pr1_bin_prod_algebra : Homomorphism BinProdAlgebra A
+  Definition pr1_prod_algebra : Homomorphism BinProdAlgebra A
     := hom_projection_prod_algebra Bool bin_prod_algebras false.
 
-  Definition pr2_bin_prod_algebra : Homomorphism BinProdAlgebra B
+  Definition pr2_prod_algebra : Homomorphism BinProdAlgebra B
     := hom_projection_prod_algebra Bool bin_prod_algebras true.
 End bin_prod_algebra.
 

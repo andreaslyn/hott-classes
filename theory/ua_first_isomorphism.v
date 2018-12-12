@@ -17,7 +17,7 @@ Section kernel.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
 
   Definition relation_ker (s : Sort σ) : relation (A s)
-    := λ x y, f s x = f s y.
+    := λ (x y : A s), f s x = f s y.
 
   Global Instance equivalence_ker (s : Sort σ)
     : Equivalence (relation_ker s).
@@ -52,6 +52,7 @@ Section kernel.
 
   Definition cong_ker : Congruence A
     := BuildCongruence relation_ker.
+
 End kernel.
 
 Section subalgebra_predicate_in_image_hom.
@@ -80,6 +81,7 @@ Section subalgebra_predicate_in_image_hom.
 
   Definition in_image_hom : SubalgebraPredicate B
     := BuildSubalgebraPredicate def_in_image_hom.
+
 End subalgebra_predicate_in_image_hom.
 
 Section first_isomorphism.
@@ -118,7 +120,7 @@ Section first_isomorphism.
   Proof.
     intro u.
     apply oppreserving_first_isomorphism.
-    apply quotient_op_property_quotient_algebra.
+    apply quotient_op_property.
   Qed.
 
   Definition hom_first_isomorphism
@@ -159,12 +161,12 @@ Section first_isomorphism.
   Defined.
 End first_isomorphism.
 
-Section first_surjective_isomorphism.
+Section surjective_first_isomorphism.
   Context
     `{Univalence} {σ} {A B : Algebra σ}
     (f : Homomorphism A B) {Su : ∀ s, IsSurjection (f s)}.
 
-  Global Instance is_isomorphism_inclusion_first_surjective_isomorphism
+  Global Instance is_isomorphism_inclusion_surjective_first_isomorphism
     : IsIsomorphism (hom_inclusion_subalgebra B (in_image_hom f)).
   Proof.
     apply is_isomorphism_inclusion_subalgebra.
@@ -176,12 +178,12 @@ Section first_surjective_isomorphism.
     by exists y'.
   Qed.
 
-  Definition hom_first_surjective_isomorphism : Homomorphism (A / cong_ker f) B
+  Definition hom_surjective_first_isomorphism : Homomorphism (A / cong_ker f) B
   := BuildHomomorphism (λ (s : Sort σ),
       hom_inclusion_subalgebra B (in_image_hom f) s ∘ hom_first_isomorphism f s).
 
-  Corollary path_first_surjective_isomorphism : (A / cong_ker f) = B.
+  Corollary path_surjective_first_isomorphism : (A / cong_ker f) = B.
   Proof.
-    exact (path_isomorphism hom_first_surjective_isomorphism).
+    exact (path_isomorphism hom_surjective_first_isomorphism).
   Defined.
-End first_surjective_isomorphism.
+End surjective_first_isomorphism.

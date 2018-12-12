@@ -7,6 +7,30 @@ Require Import
   HoTT.Types.Record
   HoTT.Classes.interfaces.abstract_algebra.
 
+Definition RespectsRelation {A B : Type} (R : relation A) (f : A → B) : Type
+  := ∀ (x y : A), R x y → f x = f y.
+
+Global Instance trunc_reflexive_relation `{Funext} {A : Type}
+  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
+  :  IsTrunc n (Reflexive R).
+Proof.
+  apply trunc_forall.
+Defined.
+
+Global Instance trunc_symmetric_relation `{Funext} {A : Type}
+  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
+  :  IsTrunc n (Symmetric R).
+Proof.
+  apply trunc_forall.
+Defined.
+
+Global Instance trunc_transitive_relation `{Funext} {A : Type}
+  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
+  :  IsTrunc n (Transitive R).
+Proof.
+  apply trunc_forall.
+Defined.
+
 Definition SigEquivalence {A:Type} (R : relation A) : Type :=
   {_ : Reflexive R | { _ : Symmetric R | Transitive R}}.
 
@@ -23,18 +47,6 @@ Ltac change_issig_equivalence E :=
   change (Equivalence_Transitive E) with (issig_equivalence E).2.2 in *;
   change (Equivalence_Symmetric E) with (issig_equivalence E).2.1 in *;
   change (Equivalence_Reflexive E) with (issig_equivalence E).1 in *.
-
-Global Instance trunc_sig_equivalence `{Funext} {A : Type}
-  (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
-  :  IsTrunc n (SigEquivalence R).
-Proof.
-  assert (IsTrunc n (Reflexive R)). apply trunc_forall.
-  assert (IsTrunc n (Symmetric R)). apply trunc_forall.
-  assert (IsTrunc n (Transitive R)). apply trunc_forall.
-  assert (IsTrunc n {_ : Symmetric R | Transitive R}).
-  apply trunc_sigma.
-  apply trunc_sigma.
-Qed.
 
 Global Instance trunc_equivalence `{Funext} {A : Type}
   (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}

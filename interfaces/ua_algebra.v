@@ -126,8 +126,7 @@ Lemma path_algebra `{Funext} {σ} (A B : Algebra σ)
 Proof.
   intros [p q].
   apply ((ap issig_algebra)^-1).
-  change_issig_algebra A.
-  change_issig_algebra B.
+  change_issig_algebra A. change_issig_algebra B.
   refine (path_sigma _ _ _ p _).
   apply path_sigma_hprop.
   by path_induction.
