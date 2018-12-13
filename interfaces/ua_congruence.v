@@ -1,5 +1,4 @@
 Require Import
-  Coq.Unicode.Utf8
   HoTT.Basics.Equivalences
   HoTT.HProp
   HoTT.Types.Universe
@@ -48,12 +47,14 @@ Section congruence.
       for all the algebra operations [f]. *)
 
   Record Congruence : Type := BuildCongruence
-    { relation_congruence : ∀ (s : Sort σ), relation (A s)
+    { relation_congruence
+      : ∀ (s : Sort σ), relation (A s)
     ; is_mere_relation_congruence
-        : ∀ (s : Sort σ), is_mere_relation (A s) (relation_congruence s)
+      : ∀ (s : Sort σ), is_mere_relation (A s) (relation_congruence s)
     ; equivalence_congruence
-        : ∀ (s : Sort σ), Equivalence (relation_congruence s)
-    ; property_congruence : HasCongruenceProperty A relation_congruence }.
+      : ∀ (s : Sort σ), Equivalence (relation_congruence s)
+    ; property_congruence
+      : HasCongruenceProperty A relation_congruence }.
 
   Global Existing Instance is_mere_relation_congruence.
 

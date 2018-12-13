@@ -1,5 +1,4 @@
 Require Import
-  Coq.Unicode.Utf8
   HoTT.Types.Universe
   HoTT.HIT.quotient
   HoTT.Classes.interfaces.abstract_algebra

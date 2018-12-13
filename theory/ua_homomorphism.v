@@ -1,15 +1,14 @@
 Require Import
-  Coq.Unicode.Utf8
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
   HoTT.Basics.Equivalences
-  HoTT.Types.Forall
-  HoTT.HSet
-  HoTT.Types.Universe
   HoTT.Basics.PathGroupoids
-  HoTT.Tactics
+  HoTT.Types.Forall
+  HoTT.Types.Universe
   HoTT.Types.Record
-  HoTT.Types.Sigma.
+  HoTT.Types.Sigma
+  HoTT.HSet
+  HoTT.Tactics
+  HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.interfaces.ua_algebra.
 
 Import algebra_notations ne_list.notations.
 

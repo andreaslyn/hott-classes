@@ -1,5 +1,4 @@
 Require Import
-  Coq.Unicode.Utf8
   HoTT.Basics.Equivalences
   HoTT.Types.Sigma
   HoTT.Types.Record

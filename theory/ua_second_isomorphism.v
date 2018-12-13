@@ -1,5 +1,4 @@
 Require Import
-  Coq.Unicode.Utf8
   HoTT.Types.Sigma
   HoTT.Types.Universe
   HoTT.HIT.quotient
