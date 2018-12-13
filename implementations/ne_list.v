@@ -4,16 +4,24 @@ Require Import
   HoTT.Basics.Overture
   HoTT.Spaces.Nat.
 
-Declare Scope nel_scope.
-Delimit Scope nel_scope with ne_list.
+Declare Scope ne_list_scope.
+
+Delimit Scope ne_list_scope with ne_list.
+
+Open Scope ne_list_scope.
 
 (** Nonempty list implementation [ne_list.ne_list]. *)
+
 Module ne_list.
 
 Section with_type.
   Context {T: Type}.
 
-  Inductive ne_list: Type := one: T → ne_list | cons: T → ne_list → ne_list.
+(** A nonempty list. Below there is an implicit coercion
+    [ne_list >-> list]. *)
+
+  Inductive ne_list : Type
+    := one: T → ne_list | cons: T → ne_list → ne_list.
 
   Fixpoint app (a b: ne_list): ne_list :=
     match a with
@@ -82,8 +90,8 @@ Section with_type.
   Lemma two_level_rect (P: ne_list → Type)
     (Pone: ∀ x, P (one x))
     (Ptwo: ∀ x y, P (cons x (one y)))
-    (Pmore: ∀ x y z, P z → (∀ y', P (cons y' z)) → P (cons x (cons y z))):
-      ∀ l, P l.
+    (Pmore: ∀ x y z, P z → (∀ y', P (cons y' z)) → P (cons x (cons y z)))
+    : ∀ l, P l.
   Proof with auto.
    cut (∀ l, P l * ∀ x, P (cons x l)).
     intros. apply X.
@@ -140,7 +148,8 @@ Fixpoint inits {A} (l: ne_list A): ne_list (ne_list A) :=
   | cons h t => cons (one h) (map (cons h) (inits t))
   end.
 
-Fixpoint zip {A B: Type} (l: ne_list A) (m: ne_list B): ne_list (A * B) :=
+Fixpoint zip {A B: Type} (l: ne_list A) (m: ne_list B)
+  : ne_list (A * B) :=
   match l with
   | one a => one (a, head m)
   | cons a l =>
@@ -152,16 +161,14 @@ Fixpoint zip {A B: Type} (l: ne_list A) (m: ne_list B): ne_list (A * B) :=
 
   Module notations.
 
-    Open Scope nel_scope.
-
     Global Notation ne_list := ne_list.
 
-    Global Notation "[: x :]" := (one x) : nel_scope.
+    Global Notation "[: x :]" := (one x) : ne_list_scope.
 
     Global Notation "[: x ; .. ; y ; z :]"
-        := (cons x .. (cons y (one z)) ..) : nel_scope.
+        := (cons x .. (cons y (one z)) ..) : ne_list_scope.
 
-    Global Infix ":::" := cons (at level 60, right associativity) : nel_scope.
+    Global Infix ":::" := cons (at level 60, right associativity) : ne_list_scope.
 
   End notations.
 

@@ -16,9 +16,10 @@ Section prod_algebra.
     := λ (s : Sort σ), ∀ (i:I), A i s.
 
   Fixpoint op_prod_algebra (w : SymbolType σ)
-      : (∀ i, Operation (A i) w) → Operation carriers_prod_algebra w :=
-    match w
-      return (∀ i, Operation (A i) w) → Operation carriers_prod_algebra w
+      : (∀ i, Operation (A i) w) →
+        Operation carriers_prod_algebra w :=
+    match w return (∀ i, Operation (A i) w) →
+                   Operation carriers_prod_algebra w
     with
     | [:_:] => idmap
     | _ ::: g => λ f p, op_prod_algebra g (λ i, f i (p i))
@@ -40,9 +41,11 @@ Section hom_projection_prod_algebra.
     : A i s
     := c i.
 
-  Lemma oppreserving_projection_prod_algebra {w : SymbolType σ} (i : I)
-    (v : ∀ i : I, Operation (A i) w) (α : Operation (A i) w) (P : v i = α)
-    : OpPreserving (def_projection_prod_algebra i) (op_prod_algebra I A w v) α.
+  Lemma oppreserving_projection_prod_algebra {w : SymbolType σ}
+    (i : I) (v : ∀ i : I, Operation (A i) w) (α : Operation (A i) w)
+    (P : v i = α)
+    : OpPreserving (def_projection_prod_algebra i)
+        (op_prod_algebra I A w v) α.
   Proof.
     induction w.
     - exact P.
@@ -63,22 +66,26 @@ End hom_projection_prod_algebra.
 
 Section ump_prod_algebra.
   Context
-    `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ) (X : Algebra σ).
+    `{Funext}
+    {σ : Signature}
+    (I : Type)
+    (A : I → Algebra σ)
+    (X : Algebra σ).
 
   Definition hom_ump_prod_algebra_factoring
     (f : Homomorphism X (ProdAlgebra I A)) (i:I)
     : Homomorphism X (A i)
     := BuildHomomorphism (λ s, hom_projection_prod_algebra I A i s ∘ f s).
 
-  Definition def_ump_prod_algebra_mapin (f : ∀ (i:I), Homomorphism X (A i))
+  Definition def_ump_prod_algebra_mapin (f : ∀ i, Homomorphism X (A i))
     : ∀ (s : Sort σ) , X s → ProdAlgebra I A s
     := λ (s : Sort σ) (x : X s) (i : I), f i s x.
 
   Lemma oppreserving_ump_prod_algebra_mapin {w : SymbolType σ}
     (f : ∀ (i:I), Homomorphism X (A i))
-    (xo : Operation X w) (α : ∀ (i:I), Operation (A i) w)
-    (P : ∀ (i:I), OpPreserving (f i) xo (α i))
-    : OpPreserving (def_ump_prod_algebra_mapin f) xo
+    (α : ∀ (i:I), Operation (A i) w) (β : Operation X w)
+    (P : ∀ (i:I), OpPreserving (f i) β (α i))
+    : OpPreserving (def_ump_prod_algebra_mapin f) β
         (op_prod_algebra I A w (λ (i:I), α i)).
   Proof.
     induction w.
@@ -90,10 +97,13 @@ Section ump_prod_algebra.
     (f : ∀ (i:I), Homomorphism X (A i))
     : IsHomomorphism (def_ump_prod_algebra_mapin f).
   Proof.
-    intro u. apply oppreserving_ump_prod_algebra_mapin. intro i. apply f.
+    intro u.
+    apply oppreserving_ump_prod_algebra_mapin.
+    intro i.
+    apply f.
   Qed.
 
-  Definition hom_ump_prod_algebra_mapin (f : ∀ (i:I), Homomorphism X (A i))
+  Definition hom_ump_prod_algebra_mapin (f : ∀ i, Homomorphism X (A i))
     : Homomorphism X (ProdAlgebra I A)
     := BuildHomomorphism (def_ump_prod_algebra_mapin f).
 
@@ -138,7 +148,8 @@ Section ump_bin_prod_algebra.
    : Homomorphism X (A × B) <~> Homomorphism X A * Homomorphism X B.
   Proof.
     exact (equiv_compose
-      (equiv_bool_forall_prod (λ b, Homomorphism X (bin_prod_algebras A B b)))
-      (ump_prod_algebra Bool (bin_prod_algebras A B) X)).
+            (equiv_bool_forall_prod
+              (λ (b:Bool), Homomorphism X (bin_prod_algebras A B b)))
+            (ump_prod_algebra Bool (bin_prod_algebras A B) X)).
   Defined.
 End ump_bin_prod_algebra.

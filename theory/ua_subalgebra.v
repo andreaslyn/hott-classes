@@ -9,18 +9,18 @@ Require Import
 Import algebra_notations ne_list.notations.
 
 Section subalgebra_predicate.
-  Context {σ : Signature} (A : Algebra σ) (P : ∀ (s : Sort σ), A s → hProp).
+  Context {σ} (A : Algebra σ) (P : ∀ (s : Sort σ), A s → hProp).
 
   Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
     match w with
     | [:s:] => P s
-    | s ::: w' => λ (f : A s → Operation A w'),
-                    ∀ (x : A s), P s x → ClosedUnderOp (f x)
+    | s ::: w' => λ (α : A s → Operation A w'),
+                    ∀ (x : A s), P s x → ClosedUnderOp (α x)
     end.
 
   Global Instance hprop_op_closed_subalgebra `{Funext}
-    {w : SymbolType σ} (f : Operation A w)
-    : IsHProp (ClosedUnderOp f).
+    {w : SymbolType σ} (α : Operation A w)
+    : IsHProp (ClosedUnderOp α).
   Proof.
     induction w; simpl; exact _.
   Defined.
@@ -37,11 +37,12 @@ Section SubalgebraPredicate.
   Record SubalgebraPredicate : Type := BuildSubalgebraPredicate
     { subalgebra_predicate : ∀ (s : Sort σ), A s → hProp
     ; is_closed_under_ops_subalgebra_predicate
-        : IsClosedUnderOps A subalgebra_predicate }.
+      : IsClosedUnderOps A subalgebra_predicate }.
 
   Global Existing Instance is_closed_under_ops_subalgebra_predicate.
 
-  Global Coercion subalgebra_predicate : SubalgebraPredicate >-> Funclass.
+  Global Coercion subalgebra_predicate
+    : SubalgebraPredicate >-> Funclass.
 
   Definition SigSubalgebraPredicate : Type :=
     { subalgebra_predicate : ∀ (s : Sort σ), A s → hProp
@@ -61,16 +62,17 @@ Arguments BuildSubalgebraPredicate {σ} {A} subalgebra_predicate
             {is_closed_under_ops_subalgebra_predicate}.
 
 Section subalgebra.
-  Context {σ : Signature} (A : Algebra σ) (P : SubalgebraPredicate A).
+  Context {σ} (A : Algebra σ) (P : SubalgebraPredicate A).
 
-  Definition carriers_subalgebra : Carriers σ := λ (s : Sort σ), {x | P s x}.
+  Definition carriers_subalgebra : Carriers σ
+    := λ (s : Sort σ), {x | P s x}.
 
   Fixpoint op_subalgebra {w : SymbolType σ}
-    : ∀ (f : Operation A w),
-      ClosedUnderOp A P f → Operation carriers_subalgebra w
+    : ∀ (α : Operation A w),
+      ClosedUnderOp A P α → Operation carriers_subalgebra w
     := match w with
-       | [:_:] => λ u c, (u; c)
-       | _ ::: _ => λ u c x, op_subalgebra (u (pr1 x)) (c (pr1 x) (pr2 x))
+       | [:_:] => λ α c, (α; c)
+       | _ ::: _ => λ α c x, op_subalgebra (α x.1) (c x.1 x.2)
        end.
 
   Definition ops_subalgebra (u : Symbol σ)
@@ -89,13 +91,14 @@ End subalgebra_notations.
 Import subalgebra_notations.
 
 Section hom_inclusion_subalgebra.
-  Context {σ : Signature} (A : Algebra σ) (P : SubalgebraPredicate A).
+  Context {σ} (A : Algebra σ) (P : SubalgebraPredicate A).
 
-  Definition def_inclusion_subalgebra (s : Sort σ) : (A&P) s → A s := pr1.
+  Definition def_inclusion_subalgebra (s : Sort σ) : (A&P) s → A s
+    := pr1.
 
   Lemma oppreserving_inclusion_subalgebra {w : SymbolType σ}
-    (f : Operation A w) (C : ClosedUnderOp A P f)
-    : OpPreserving def_inclusion_subalgebra (op_subalgebra A P f C) f.
+    (α : Operation A w) (C : ClosedUnderOp A P α)
+    : OpPreserving def_inclusion_subalgebra (op_subalgebra A P α C) α.
   Proof.
     induction w.
     - reflexivity.
@@ -117,7 +120,7 @@ Section hom_inclusion_subalgebra.
     intros s x y p. by apply path_sigma_hprop.
   Qed.
 
-  Lemma surjection_inclusion_subalgebra (total : ∀ s x, P s x)
+  Lemma surjection_inclusion_subalgebra (total : ∀ s (x : A s), P s x)
     : ∀ (s : Sort σ), IsSurjection (hom_inclusion_subalgebra s).
   Proof.
     intros s.
@@ -127,7 +130,8 @@ Section hom_inclusion_subalgebra.
     by exists (y; total s y).
   Qed.
 
-  Lemma is_isomorphism_inclusion_subalgebra (total : ∀ s (x : A s), P s x)
+  Lemma is_isomorphism_inclusion_subalgebra
+    (total : ∀ s (x : A s), P s x)
     : IsIsomorphism hom_inclusion_subalgebra.
   Proof.
     constructor.
@@ -135,14 +139,24 @@ Section hom_inclusion_subalgebra.
     - by apply surjection_inclusion_subalgebra.
   Qed.
 
-  Lemma path_ap_operation_inclusion_subalgebra
-    {w : SymbolType σ} a (f : Operation A w) C
-    : ap_operation f (map_family_prod hom_inclusion_subalgebra a)
+  Lemma path_ap_operation_inclusion_subalgebra'
+    {w : SymbolType σ} (a : FamilyProd (A&P) (dom_symboltype w))
+    (α : Operation A w) (C : ClosedUnderOp A P α)
+    : ap_operation α (map_family_prod hom_inclusion_subalgebra a)
       = hom_inclusion_subalgebra (cod_symboltype w)
-          (ap_operation (op_subalgebra A P f C) a).
+          (ap_operation (op_subalgebra A P α C) a).
   Proof.
     induction w.
     - reflexivity.
     - apply IHw.
+  Defined.
+
+  Lemma path_ap_operation_inclusion_subalgebra (u : Symbol σ)
+    (a : FamilyProd (A&P) (dom_symboltype (σ u)))
+    : ap_operation (u^^A) (map_family_prod hom_inclusion_subalgebra a)
+      = hom_inclusion_subalgebra (cod_symboltype (σ u))
+          (ap_operation (u ^^ A&P) a).
+  Proof.
+    apply path_ap_operation_inclusion_subalgebra'.
   Defined.
 End hom_inclusion_subalgebra.

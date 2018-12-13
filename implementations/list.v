@@ -3,7 +3,8 @@ Require Export HoTT.Classes.implementations.list.
 
 Import ListNotations.
 
-(** Extension of [list] *)
+(** Extensions to [list] *)
+
 Section operations.
   Context {A: Type}.
 

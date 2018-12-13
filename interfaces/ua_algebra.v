@@ -49,14 +49,13 @@ Record Signature : Type := BuildSignature
 
 Global Coercion symbol_types : Signature >-> Funclass.
 
-(** A single sorted [Signature] is a singuture with [Sort = Unit].
-    Then it suffices to provide an arity for each Function [Symbol]. *)
+(** A single sorted [Signature] is a singuture with [Sort = Unit]. *)
 
-Definition BuildSingleSortedSignature {sym : Type} (arities : sym → nat)
+Definition BuildSingleSortedSignature (sym : Type) (arities : sym → nat)
   : Signature
   := BuildSignature Unit sym (ne_list.replicate_Sn tt ∘ arities).
 
-(** Let [σ:Signature]. For each symbol [u : Symbol σ], [σ u] is
+(** Let [σ:Signature]. For each symbol [u : Symbol σ], [σ u]
     associates [u] to a [SymbolType σ]. This represents the required
     type of the algebra operation corresponding to [u]. *)
 
@@ -93,6 +92,7 @@ Notation Carriers := (λ (σ : Signature), Sort σ → Type).
 (** The function [Operation] maps a family of carriers [A : Carriers σ]
     and [w : SymbolType σ] to the corresponding function type. For
     example
+
     <<
       Operation A [:s1; s2; r:] = A s1 → A s2 → A r
     >> *)
@@ -111,7 +111,8 @@ Proof.
   induction w; apply (istrunc_trunctype_type (BuildTruncType n _)).
 Defined.
 
-(** Uncurry of an [Operation A w], such that
+(** Uncurry of an [f : Operation A w], such that
+
     <<
       ap_operation f (x1,x2,...,xn) = f x1 x2 ... xn
     >> *)
@@ -126,6 +127,7 @@ Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
        end.
 
 (** Funext for uncurried [Operation A w]. If
+
     <<
       ap_operation f (x1,x2,...,xn) = ap_operation g (x1,x2,...,xn)
     >>
@@ -202,6 +204,10 @@ Proof.
 Defined.
 
 Module algebra_notations.
+
+(** Given [A : Algebra σ] and function symbol [u : Symbol σ], we use
+    the notation [u ^^ A] to refer to the algebra operation
+    corresponding to the symbol [u]. *)
 
   Global Notation "u ^^ A" := (operations A u) (at level 60, no associativity)
     : Algebra_scope.
