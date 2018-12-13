@@ -7,7 +7,8 @@ Require Import
   HoTT.Types.Record
   HoTT.Classes.interfaces.abstract_algebra.
 
-Definition RespectsRelation {A B : Type} (R : relation A) (f : A → B) : Type
+Definition RespectsRelation {A B : Type} (R : relation A) (f : A → B)
+  : Type
   := ∀ (x y : A), R x y → f x = f y.
 
 Global Instance trunc_reflexive_relation `{Funext} {A : Type}
@@ -42,11 +43,6 @@ Proof.
   issig (@Build_Equivalence A R) (@Equivalence_Reflexive A R)
           (@Equivalence_Symmetric A R) (@Equivalence_Transitive A R).
 Defined.
-
-Ltac change_issig_equivalence E :=
-  change (Equivalence_Transitive E) with (issig_equivalence E).2.2 in *;
-  change (Equivalence_Symmetric E) with (issig_equivalence E).2.1 in *;
-  change (Equivalence_Reflexive E) with (issig_equivalence E).1 in *.
 
 Global Instance trunc_equivalence `{Funext} {A : Type}
   (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}

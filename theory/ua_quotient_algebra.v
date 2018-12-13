@@ -69,8 +69,8 @@ Section quotient_algebra.
   Lemma op_quotient_algebra_well_def `{Funext}
     (q : ∀ (w : SymbolType σ) (f : Operation A w),
          CongruenceProperty A Φ f →
-         ∃ (g : Operation carriers_quotient_algebra w),
-            QuotientOpProperty f g)
+         ∃ g : Operation carriers_quotient_algebra w,
+         QuotientOpProperty f g)
     (s : Sort σ) (w : SymbolType σ) (f : Operation A (s ::: w))
     (P : CongruenceProperty A Φ f) (x y : A s) (C : Φ s x y)
     : (q w (f x) (congruence_property_cons f x P)).1
@@ -93,17 +93,17 @@ Section quotient_algebra.
   Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ}
     : ∀ (f : Operation A w),
       CongruenceProperty A Φ f ->
-      ∃ (g : Operation carriers_quotient_algebra w),
-         QuotientOpProperty f g.
+      ∃ g : Operation carriers_quotient_algebra w,
+      QuotientOpProperty f g.
   Proof. refine (
       match w with
       | [:s:] => λ (f : A s) P, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ (f : A s → Operation A w') P,
         (quotient_rec (Φ s)
-          (λ (x : A s), (pr1 (op_quotient_algebra _ w' (f x)
-                                (congruence_property_cons f x P))))
+          (λ (x : A s), (op_quotient_algebra _ w' (f x)
+                            (congruence_property_cons f x P)).1)
           (op_quotient_algebra_well_def
-             (op_quotient_algebra _) s w' f P)
+              (op_quotient_algebra _) s w' f P)
         ; _)
       end
     ).
@@ -127,9 +127,11 @@ Section quotient_algebra.
 End quotient_algebra.
 
 Module quotient_algebra_notations.
+
   Global Notation "A / Φ" := (QuotientAlgebra A Φ)
                              (at level 40, left associativity)
                              : Algebra_scope.
+
 End quotient_algebra_notations.
 
 Import quotient_algebra_notations.
@@ -288,12 +290,12 @@ Section ump_quotient_algebra.
   Proof.
     apply (equiv_adjointify
              ump_quotient_algebra_lr ump_quotient_algebra_rl).
-    - intros F.
+    - intro F.
       apply path_sigma_hprop.
       apply path_homomorphism.
       funext s.
       now apply path_forall.
-    - intros G.
+    - intro G.
       apply path_homomorphism.
       funext s.
       refine (eissect (quotient_ump (Φ s) (BuildhSet (B s))) (G s)).

@@ -70,20 +70,20 @@ Section ump_prod_algebra.
     {σ : Signature}
     (I : Type)
     (A : I → Algebra σ)
-    (X : Algebra σ).
+    (C : Algebra σ).
 
   Definition hom_ump_prod_algebra_factoring
-    (f : Homomorphism X (ProdAlgebra I A)) (i:I)
-    : Homomorphism X (A i)
+    (f : Homomorphism C (ProdAlgebra I A)) (i:I)
+    : Homomorphism C (A i)
     := BuildHomomorphism (λ s, hom_projection_prod_algebra I A i s ∘ f s).
 
-  Definition def_ump_prod_algebra_mapin (f : ∀ i, Homomorphism X (A i))
-    : ∀ (s : Sort σ) , X s → ProdAlgebra I A s
-    := λ (s : Sort σ) (x : X s) (i : I), f i s x.
+  Definition def_ump_prod_algebra_mapin (f : ∀ i, Homomorphism C (A i))
+    : ∀ (s : Sort σ) , C s → ProdAlgebra I A s
+    := λ (s : Sort σ) (x : C s) (i : I), f i s x.
 
   Lemma oppreserving_ump_prod_algebra_mapin {w : SymbolType σ}
-    (f : ∀ (i:I), Homomorphism X (A i))
-    (α : ∀ (i:I), Operation (A i) w) (β : Operation X w)
+    (f : ∀ (i:I), Homomorphism C (A i))
+    (α : ∀ (i:I), Operation (A i) w) (β : Operation C w)
     (P : ∀ (i:I), OpPreserving (f i) β (α i))
     : OpPreserving (def_ump_prod_algebra_mapin f) β
         (op_prod_algebra I A w (λ (i:I), α i)).
@@ -94,7 +94,7 @@ Section ump_prod_algebra.
   Qed.
 
   Global Instance is_homomorphism_ump_prod_algebra_mapin
-    (f : ∀ (i:I), Homomorphism X (A i))
+    (f : ∀ (i:I), Homomorphism C (A i))
     : IsHomomorphism (def_ump_prod_algebra_mapin f).
   Proof.
     intro u.
@@ -103,12 +103,12 @@ Section ump_prod_algebra.
     apply f.
   Qed.
 
-  Definition hom_ump_prod_algebra_mapin (f : ∀ i, Homomorphism X (A i))
-    : Homomorphism X (ProdAlgebra I A)
+  Definition hom_ump_prod_algebra_mapin (f : ∀ i, Homomorphism C (A i))
+    : Homomorphism C (ProdAlgebra I A)
     := BuildHomomorphism (def_ump_prod_algebra_mapin f).
 
  Lemma ump_prod_algebra
-   : Homomorphism X (ProdAlgebra I A) <~> ∀ (i:I), Homomorphism X (A i).
+   : Homomorphism C (ProdAlgebra I A) <~> ∀ (i:I), Homomorphism C (A i).
   Proof.
     apply (equiv_adjointify
             hom_ump_prod_algebra_factoring hom_ump_prod_algebra_mapin).
@@ -134,22 +134,24 @@ Section bin_prod_algebra.
 End bin_prod_algebra.
 
 Module prod_algebra_notations.
+
   Global Notation "A × B" := (BinProdAlgebra A B)
-    (at level 40, left associativity)
-    : Algebra_scope.
+                             (at level 40, left associativity)
+                             : Algebra_scope.
+
 End prod_algebra_notations.
 
 Import prod_algebra_notations.
 
 Section ump_bin_prod_algebra.
-  Context `{Funext} {σ : Signature} (A B X : Algebra σ).
+  Context `{Funext} {σ : Signature} (A B C : Algebra σ).
 
  Lemma ump_bin_prod_algebra
-   : Homomorphism X (A × B) <~> Homomorphism X A * Homomorphism X B.
+   : Homomorphism C (A × B) <~> Homomorphism C A * Homomorphism C B.
   Proof.
     exact (equiv_compose
             (equiv_bool_forall_prod
-              (λ (b:Bool), Homomorphism X (bin_prod_algebras A B b)))
-            (ump_prod_algebra Bool (bin_prod_algebras A B) X)).
+              (λ (b:Bool), Homomorphism C (bin_prod_algebras A B b)))
+            (ump_prod_algebra Bool (bin_prod_algebras A B) C)).
   Defined.
 End ump_bin_prod_algebra.

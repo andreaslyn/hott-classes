@@ -26,7 +26,8 @@ Section is_homomorphism.
 
     <<
       f r (α x1 x2 ... xn) = β (f s1 x1) (f s2 x2) ... (f sn xn)
-    >> *)
+    >>
+*)
 
   Fixpoint OpPreserving {w : SymbolType σ}
     : Operation A w → Operation B w → Type
@@ -152,7 +153,8 @@ Defined.
 
     <<
       ∀ (s : Sort σ), A s <~> B s
-    >> *)
+    >>
+*)
 
 Section equiv_carriers_isomorphism.
   Context {σ} {A B : Algebra σ} (f : Homomorphism A B) {Is : IsIsomorphism f}.

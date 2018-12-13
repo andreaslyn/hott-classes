@@ -95,7 +95,10 @@ Notation Carriers := (λ (σ : Signature), Sort σ → Type).
 
     <<
       Operation A [:s1; s2; r:] = A s1 → A s2 → A r
-    >> *)
+    >>
+
+    where [[:s1; s2; r:] : SymbolType σ] is a symbol type with domain
+    [[s1; s2]] and codomain [r]. *)
 
 Fixpoint Operation {σ : Signature} (A : Carriers σ) (w : SymbolType σ)
   : Type
@@ -115,7 +118,8 @@ Defined.
 
     <<
       ap_operation f (x1,x2,...,xn) = f x1 x2 ... xn
-    >> *)
+    >>
+*)
 
 Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
     : Operation A w →
@@ -173,30 +177,30 @@ Definition SigAlgebra (σ : Signature) : Type :=
   | {operations : ∀ (u : Symbol σ), Operation carriers (σ u)
     | ∀ (s : Sort σ), IsHSet (carriers s)}}.
 
-Lemma issig_algebra {σ} : Algebra σ <~> SigAlgebra σ.
+Lemma issig_algebra (σ : Signature) : Algebra σ <~> SigAlgebra σ.
 Proof.
   apply symmetric_equiv.
   unfold SigAlgebra.
   issig (@BuildAlgebra σ) (@carriers σ) (@operations σ)
-    (@hset_carriers_algebra σ).
+            (@hset_carriers_algebra σ).
 Defined.
 
 Ltac change_issig_algebra A :=
-  change (hset_carriers_algebra A) with (issig_algebra A).2.2 in *;
-  change (operations A) with (issig_algebra A).2.1 in *;
-  change (carriers A) with (issig_algebra A).1 in *.
+  change (hset_carriers_algebra A) with (issig_algebra _ A).2.2 in *;
+  change (operations A) with (issig_algebra _ A).2.1 in *;
+  change (carriers A) with (issig_algebra _ A).1 in *.
 
 (** To find a path between two algebras [A B : Algebra σ] it suffices
     to find a path between the carrier families and the operations. *)
 
-Lemma path_algebra `{Funext} {σ} (A B : Algebra σ)
+Lemma path_algebra `{Funext} {σ : Signature} (A B : Algebra σ)
   : (∃ (p : carriers A = carriers B),
-       transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
-       = operations B)
-  → A = B.
+        transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
+        = operations B)
+    → A = B.
 Proof.
   intros [p q].
-  apply ((ap issig_algebra)^-1).
+  apply ((ap (issig_algebra σ))^-1).
   change_issig_algebra A. change_issig_algebra B.
   refine (path_sigma _ _ _ p _).
   apply path_sigma_hprop.
@@ -206,10 +210,11 @@ Defined.
 Module algebra_notations.
 
 (** Given [A : Algebra σ] and function symbol [u : Symbol σ], we use
-    the notation [u ^^ A] to refer to the algebra operation
-    corresponding to the symbol [u]. *)
+    the notation [u ^^ A] to refer to the corresponding algebra
+    operation of type [Operation A (σ u)]. *)
 
-  Global Notation "u ^^ A" := (operations A u) (at level 60, no associativity)
-    : Algebra_scope.
+  Global Notation "u ^^ A" := (operations A u)
+                              (at level 60, no associativity)
+                              : Algebra_scope.
 
 End algebra_notations.
