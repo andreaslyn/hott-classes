@@ -40,7 +40,7 @@ End property_congruence.
 Arguments has_congruence_property {σ} A Φ {HasCongruenceProperty}.
 
 Section congruence.
-  Context {σ : Signature} (A : Algebra σ).
+  Context {σ : Signature} {A : Algebra σ}.
 
   (** The relation family [Φ] is a [IsCongruence] if [Φ s] it is a family of
       mere equivalence relations and [Φ] has the [CongruenceProperty f]
@@ -65,13 +65,10 @@ Section congruence.
   Global Coercion relation_congruence : Congruence >-> Funclass.
 End congruence.
 
+Arguments Congruence {σ} A.
+
 Arguments BuildCongruence {σ} {A} relation_congruence
   {is_mere_relation_congruence} {equivalence_congruence} {property_congruence}.
-
-Arguments relation_congruence {σ} {A}.
-Arguments is_mere_relation_congruence {σ} {A}.
-Arguments equivalence_congruence {σ} {A}.
-Arguments property_congruence {σ} {A}.
 
 Section path_congruence.
   Context {σ : Signature} (A : Algebra σ).

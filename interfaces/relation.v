@@ -11,6 +11,9 @@ Definition RespectsRelation {A B : Type} (R : relation A) (f : A → B)
   : Type
   := ∀ (x y : A), R x y → f x = f y.
 
+Definition subrelation (A : Type) (Subrel Rel : relation A) : Type
+  := ∀ (x y : A), Subrel x y → Rel x y.
+
 Global Instance trunc_reflexive_relation `{Funext} {A : Type}
   (R : relation A) {n} `{!∀ (x y : A), IsTrunc n (R x y)}
   :  IsTrunc n (Reflexive R).

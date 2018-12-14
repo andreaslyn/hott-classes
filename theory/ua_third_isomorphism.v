@@ -2,6 +2,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.HIT.quotient
   HoTT.Classes.interfaces.abstract_algebra
+  HoTTClasses.interfaces.relation
   HoTTClasses.interfaces.ua_algebra
   HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_quotient_algebra
@@ -17,7 +18,7 @@ Section cong_quotient.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
+    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
 
   Definition relation_quotient (s : Sort σ) (a b : (A/Ψ) s) : Type
     := ∀ (x y : A s), in_class (Ψ s) a x → in_class (Ψ s) b y → Φ s x y.
@@ -27,7 +28,7 @@ Section cong_quotient.
   Proof.
     constructor.
     - refine (quotient_ind_prop (Ψ s) _ _). intros x y z P Q.
-      apply is_subrel.
+      apply subrel.
       by transitivity x.
     - refine (quotient_ind_prop (Ψ s) _ _). intro x1.
       refine (quotient_ind_prop (Ψ s) _ _). intros x2 C y1 y2 P Q.
@@ -64,8 +65,8 @@ Section cong_quotient.
     refine (quotient_ind_prop_family_prod A Ψ _ _). intros b R x y P Q.
     rewrite (quotient_op_property A Ψ u a) in P.
     rewrite (quotient_op_property A Ψ u b) in Q.
-    apply is_subrel in P.
-    apply is_subrel in Q.
+    apply subrel in P.
+    apply subrel in Q.
     transitivity (ap_operation (u^^A) a).
     - by symmetry.
     - transitivity (ap_operation (u^^A) b); try assumption.
@@ -85,15 +86,15 @@ Section third_isomorphism.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
+    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
 
-  Local Notation Θ := (cong_quotient Φ Ψ is_subrel).
+  Local Notation Θ := (cong_quotient Φ Ψ subrel).
 
   Lemma third_isomorphism_well_def_1 (s : Sort σ)
     (x y : A s) (P : Ψ s x y)
     : class_of (Φ s) x = class_of (Φ s) y.
   Proof.
-    apply related_classes_eq. exact (is_subrel s x y P).
+    apply related_classes_eq. exact (subrel s x y P).
   Defined.
 
   Lemma third_isomorphism_well_def_2 (s : Sort σ) P
@@ -171,7 +172,7 @@ Section third_isomorphism.
     refine (quotient_ind_prop (Ψ s) _ _). intros y p.
     apply related_classes_eq.
     intros x' y' P Q.
-    apply is_subrel in P. apply is_subrel in Q.
+    apply subrel in P. apply subrel in Q.
     apply (classes_eq_related (Φ s)) in p.
     transitivity x.
     - by symmetry.
@@ -199,11 +200,11 @@ Section third_isomorphism'.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (is_subrel : ∀ s x y, Ψ s x y → Φ s x y).
+    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
 
   Definition def_third_surjection (s : Sort σ) : (A/Ψ) s → (A/Φ) s
     := quotient_rec (Ψ s) (class_of (Φ s))
-        (third_isomorphism_well_def_1 Φ Ψ is_subrel s).
+        (third_isomorphism_well_def_1 Φ Ψ subrel s).
 
   Lemma oppreserving_third_surjection {w : SymbolType σ} (f : Operation A w)
     : ∀ (α : Operation (A/Φ) w) (Qα : QuotientOpProperty A Φ f α)
@@ -215,7 +216,7 @@ Section third_isomorphism'.
       refine (quotient_ind_prop (Ψ t) _ _). intros β Qβ.
       apply related_classes_eq.
       transitivity f.
-      + apply is_subrel. apply (classes_eq_related (Ψ t)). exact (Qβ tt).
+      + apply subrel. apply (classes_eq_related (Ψ t)). exact (Qβ tt).
       + apply (classes_eq_related (Φ t)). symmetry. exact (Qα tt).
     - intros α Qα β Qβ.
       refine (quotient_ind_prop (Ψ t) _ _).
@@ -244,7 +245,7 @@ Section third_isomorphism'.
     by exists (class_of (Ψ s) x).
   Qed.
 
-  Local Notation Θ := (cong_quotient Φ Ψ is_subrel).
+  Local Notation Θ := (cong_quotient Φ Ψ subrel).
 
   Lemma iff_third_surjection_cong_ker_quotient (s : Sort σ) (x y : (A/Ψ) s)
     : cong_ker hom_third_surjection s x y ↔ Θ s x y.
@@ -253,7 +254,7 @@ Section third_isomorphism'.
            refine (quotient_ind_prop (Ψ s) _ _); intro x;
            refine (quotient_ind_prop (Ψ s) _ _); intro y.
     - intros K x' y' Cx Cy.
-      apply is_subrel in Cx. apply is_subrel in Cy.
+      apply subrel in Cx. apply subrel in Cy.
       apply (classes_eq_related (Φ s)) in K.
       transitivity x.
       + by symmetry.
@@ -291,7 +292,7 @@ Section third_isomorphism'.
   Defined.
 
   Lemma path_hom_third_isomorphisms
-    : hom_third_isomorphism Φ Ψ is_subrel = hom_third_isomorphism'.
+    : hom_third_isomorphism Φ Ψ subrel = hom_third_isomorphism'.
   Proof.
     apply path_homomorphism.
     funext s x.
