@@ -27,24 +27,26 @@ Delimit Scope Algebra_scope with Algebra.
 
 Open Scope Algebra_scope.
 
-Local Notation SymbolType_internal := @ne_list.
+Definition SymbolType_internal : Type → Type := ne_list.
 
-(** A [Signature] is used to characterise [Algebra]s. It consists of
-    - A type of [Sort]s, which represent the "objects" (types) an
-      algebra for the signature must provide.
-    - A type of Function [Symbol]s, which represent operations an
-      algebra for the signature must provide.
-    - For each symbol [u:Symbol], a [SymbolType] specifying the
-      required type of the operation corresponding to [u] provided by
-      the algebra for the signature. *)
+(** A [Signature] is used to characterise [Algebra]s. In particular
+    a signature specifies which operations (functions) an algebra for
+    the signature is expected to provide. A signature consists of
+    - A type of [Sort]s. An algebra for the signature must provide
+      a type for each [s : Sort].
+    - A type of function symbols [Symbol]. For each function symbol
+      [u : Symbol], an algebra for the signature must provide a
+      corresponding operation.
+    - The field [symbol_types σ u] indicates which type the operation
+      corresponding to [u] should have. *)
 
 Record Signature : Type := BuildSignature
   { Sort : Type
   ; Symbol : Type
   ; symbol_types : Symbol → SymbolType_internal Sort }.
 
-(** Notice we have this implicit coercion allowing us to use a
-    signature [σ:Signature] as a map [Symbol σ → SymbolType σ]
+(** We have this implicit coercion allowing us to use a signature
+    [σ:Signature] as a map [Symbol σ → SymbolType σ]
     (see [SymbolType] below). *)
 
 Global Coercion symbol_types : Signature >-> Funclass.
@@ -59,8 +61,7 @@ Definition BuildSingleSortedSignature (sym : Type) (arities : sym → nat)
     associates [u] to a [SymbolType σ]. This represents the required
     type of the algebra operation corresponding to [u]. *)
 
-Definition SymbolType (σ : Signature) : Type
-  := SymbolType_internal (Sort σ).
+Definition SymbolType (σ : Signature) : Type := ne_list (Sort σ).
 
 (** For [s : SymbolType σ], [cod_symboltype σ] is the codomain of the
     symbol type [s]. *)
@@ -87,21 +88,19 @@ Definition arity_symboltype {σ} : SymbolType σ → nat
 (* [Carriers] is a notation because it will be used for an implicit
    coercion [Algebra >-> Funclass] below. *)
 
-Notation Carriers := (λ (σ : Signature), Sort σ → Type).
+Notation Carriers := (λ σ, Sort σ → Type).
 
 (** The function [Operation] maps a family of carriers [A : Carriers σ]
-    and [w : SymbolType σ] to the corresponding function type. For
-    example
+    and [w : SymbolType σ] to the corresponding function type.
 
     <<
-      Operation A [:s1; s2; r:] = A s1 → A s2 → A r
+      Operation A [:s1; s2; ...; sn; t:] = A s1 → A s2 → ... → A sn → A t
     >>
 
-    where [[:s1; s2; r:] : SymbolType σ] is a symbol type with domain
-    [[s1; s2]] and codomain [r]. *)
+    where [[:s1; s2; ...; sn; t:] : SymbolType σ] is a symbol type
+    with domain [[s1; s2; ...; sn]] and codomain [t]. *)
 
-Fixpoint Operation {σ : Signature} (A : Carriers σ) (w : SymbolType σ)
-  : Type
+Fixpoint Operation {σ} (A : Carriers σ) (w : SymbolType σ) : Type
   := match w with
      | [:s:] => A s
      | s ::: w' => A s → Operation A w'
@@ -185,13 +184,8 @@ Proof.
             (@hset_carriers_algebra σ).
 Defined.
 
-Ltac change_issig_algebra A :=
-  change (hset_carriers_algebra A) with (issig_algebra _ A).2.2 in *;
-  change (operations A) with (issig_algebra _ A).2.1 in *;
-  change (carriers A) with (issig_algebra _ A).1 in *.
-
 (** To find a path between two algebras [A B : Algebra σ] it suffices
-    to find a path between the carrier families and the operations. *)
+    to find a path between the carriers and the operations. *)
 
 Lemma path_algebra `{Funext} {σ : Signature} (A B : Algebra σ)
   : (∃ (p : carriers A = carriers B),
@@ -201,9 +195,11 @@ Lemma path_algebra `{Funext} {σ : Signature} (A B : Algebra σ)
 Proof.
   intros [p q].
   apply ((ap (issig_algebra σ))^-1).
-  change_issig_algebra A. change_issig_algebra B.
+  change (carriers A) with (issig_algebra _ A).1 in *.
+  change (carriers B) with (issig_algebra _ B).1 in *.
   refine (path_sigma _ _ _ p _).
   apply path_sigma_hprop.
+  simpl in *.
   by path_induction.
 Defined.
 

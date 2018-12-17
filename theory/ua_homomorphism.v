@@ -7,6 +7,7 @@ Require Import
   HoTT.Basics.Equivalences
   HoTT.Basics.PathGroupoids
   HoTT.Types.Forall
+  HoTT.Types.Arrow
   HoTT.Types.Universe
   HoTT.Types.Record
   HoTT.Types.Sigma
@@ -21,11 +22,11 @@ Section is_homomorphism.
   Context {σ} {A B : Algebra σ} (f : ∀ (s : Sort σ), A s → B s).
 
 (** The family of functions [f] above is [OpPreserving α β] with
-    respect to operations [α : A s1 → A s2 → ... → A sn → A r] and
-    [β : B s1 → B s2 → ... → B sn → B r] if
+    respect to operations [α : A s1 → A s2 → ... → A sn → A t] and
+    [β : B s1 → B s2 → ... → B sn → B t] if
 
     <<
-      f r (α x1 x2 ... xn) = β (f s1 x1) (f s2 x2) ... (f sn xn)
+      f t (α x1 x2 ... xn) = β (f s1 x1) (f s2 x2) ... (f sn xn)
     >>
 *)
 
@@ -94,15 +95,18 @@ Defined.
     functions. *)
 
 Lemma path_homomorphism `{Funext} {σ} {A B : Algebra σ}
-  (f g : Homomorphism A B) (p : def_hom f = def_hom g) : f = g.
+  (f g : Homomorphism A B) (p : ∀ s, f s == g s) : f = g.
 Proof.
-  apply (ap (issig_homomorphism A B))^-1. by apply path_sigma_hprop.
+  transparent assert (F : (def_hom f = def_hom g)).
+  - funext s x. apply p.
+  - apply (ap (issig_homomorphism A B))^-1. by apply path_sigma_hprop.
 Defined.
 
 (** [f : Homomorphism A B] is an isomorphism if for each [s : Sort σ],
     [f s] is both injective and surjective. *)
 
-Class IsIsomorphism {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B)
+Class IsIsomorphism {σ : Signature} {A B : Algebra σ}
+  (f : Homomorphism A B) : Type
   := BuildIsIsomorphism
     { injection_isomorphism : ∀ (s : Sort σ), Injective (f s)
     ; surjection_isomorphism : ∀ (s : Sort σ), IsSurjection (f s) }.
@@ -111,7 +115,8 @@ Global Existing Instance injection_isomorphism.
 
 Global Existing Instance surjection_isomorphism.
 
-Definition SigIsIsomorphism {σ} {A B : Algebra σ} (f : Homomorphism A B) : Type
+Definition SigIsIsomorphism {σ} {A B : Algebra σ}
+  (f : Homomorphism A B) : Type
   := { injection_isomorphism : ∀ (s : Sort σ), Injective (f s)
      | ∀ (s : Sort σ), IsSurjection (f s) }.
 
@@ -157,7 +162,11 @@ Defined.
 *)
 
 Section equiv_carriers_isomorphism.
-  Context {σ} {A B : Algebra σ} (f : Homomorphism A B) {Is : IsIsomorphism f}.
+  Context
+    {σ : Signature}
+    {A B : Algebra σ}
+    (f : Homomorphism A B)
+    {Is : IsIsomorphism f}.
 
   Global Instance isequiv_carriers_isomorphism
     : ∀ (s : Sort σ), IsEquiv (f s).
@@ -176,11 +185,12 @@ End equiv_carriers_isomorphism.
     uncurried algebra operations in the sense that
 
     <<
-      f r (α (x1,x2,...,xn,tt)) = β (f s1 x1,f s2 x1,...,f sn xn,tt)
+      f t (α (x1,x2,...,xn,tt)) = β (f s1 x1,f s2 x1,...,f sn xn,tt)
     >>
 
-    for all [(x1,x2,...,xn,tt) : FamilyProd A [s1;s2;...;sn]], where [α]
-    and [β] are uncurried algebra operations in [A] and [B] respectively.
+    for all [(x1,x2,...,xn,tt) : FamilyProd A [s1;s2;...;sn]], where
+    [α] and [β] are uncurried algebra operations in [A] and [B]
+    respectively.
 *)
 
 Section homomorphism_ap_operation.
@@ -250,7 +260,7 @@ Section hom_inv.
    intros a b P.
    induction (σ u).
    - rewrite <- P. apply (eissect (f t)).
-   - intro. apply IHn.
+   - intro. apply IHs.
      exact (transport (λ y, OpPreserving f _ (b y))
               (eisretr (f t) x) (P (_^-1 x))).
   Qed.
@@ -326,11 +336,26 @@ Section hom_compose.
   Qed.
 End hom_compose.
 
+Lemma path_forall_recr_beta `{Funext} {A : Type} {B : A → Type}
+  (a : A) (P : (∀ x, B x) → B a → Type) (f g : ∀ a, B a)
+  (e : f == g) (Pa : P f (f a))
+  : transport (fun f => P f (f a)) (path_forall f g e) Pa
+    = transport (fun x => P x (g a))
+        (path_forall f g e) (transport (fun y => P f y) (e a) Pa).
+Proof.
+  rewrite <- (eissect (path_forall f g) e).
+  change ((_^-1 (path_forall f g e))) with ((apD10 (path_forall f g e))).
+  destruct (path_forall f g e).
+  unfold apD10.
+  rewrite (path_forall_1 f).
+  reflexivity.
+Defined.
+
 (** The following section proves that there is a path between
     isomorphic algebras. *)
 
 Section path_isomorphism.
-  Context `{Univalence} {σ} {A B : Algebra σ}.
+  Context `{Univalence} {σ : Signature} {A B : Algebra σ}.
 
 (** Recall that there is an implicit coercion
 
@@ -344,20 +369,20 @@ Section path_isomorphism.
     then by function extensionality and univalence there is a path
     between the carriers, [carriers A = carriers B]. *)
 
-  Definition path_carriers_equiv (f : ∀ (s : Sort σ), A s <~> B s)
-    : carriers A = carriers B
-    := path_forall A B (λ s, path_universe (f s)).
+  Definition path_carriers_equiv {I : Type} {X Y : I → Type} (f : ∀ i, X i <~> Y i)
+    : X = Y
+    := path_forall X Y (λ i, path_universe (f i)).
 
 (** Given a family of equivalences [f : ∀ (s : Sort σ), A s <~> B s]
     which is [OpPreserving f α β] with respect to algebra operations
 
     <<
-      α : A s1 → A s2 → ... → A sn → A r
-      β : B s1 → B s2 → ... → B sn → B r
+      α : A s1 → A s2 → ... → A sn → A t
+      β : B s1 → B s2 → ... → B sn → B t
     >>
 
     By transporting [α] along the path [path_carriers_equiv f] we
-    find a path from the transported [α] to [β]. *)
+    find a path from the transported operation [α] to [β]. *)
 
   Lemma path_operations_equiv (f : ∀ (s : Sort σ), A s <~> B s)
     {w : SymbolType σ} (α : Operation A w) (β : Operation B w)
@@ -367,15 +392,20 @@ Section path_isomorphism.
   Proof.
     unfold path_carriers_equiv.
     induction w; simpl in *.
-    - transport_path_forall_hammer.
+    - rewrite (path_forall_recr_beta t (λ _ x, x) A B (λ s, path_universe (f s)) α).
+      induction (path_forall A B (λ s : Sort σ, path_universe (f s))).
+      (* transport_path_forall_hammer. *)
+
       exact (ap10 (transport_idmap_path_universe (f t)) α @ P).
     - funext y.
-      transport_path_forall_hammer.
+
+      set (Λ := λ (a : Sort σ → Type) (b:Type), b → Operation a w).
+      rewrite (path_forall_recr_beta t Λ A B (λ s, path_universe (f s)) α).
+      (*transport_path_forall_hammer.*)
+      
       rewrite transport_forall_constant.
-      rewrite transport_forall.
-      rewrite transport_const.
+      rewrite transport_arrow_toconst.
       rewrite (transport_path_universe_V (f t)).
-      destruct (path_universe (f t)).
       specialize (P ((f t)^-1 y)).
       rewrite (eisretr (f t)) in P.
       exact (IHw (α ((f t)^-1 y)) (β y) P).

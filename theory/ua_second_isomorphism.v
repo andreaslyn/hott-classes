@@ -313,9 +313,7 @@ Section second_isomorphism'.
   Lemma path_hom_second_isomorphisms
     : hom_second_isomorphism P Φ = hom_second_isomorphism'.
   Proof.
-    apply path_homomorphism.
-    funext s x.
-    generalize dependent x.
+    apply path_homomorphism. intro s.
     refine (quotient_ind_prop (Ψ s) _ _). intros [x E].
     apply path_sigma_hprop.
     unfold hom_second_isomorphism'.

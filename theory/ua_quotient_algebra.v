@@ -292,12 +292,10 @@ Section ump_quotient_algebra.
              ump_quotient_algebra_lr ump_quotient_algebra_rl).
     - intro F.
       apply path_sigma_hprop.
-      apply path_homomorphism.
-      funext s.
-      now apply path_forall.
+      by apply path_homomorphism.
     - intro G.
       apply path_homomorphism.
-      funext s.
-      refine (eissect (quotient_ump (Φ s) (BuildhSet (B s))) (G s)).
+      intro s.
+      refine (ap10 (eissect (quotient_ump (Φ s) _) (G s))).
   Defined.
 End ump_quotient_algebra.

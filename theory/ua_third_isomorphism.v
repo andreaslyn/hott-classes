@@ -294,9 +294,7 @@ Section third_isomorphism'.
   Lemma path_hom_third_isomorphisms
     : hom_third_isomorphism Φ Ψ subrel = hom_third_isomorphism'.
   Proof.
-    apply path_homomorphism.
-    funext s x.
-    generalize dependent x.
+    apply path_homomorphism. intro s.
     refine (quotient_ind_prop (Θ s) _ _).
     refine (quotient_ind_prop (Ψ s) _ _). intro x.
     unfold hom_third_isomorphism'.
