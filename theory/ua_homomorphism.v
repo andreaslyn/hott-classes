@@ -59,7 +59,7 @@ Section is_homomorphism.
   Defined.
 End is_homomorphism.
 
-(** Gival algebras [A B : Algebra σ] a homomorphism [Homomorphism A B]
+(** Given algebras [A B : Algebra σ] a homomorphism [Homomorphism A B]
     is a family of functions [f : ∀ (s : Sort σ), A s → B s] where
     [IsHomomorphism f] holds. *)
 
@@ -67,7 +67,7 @@ Record Homomorphism {σ} {A B : Algebra σ} : Type := BuildHomomorphism
   { def_hom : ∀ (s : Sort σ), A s → B s
   ; is_homomorphism_hom : IsHomomorphism def_hom }.
 
-Arguments Homomorphism {σ} A B.
+Arguments Homomorphism {σ}.
 
 Arguments BuildHomomorphism {σ A B} def_hom {is_homomorphism_hom}.
 
@@ -336,42 +336,20 @@ Section hom_compose.
   Qed.
 End hom_compose.
 
-Lemma path_forall_recr_beta `{Funext} {A : Type} {B : A → Type}
-  (a : A) (P : (∀ x, B x) → B a → Type) (f g : ∀ a, B a)
-  (e : f == g) (Pa : P f (f a))
-  : transport (fun f => P f (f a)) (path_forall f g e) Pa
-    = transport (fun x => P x (g a))
-        (path_forall f g e) (transport (fun y => P f y) (e a) Pa).
-Proof.
-  rewrite <- (eissect (path_forall f g) e).
-  change ((_^-1 (path_forall f g e))) with ((apD10 (path_forall f g e))).
-  destruct (path_forall f g e).
-  unfold apD10.
-  rewrite (path_forall_1 f).
-  reflexivity.
-Defined.
+(** If [f : ∀ i, F i <~> G i] is a family of equivalences,
+    then by function extensionality composed with univalence there is
+    a path [F = G]. *)
 
-(** The following section proves that there is a path between
+  Definition path_equiv_family `{Univalence} {I : Type}
+    {F G : I → Type} (f : ∀ i, F i <~> G i)
+    : F = G
+    := path_forall F G (λ i, path_universe (f i)).
+
+(** The following section shows that there is a path between
     isomorphic algebras. *)
 
 Section path_isomorphism.
   Context `{Univalence} {σ : Signature} {A B : Algebra σ}.
-
-(** Recall that there is an implicit coercion
-
-    <<
-      Coercion carriers : Algebra >-> Funclass
-    >>
-
-    so that [A s] is notation for [carriers A s]. *)
-
-(** If [f : ∀ (s : Sort σ), A s <~> B s] is a family of equivalences,
-    then by function extensionality and univalence there is a path
-    between the carriers, [carriers A = carriers B]. *)
-
-  Definition path_carriers_equiv {I : Type} {X Y : I → Type} (f : ∀ i, X i <~> Y i)
-    : X = Y
-    := path_forall X Y (λ i, path_universe (f i)).
 
 (** Given a family of equivalences [f : ∀ (s : Sort σ), A s <~> B s]
     which is [OpPreserving f α β] with respect to algebra operations
@@ -381,34 +359,27 @@ Section path_isomorphism.
       β : B s1 → B s2 → ... → B sn → B t
     >>
 
-    By transporting [α] along the path [path_carriers_equiv f] we
+    By transporting [α] along the path [path_equiv_family f] we
     find a path from the transported operation [α] to [β]. *)
 
-  Lemma path_operations_equiv (f : ∀ (s : Sort σ), A s <~> B s)
-    {w : SymbolType σ} (α : Operation A w) (β : Operation B w)
-    (P : OpPreserving f α β)
+  Lemma path_operations_equiv {w : SymbolType σ}
+    (α : Operation A w) (β : Operation B w)
+    (f : ∀ (s : Sort σ), A s <~> B s) (P : OpPreserving f α β)
     : transport (λ C : Carriers σ, Operation C w)
-        (path_carriers_equiv f) α = β.
+        (path_equiv_family f) α = β.
   Proof.
-    unfold path_carriers_equiv.
+    unfold path_equiv_family.
     induction w; simpl in *.
-    - rewrite (path_forall_recr_beta t (λ _ x, x) A B (λ s, path_universe (f s)) α).
-      induction (path_forall A B (λ s : Sort σ, path_universe (f s))).
-      (* transport_path_forall_hammer. *)
-
+    - transport_path_forall_hammer.
       exact (ap10 (transport_idmap_path_universe (f t)) α @ P).
     - funext y.
-
-      set (Λ := λ (a : Sort σ → Type) (b:Type), b → Operation a w).
-      rewrite (path_forall_recr_beta t Λ A B (λ s, path_universe (f s)) α).
-      (*transport_path_forall_hammer.*)
-      
+      transport_path_forall_hammer.
       rewrite transport_forall_constant.
       rewrite transport_arrow_toconst.
       rewrite (transport_path_universe_V (f t)).
+      apply IHw.
       specialize (P ((f t)^-1 y)).
-      rewrite (eisretr (f t)) in P.
-      exact (IHw (α ((f t)^-1 y)) (β y) P).
+      by rewrite (eisretr (f t) y) in P.
   Qed.
 
 (** Suppose [u : Symbol σ] is a function symbol. Recall that
@@ -420,12 +391,12 @@ Section path_isomorphism.
     be a function symbol. Since [f] is a homomorphism, the induced
     family of equivalences [e] satisfies [OpPreserving e (u^^A) (u^^B)].
     By [path_operations_equiv] above, we can then transport [u^^A] along
-    the path [path_carriers_equiv e] and obtain a path to [u^^B]. *)
+    the path [path_equiv_family e] and obtain a path to [u^^B]. *)
 
   Lemma path_operations_isomorphism (f : Homomorphism A B)
     `{!IsIsomorphism f} (u : Symbol σ)
     : transport (λ C : Carriers σ, Operation C (σ u))
-        (path_carriers_equiv (equiv_carriers_isomorphism f)) (u^^A)
+        (path_equiv_family (equiv_carriers_isomorphism f)) (u^^A)
       = u^^B.
   Proof.
     apply path_operations_equiv. apply (op_preserving f).
@@ -437,7 +408,7 @@ Section path_isomorphism.
     : A = B.
   Proof.
     apply path_algebra.
-    exists (path_carriers_equiv (equiv_carriers_isomorphism f)).
+    exists (path_equiv_family (equiv_carriers_isomorphism f)).
     funext u.
     exact (transport_forall_constant _ _ u
            @ path_operations_isomorphism f u).

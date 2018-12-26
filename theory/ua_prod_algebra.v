@@ -126,10 +126,10 @@ Section bin_prod_algebra.
   Definition BinProdAlgebra : Algebra σ :=
     ProdAlgebra Bool bin_prod_algebras.
 
-  Definition pr1_prod_algebra : Homomorphism BinProdAlgebra A
+  Definition fst_prod_algebra : Homomorphism BinProdAlgebra A
     := hom_projection_prod_algebra Bool bin_prod_algebras false.
 
-  Definition pr2_prod_algebra : Homomorphism BinProdAlgebra B
+  Definition snd_prod_algebra : Homomorphism BinProdAlgebra B
     := hom_projection_prod_algebra Bool bin_prod_algebras true.
 End bin_prod_algebra.
 
