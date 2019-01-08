@@ -4,7 +4,7 @@ Require Import
   HoTT.Basics.Overture
   HoTT.Spaces.Nat.
 
-Declare Scope ne_list_scope.
+(* Declare Scope ne_list_scope. *)
 
 Delimit Scope ne_list_scope with ne_list.
 

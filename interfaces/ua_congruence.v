@@ -9,16 +9,24 @@ Require Import
   HoTTClasses.interfaces.ua_algebra
   HoTT.Classes.interfaces.abstract_algebra.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section property_congruence.
   Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
 
-(** The relation family [Φ] satisfies the [CongruenceProperty f] with respect
-    to the algebra operation [f : A s1 → A s2 → ... → A (s(n+1))] if
+(** The relation family [Φ] satisfies the [CongruenceProperty f] with
+    respect to algebra operation [f : A s1 → A s2 → ... → A sn → A t] if
 
-      [Φ s1 x1 y1 ∧ Φ s2 x2 y2 ∧ ... ∧ Φ sn xn yn] implies
-      [Φ (s(n+1)) (f x1 x2 ... xn) (f y1 y2 ... yn)]. *)
+    <<
+      [Φ s1 x1 y1 ∧ Φ s2 x2 y2 ∧ ... ∧ Φ sn xn yn]
+    >>
+
+    implies
+
+    <<
+      [Φ t (f x1 x2 ... xn) (f y1 y2 ... yn)].
+    >>
+*)
 
   Definition CongruenceProperty {w : SymbolType σ} (f : Operation A w)
     : Type
@@ -41,10 +49,6 @@ Arguments has_congruence_property {σ} A Φ {HasCongruenceProperty}.
 
 Section congruence.
   Context {σ : Signature} {A : Algebra σ}.
-
-  (** The relation family [Φ] is a [IsCongruence] if [Φ s] it is a family of
-      mere equivalence relations and [Φ] has the [CongruenceProperty f]
-      for all the algebra operations [f]. *)
 
   Record Congruence : Type := BuildCongruence
     { relation_congruence
@@ -104,3 +108,16 @@ Section path_congruence.
     apply (path_universe (equiv_equiv_iff_hprop _ _ (e s x y))).
   Defined.
 End path_congruence.
+
+(** If a congruence [Φ] satisfies the [CongruenceProperty f] for
+    [f : A s1 → A s2 → ... → A sn], then [Φ] satisfies
+    the [CongruenceProperty (f x)] for any [x : A s1]. *)
+
+Lemma congruence_property_cons {σ : Signature} {A : Algebra σ}
+  (Φ : Congruence A) {s : Sort σ} {w : SymbolType σ}
+  : ∀ (f : Operation A (s ::: w)) (x : A s),
+    CongruenceProperty A Φ f → CongruenceProperty A Φ (f x).
+Proof.
+  intros f x P a b R.
+  exact (P (x,a) (x,b) (Equivalence_Reflexive x, R)).
+Defined.

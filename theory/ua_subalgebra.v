@@ -8,7 +8,7 @@ Require Import
 
 Import algebra_notations ne_list.notations.
 
-Section subalgebra_predicate.
+Section closed_under_op.
   Context {σ} (A : Algebra σ) (P : ∀ (s : Sort σ), A s → hProp).
 
   Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
@@ -27,11 +27,11 @@ Section subalgebra_predicate.
 
   Class IsClosedUnderOps : Type :=
     closed_under_ops : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
-End subalgebra_predicate.
+End closed_under_op.
 
 Arguments closed_under_ops {σ} A P {IsClosedUnderOps}.
 
-Section SubalgebraPredicate.
+Section subalgebra_predicate.
   Context {σ : Signature} (A : Algebra σ).
 
   Record SubalgebraPredicate : Type := BuildSubalgebraPredicate
@@ -56,7 +56,7 @@ Section SubalgebraPredicate.
     issig BuildSubalgebraPredicate subalgebra_predicate
             is_closed_under_ops_subalgebra_predicate.
   Defined.
-End SubalgebraPredicate.
+End subalgebra_predicate.
 
 Arguments BuildSubalgebraPredicate {σ} {A} subalgebra_predicate
             {is_closed_under_ops_subalgebra_predicate}.
@@ -120,18 +120,17 @@ Section hom_inclusion_subalgebra.
     intros s x y p. by apply path_sigma_hprop.
   Qed.
 
-  Lemma surjection_inclusion_subalgebra (total : ∀ s (x : A s), P s x)
+  Lemma surjection_inclusion_subalgebra (full : ∀ s (x : A s), P s x)
     : ∀ (s : Sort σ), IsSurjection (hom_inclusion_subalgebra s).
   Proof.
     intros s.
     apply BuildIsSurjection.
     intro y.
     apply tr.
-    by exists (y; total s y).
+    by exists (y; full s y).
   Qed.
 
-  Lemma is_isomorphism_inclusion_subalgebra
-    (total : ∀ s (x : A s), P s x)
+  Lemma is_isomorphism_inclusion_subalgebra (full : ∀ s (x : A s), P s x)
     : IsIsomorphism hom_inclusion_subalgebra.
   Proof.
     constructor.

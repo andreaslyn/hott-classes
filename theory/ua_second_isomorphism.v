@@ -15,7 +15,7 @@ Import
   quotient_algebra_notations
   subalgebra_notations.
 
-Local Notation i := (def_inclusion_subalgebra _ _).
+Local Notation i := (hom_inclusion_subalgebra _ _).
 
 Section cong_trace.
   Context

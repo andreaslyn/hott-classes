@@ -21,7 +21,7 @@ Require Import
 
 Import ne_list.notations.
 
-Declare Scope Algebra_scope.
+(* Declare Scope Algebra_scope. *)
 
 Delimit Scope Algebra_scope with Algebra.
 
