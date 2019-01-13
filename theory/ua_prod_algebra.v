@@ -75,7 +75,7 @@ Section ump_prod_algebra.
   Definition hom_ump_prod_algebra_factoring
     (f : Homomorphism C (ProdAlgebra I A)) (i:I)
     : Homomorphism C (A i)
-    := BuildHomomorphism (λ s, hom_projection_prod_algebra I A i s ∘ f s).
+    := hom_compose (hom_projection_prod_algebra I A i) f.
 
   Definition def_ump_prod_algebra_mapin (f : ∀ i, Homomorphism C (A i))
     : ∀ (s : Sort σ) , C s → ProdAlgebra I A s
