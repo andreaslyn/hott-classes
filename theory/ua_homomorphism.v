@@ -49,8 +49,8 @@ Section is_homomorphism.
     [OpPreserving (u^^A) (u^^B)] with respect to the algebra
     operations [u^^A] and [u^^B] corresponding to [u]. *)
 
-  Class IsHomomorphism : Type :=
-    op_preserving : ∀ (u : Symbol σ), OpPreserving (u^^A) (u^^B).
+  Definition IsHomomorphism : Type
+    := ∀ (u : Symbol σ), OpPreserving (u^^A) (u^^B).
 
   Global Instance hprop_is_homomorphism `{Funext}
     : IsHProp IsHomomorphism.
@@ -69,14 +69,12 @@ Record Homomorphism {σ} {A B : Algebra σ} : Type := BuildHomomorphism
 
 Arguments Homomorphism {σ}.
 
-Arguments BuildHomomorphism {σ A B} def_hom {is_homomorphism_hom}.
+Arguments BuildHomomorphism {σ A B} def_hom is_homomorphism_hom.
 
 (** We the implicit coercion from [Homomorphism A B] to the family
     of functions [∀ s, A s → B s]. *)
 
 Global Coercion def_hom : Homomorphism >-> Funclass.
-
-Global Existing Instance is_homomorphism_hom.
 
 Definition SigHomomorphism {σ} (A B : Algebra σ) : Type :=
   {def_hom : ∀ s, A s → B s | IsHomomorphism def_hom}.
@@ -224,7 +222,7 @@ End homomorphism_ap_operation.
 Section hom_id.
   Context {σ} (A : Algebra σ).
 
-  Global Instance is_homomorphism_id
+  Definition is_homomorphism_id
     : @IsHomomorphism σ A A (λ _, idmap).
   Proof.
    intro u. generalize (u^^A). intro w. induction (σ u).
@@ -233,7 +231,7 @@ Section hom_id.
   Qed.
 
   Definition hom_id : Homomorphism A A
-    := BuildHomomorphism (λ _, idmap).
+    := BuildHomomorphism (λ _, idmap) is_homomorphism_id.
 
   Global Instance is_isomorphism_id : IsIsomorphism hom_id.
   Proof.
@@ -251,12 +249,12 @@ End hom_id.
 Section hom_inv.
   Context {σ} {A B : Algebra σ}.
 
-  Global Instance is_homomorphism_inv (f : Homomorphism A B)
+  Definition is_homomorphism_inv (f : Homomorphism A B)
     `{!IsIsomorphism f}
     : IsHomomorphism (λ s, (f s)^-1).
   Proof.
    intro u.
-   generalize (u^^A) (u^^B) (op_preserving f u).
+   generalize (u^^A) (u^^B) (is_homomorphism_hom f u).
    intros a b P.
    induction (σ u).
    - rewrite <- P. apply (eissect (f t)).
@@ -267,7 +265,7 @@ Section hom_inv.
 
   Definition hom_inv (f : Homomorphism A B) `{!IsIsomorphism f}
     : Homomorphism B A
-    := BuildHomomorphism (λ s, (f s)^-1).
+    := BuildHomomorphism (λ s, (f s)^-1) (is_homomorphism_inv f).
 
   Global Instance is_isomorphism_inv (f : Homomorphism A B)
     `{!IsIsomorphism f}
@@ -305,18 +303,18 @@ Section hom_compose.
    - intro x. now apply (IHw _ (β (f _ x))).
   Qed.
 
-  Global Instance is_homomorphism_compose (g : Homomorphism B C)
+  Definition is_homomorphism_compose (g : Homomorphism B C)
     (f : Homomorphism A B)
     : IsHomomorphism (λ s, g s ∘ f s).
   Proof.
    intro u.
    exact (oppreserving_compose g f
-            (op_preserving g u) (op_preserving f u)).
+            (is_homomorphism_hom g u) (is_homomorphism_hom f u)).
   Qed.
 
   Definition hom_compose (g : Homomorphism B C) (f : Homomorphism A B)
     : Homomorphism A C
-    := BuildHomomorphism (λ s, g s ∘ f s).
+    := BuildHomomorphism (λ s, g s ∘ f s) (is_homomorphism_compose g f).
 
   Global Instance is_isomorphism_compose
     (g : Homomorphism B C) `{!IsIsomorphism g}
@@ -399,7 +397,7 @@ Section path_isomorphism.
         (path_equiv_family (equiv_carriers_isomorphism f)) (u^^A)
       = u^^B.
   Proof.
-    apply path_operations_equiv. apply (op_preserving f).
+    apply path_operations_equiv. apply (is_homomorphism_hom f).
   Defined.
 
 (** If there is an isomorphism [Homomorphism A B] then [A = B]. *)

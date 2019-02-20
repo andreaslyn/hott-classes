@@ -57,7 +57,7 @@ Section cong_quotient.
       + by apply IHw.
   Qed.
 
-  Global Instance has_congruence_property_relation_quotient
+  Definition has_congruence_property_relation_quotient
     : HasCongruenceProperty (A/Ψ) relation_quotient.
   Proof.
     intros u.
@@ -75,7 +75,7 @@ Section cong_quotient.
   Qed.
 
   Definition cong_quotient : Congruence (A/Ψ)
-    := BuildCongruence relation_quotient.
+    := BuildCongruence relation_quotient has_congruence_property_relation_quotient.
 
 End cong_quotient.
 
@@ -142,7 +142,7 @@ Section third_isomorphism.
       exact (Qγ (class_of (Ψ t) x, a)).
   Qed.
 
- Global Instance is_homomorphism_third_isomorphism
+ Definition is_homomorphism_third_isomorphism
     : IsHomomorphism def_third_isomorphism.
   Proof with apply quotient_op_property.
     intro u.
@@ -151,7 +151,8 @@ Section third_isomorphism.
 
   Definition hom_third_isomorphism
     : Homomorphism (A/Ψ/Θ) (A/Φ)
-    := BuildHomomorphism def_third_isomorphism.
+    := BuildHomomorphism
+        def_third_isomorphism is_homomorphism_third_isomorphism.
 
   Global Instance surjection_third_isomorphism (s : Sort σ)
     : IsSurjection (hom_third_isomorphism s).
@@ -225,7 +226,7 @@ Section third_isomorphism'.
                (β (class_of (Ψ t) x)) (λ a, Qβ (x,a))).
   Qed.
 
- Global Instance is_homomorphism_third_surjection
+ Definition is_homomorphism_third_surjection
     : IsHomomorphism def_third_surjection.
   Proof with apply quotient_op_property.
     intro u.
@@ -233,7 +234,8 @@ Section third_isomorphism'.
   Qed.
 
   Definition hom_third_surjection : Homomorphism (A/Ψ) (A/Φ)
-    := BuildHomomorphism def_third_surjection.
+    := BuildHomomorphism
+        def_third_surjection is_homomorphism_third_surjection.
 
   Global Instance surjection_third_surjection (s : Sort σ)
     : IsSurjection (hom_third_surjection s).

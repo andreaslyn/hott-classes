@@ -158,7 +158,7 @@ Section hom_quotient.
     - intro x. apply IHw. intro a. apply (G (x,a)).
   Qed.
 
-  Global Instance is_homomorphism_quotient `{Funext}
+  Definition is_homomorphism_quotient `{Funext}
     : IsHomomorphism def_quotient.
   Proof.
     intro u.
@@ -166,7 +166,7 @@ Section hom_quotient.
   Qed.
 
   Definition hom_quotient : Homomorphism A (A/Φ)
-    := BuildHomomorphism def_quotient.
+    := BuildHomomorphism def_quotient is_homomorphism_quotient.
 
   Global Instance surjection_quotient
     : ∀ s, IsSurjection (hom_quotient s).
@@ -209,7 +209,7 @@ Section ump_quotient_algebra.
         + apply P.
     Qed.
 
-    Global Instance is_homomorphism_ump_quotient_algebra_mapout
+    Definition is_homomorphism_ump_quotient_algebra_mapout
       : IsHomomorphism def_ump_quotient_algebra_mapout.
     Proof.
       intro u.
@@ -220,7 +220,9 @@ Section ump_quotient_algebra.
 
     Definition hom_ump_quotient_algebra_mapout
       : Homomorphism (A/Φ) B
-      := BuildHomomorphism def_ump_quotient_algebra_mapout.
+      := BuildHomomorphism
+          def_ump_quotient_algebra_mapout
+          is_homomorphism_ump_quotient_algebra_mapout.
 
     (** The computation rule for the homomorphism [g : ∀ s, carrier σ Φ s → B s]
         defined by the [ump_quotient_algebra_mapout] is
@@ -245,7 +247,7 @@ Section ump_quotient_algebra.
   Definition hom_ump_quotient_algebra_factoring
     (g : Homomorphism (A/Φ) B)
     : Homomorphism A B
-    := BuildHomomorphism (λ s, g s ∘ hom_quotient Φ s).
+    := hom_compose g (hom_quotient Φ).
 
   (** The left to right direction of the quotient algebra universal mapping
       property [ump_quotient_algebra]. The resulting homomorphism [g] is given by
@@ -257,7 +259,7 @@ Section ump_quotient_algebra.
   Proof.
     intros [f P].
     exists (hom_ump_quotient_algebra_mapout f P).
-    exact _.
+    apply is_homomorphism_ump_quotient_algebra_mapout.
   Defined.
 
   (** The right to left direction of the quotient algebra universal mapping

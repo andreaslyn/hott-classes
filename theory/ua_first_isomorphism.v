@@ -40,7 +40,7 @@ Section kernel.
       now apply IHw.
   Qed.
 
-  Global Instance has_congruence_property_ker
+  Definition has_congruence_property_ker
     : HasCongruenceProperty A relation_ker.
   Proof.
     intros u a b R.
@@ -50,7 +50,7 @@ Section kernel.
   Qed.
 
   Definition cong_ker : Congruence A
-    := BuildCongruence relation_ker.
+    := BuildCongruence relation_ker has_congruence_property_ker.
 
 End kernel.
 
@@ -114,7 +114,7 @@ Section first_isomorphism.
       apply (G (x,a)).
   Qed.
 
-  Global Instance is_homomorphism_first_isomorphism
+  Definition is_homomorphism_first_isomorphism
     : IsHomomorphism def_first_isomorphism.
   Proof.
     intro u.
@@ -124,7 +124,8 @@ Section first_isomorphism.
 
   Definition hom_first_isomorphism
     : Homomorphism (A / cong_ker f) (B & in_image_hom f)
-    := BuildHomomorphism def_first_isomorphism.
+    := BuildHomomorphism
+        def_first_isomorphism is_homomorphism_first_isomorphism.
 
   Global Instance injection_first_isomorphism (s : Sort σ)
     : Injective (hom_first_isomorphism s).
@@ -178,8 +179,9 @@ Section surjective_first_isomorphism.
   Qed.
 
   Definition hom_surjective_first_isomorphism : Homomorphism (A / cong_ker f) B
-  := BuildHomomorphism (λ (s : Sort σ),
-      hom_inclusion_subalgebra B (in_image_hom f) s ∘ hom_first_isomorphism f s).
+  := hom_compose
+      (hom_inclusion_subalgebra B (in_image_hom f))
+      (hom_first_isomorphism f).
 
   Corollary path_surjective_first_isomorphism : (A / cong_ker f) = B.
   Proof.

@@ -1,5 +1,4 @@
-(** This file defines what an [Algebra] is and provides some
-    elementary results. *)
+(** This file defines [Algebra]. *)
 
 Require Export
   Coq.Unicode.Utf8
@@ -134,6 +133,7 @@ Fixpoint ap_operation {σ} {A : Carriers σ} {w : SymbolType σ}
     <<
       ap_operation f (x1,x2,...,xn) = ap_operation g (x1,x2,...,xn)
     >>
+
     for all [(x1,x2,...,xn) : A s1 * A s2 * ... * A sn], then [f = g]. *)
 
 Fixpoint path_forall_ap_operation `{Funext} {σ : Signature}

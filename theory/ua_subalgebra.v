@@ -105,14 +105,15 @@ Section hom_inclusion_subalgebra.
     - intros x. apply IHw.
   Qed.
 
-  Global Instance is_homomorphism_inclusion_subalgebra
+  Definition is_homomorphism_inclusion_subalgebra
     : IsHomomorphism def_inclusion_subalgebra.
   Proof.
     intro u. apply oppreserving_inclusion_subalgebra.
   Qed.
 
   Definition hom_inclusion_subalgebra : Homomorphism (A&P) A
-    := BuildHomomorphism def_inclusion_subalgebra.
+    := BuildHomomorphism
+        def_inclusion_subalgebra is_homomorphism_inclusion_subalgebra.
 
   Global Instance injection_inclusion_subalgebra
     : ∀ (s : Sort σ), Injective (hom_inclusion_subalgebra s).

@@ -50,7 +50,7 @@ Section cong_trace.
     apply IHw...
   Qed.
 
-  Global Instance has_congruence_property_trace
+  Definition has_congruence_property_trace
     : HasCongruenceProperty (A&P) relation_trace.
   Proof.
     intros u a b R.
@@ -63,7 +63,7 @@ Section cong_trace.
   Qed.
 
   Definition cong_trace : Congruence (A&P)
-    := BuildCongruence relation_trace.
+    := BuildCongruence relation_trace has_congruence_property_trace.
 
 End cong_trace.
 
@@ -161,7 +161,7 @@ Section second_isomorphism.
       + intro a. exact (QB (x, a)).
   Qed.
 
-  Global Instance ishomomorphism_second_isomorphism
+  Definition is_homomorphism_second_isomorphism
     : IsHomomorphism def_second_isomorphism.
   Proof.
     intro u.
@@ -172,7 +172,8 @@ Section second_isomorphism.
 
   Definition hom_second_isomorphism
     : Homomorphism ((A&P) / Ψ) ((A/Φ) & Q)
-    := BuildHomomorphism def_second_isomorphism.
+    := BuildHomomorphism
+        def_second_isomorphism is_homomorphism_second_isomorphism.
 
   Global Instance injection_second_isomorphism (s : Sort σ)
     : Injective (hom_second_isomorphism s).
@@ -246,7 +247,7 @@ Section second_isomorphism'.
        (Cα (i t x) x.2) (λ a, R (i t x, a))).
   Qed.
 
-  Global Instance is_homomorphism_second_surjection
+  Definition is_homomorphism_second_surjection
     : IsHomomorphism def_second_surjection.
   Proof.
     intro u.
@@ -255,7 +256,8 @@ Section second_isomorphism'.
   Qed.
 
   Definition hom_second_surjection : Homomorphism (A&P) ((A/Φ) & Q)
-    := BuildHomomorphism def_second_surjection.
+    := BuildHomomorphism
+        def_second_surjection is_homomorphism_second_surjection.
 
   Global Instance surjection_second_surjection (s : Sort σ)
     : IsSurjection (hom_second_surjection s).
