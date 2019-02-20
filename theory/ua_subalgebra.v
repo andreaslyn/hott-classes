@@ -11,6 +11,21 @@ Import algebra_notations ne_list.notations.
 Section closed_under_op.
   Context {σ} (A : Algebra σ) (P : ∀ (s : Sort σ), A s → hProp).
 
+  (** Let [α : A s1 → A s2 → ... → A sn → A t] be an algebra
+      operation. Then [P] satisfies [ClosedUnderOp α] iff
+      for [x1 : A s1], [x2 : A s2], ..., [xn : A sn],
+
+    <<
+      P s1 x1 ∧ P s2 x2 ∧ ... ∧ P sn xn
+    >>
+  
+    implies
+
+    <<
+      P t (α x1 x2 ... xn)
+    >>
+  *)
+
   Fixpoint ClosedUnderOp {w : SymbolType σ} : Operation A w → Type :=
     match w with
     | [:s:] => P s
@@ -56,6 +71,8 @@ End subalgebra_predicate.
 
 Arguments BuildSubalgebraPredicate {σ} {A} subalgebra_predicate
             is_closed_under_ops_subalgebra_predicate.
+
+(** The next section defines subalgebra. *)
 
 Section subalgebra.
   Context {σ} {A : Algebra σ} (P : SubalgebraPredicate A).

@@ -9,6 +9,10 @@ Require Import
 
 Import algebra_notations ne_list.notations.
 
+(** The following section defines product algebra [ProdAlgebra].
+    Section [bin_prod_algebra] specialises the definition to
+    binary product algebra. *)
+
 Section prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ).
 
@@ -32,6 +36,8 @@ Section prod_algebra.
   Definition ProdAlgebra : Algebra σ
     := BuildAlgebra carriers_prod_algebra ops_prod_algebra.
 End prod_algebra.
+
+(** The next section defines the product projection homomorphisms. *)
 
 Section hom_projection_prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ).

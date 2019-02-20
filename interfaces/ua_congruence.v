@@ -15,7 +15,7 @@ Section property_congruence.
   Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
 
 (** The relations [Φ] satisfies [CongruenceProperty f] with respect
-    to the algebra operation [f : A s1 → A s2 → ... → A (s(n+1))] if
+    to the algebra operation [f : A s1 → A s2 → ... → A sn → A t] iff
 
     <<
       Φ s1 x1 y1 ∧ Φ s2 x2 y2 ∧ ... ∧ Φ sn xn yn
@@ -24,7 +24,7 @@ Section property_congruence.
     implies
 
     <<
-      Φ (s(n+1)) (f x1 x2 ... xn) (f y1 y2 ... yn)
+      Φ t (f x1 x2 ... xn) (f y1 y2 ... yn)
     >>
 *)
 

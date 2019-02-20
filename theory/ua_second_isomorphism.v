@@ -1,3 +1,8 @@
+(** This files proves the second isomorphism theorem in two ways.
+    The first way is direct and the other way uses the first
+    isomorphism theorem. From a software engineering perspective it
+    may make sense to split the results in this file to other files. *)
+
 Require Import
   HoTT.Types.Sigma
   HoTT.Types.Universe

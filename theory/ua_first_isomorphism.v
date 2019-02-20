@@ -1,3 +1,8 @@
+(** This files proves the first isomorphism theorem. From a software
+    engineering perspective it makes sense to distribute the results
+    in this file to other files. For example, move [cong_ker] to file
+    [theory/ua_homomorphism.v]. *)
+
 Require Import
   HoTT.Types.Forall
   HoTT.Types.Sigma
@@ -11,6 +16,8 @@ Require Import
   HoTTClasses.theory.ua_quotient_algebra.
 
 Import algebra_notations quotient_algebra_notations subalgebra_notations.
+
+(** The following section defines the kernel of a homomorphism [cong_ker]. *)
 
 Section kernel.
   Context {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B).
@@ -54,6 +61,9 @@ Section kernel.
 
 End kernel.
 
+(** The next section defines an "in homomorphic image predicate"
+    [in_image_hom]. *)
+
 Section subalgebra_predicate_in_image_hom.
   Context `{Funext} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
@@ -85,6 +95,8 @@ Section subalgebra_predicate_in_image_hom.
 
 End subalgebra_predicate_in_image_hom.
 
+(** The first isomorphism theorem. *)
+
 Section first_isomorphism.
   Context `{Univalence} {σ} {A B : Algebra σ} (f : Homomorphism A B).
 
@@ -97,8 +109,11 @@ Section first_isomorphism.
   Defined.
 
   Lemma oppreserving_first_isomorphism {w : SymbolType σ}
-    (γ : Operation (A / cong_ker f) w) (α : Operation A w) (β : Operation B w)
-    (P : OpPreserving f α β) (G : QuotientOpProperty A (cong_ker f) α γ)
+    (γ : Operation (A / cong_ker f) w)
+    (α : Operation A w)
+    (β : Operation B w)
+    (P : OpPreserving f α β)
+    (G : QuotientOpProperty A (cong_ker f) α γ)
     : OpPreserving def_first_isomorphism γ
         (op_subalgebra (in_image_hom f) β
           (closed_under_subalgebra_in_image_hom f α β P)).
@@ -162,6 +177,9 @@ Section first_isomorphism.
     exact (path_isomorphism hom_first_isomorphism).
   Defined.
 End first_isomorphism.
+
+(** A version of the first isomorphism theorem where the homomorphism
+    is surjective. *)
 
 Section surjective_first_isomorphism.
   Context
