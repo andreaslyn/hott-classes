@@ -72,14 +72,16 @@ Section subalgebra_predicate_in_image_hom.
       now refine (transport (λ y, OpPreserving f (α x) (β y)) p _).
   Defined.
 
-  Global Instance subalgebra_predicate_in_image_hom
+  Definition subalgebra_predicate_in_image_hom
     : IsClosedUnderOps B def_in_image_hom.
   Proof.
     intro u. eapply closed_under_subalgebra_in_image_hom, f.
   Defined.
 
   Definition in_image_hom : SubalgebraPredicate B
-    := BuildSubalgebraPredicate def_in_image_hom.
+    := BuildSubalgebraPredicate
+        def_in_image_hom
+        subalgebra_predicate_in_image_hom.
 
 End subalgebra_predicate_in_image_hom.
 

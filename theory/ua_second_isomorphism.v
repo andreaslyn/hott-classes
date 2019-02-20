@@ -103,18 +103,19 @@ Section in_subquotient.
       exact y.2.
   Qed.
 
-  Global Instance is_closed_under_ops_in_subquotient
+  Definition is_closed_under_ops_in_subquotient
     : IsClosedUnderOps (A/Φ) def_in_subquotient.
   Proof.
     intro u.
     eapply op_closed_subalgebra_in_subquotient.
     apply quotient_op_property.
-    apply closed_under_ops.
-    exact _.
+    apply is_closed_under_ops_subalgebra_predicate.
   Qed.
 
   Definition in_subquotient : SubalgebraPredicate (A/Φ)
-    := BuildSubalgebraPredicate def_in_subquotient.
+    := BuildSubalgebraPredicate
+        def_in_subquotient
+        is_closed_under_ops_in_subquotient.
 
 End in_subquotient.
 

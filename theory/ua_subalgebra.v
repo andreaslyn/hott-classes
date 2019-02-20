@@ -25,11 +25,9 @@ Section closed_under_op.
     induction w; simpl; exact _.
   Defined.
 
-  Class IsClosedUnderOps : Type :=
-    closed_under_ops : ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
+  Definition IsClosedUnderOps : Type
+    := ∀ (u : Symbol σ), ClosedUnderOp (u^^A).
 End closed_under_op.
-
-Arguments closed_under_ops {σ} A P {IsClosedUnderOps}.
 
 Section subalgebra_predicate.
   Context {σ : Signature} (A : Algebra σ).
@@ -38,8 +36,6 @@ Section subalgebra_predicate.
     { subalgebra_predicate : ∀ (s : Sort σ), A s → hProp
     ; is_closed_under_ops_subalgebra_predicate
       : IsClosedUnderOps A subalgebra_predicate }.
-
-  Global Existing Instance is_closed_under_ops_subalgebra_predicate.
 
   Global Coercion subalgebra_predicate
     : SubalgebraPredicate >-> Funclass.
@@ -59,7 +55,7 @@ Section subalgebra_predicate.
 End subalgebra_predicate.
 
 Arguments BuildSubalgebraPredicate {σ} {A} subalgebra_predicate
-            {is_closed_under_ops_subalgebra_predicate}.
+            is_closed_under_ops_subalgebra_predicate.
 
 Section subalgebra.
   Context {σ} {A : Algebra σ} (P : SubalgebraPredicate A).
@@ -77,7 +73,7 @@ Section subalgebra.
 
   Definition ops_subalgebra (u : Symbol σ)
     : Operation carriers_subalgebra (σ u)
-    := op_subalgebra (u^^A) (closed_under_ops A P u).
+    := op_subalgebra (u^^A) (is_closed_under_ops_subalgebra_predicate A P u).
   
   Definition Subalgebra : Algebra σ
     := BuildAlgebra carriers_subalgebra ops_subalgebra.
