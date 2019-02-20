@@ -9,7 +9,7 @@ Require Import
   HoTTClasses.interfaces.ua_algebra
   HoTT.Classes.interfaces.abstract_algebra.
 
-Import algebra_notations.
+Import algebra_notations ne_list.notations.
 
 Section property_congruence.
   Context {σ : Signature} (A : Algebra σ) (Φ : ∀ s, relation (A s)).
@@ -97,3 +97,16 @@ Section path_congruence.
     apply (path_universe (equiv_equiv_iff_hprop _ _ (e s x y))).
   Defined.
 End path_congruence.
+
+(** If a congruence [Φ] satisfies the [CongruenceProperty f] for
+    [f : A s1 → A s2 → ... → A sn], then [Φ] satisfies
+    the [CongruenceProperty (f x)] for any [x : A s1]. *)
+
+Lemma congruence_property_cons {σ : Signature} {A : Algebra σ}
+  (Φ : Congruence A) {s : Sort σ} {w : SymbolType σ}
+  : ∀ (f : Operation A (s ::: w)) (x : A s),
+    CongruenceProperty A Φ f → CongruenceProperty A Φ (f x).
+Proof.
+  intros f x P a b R.
+  exact (P (x,a) (x,b) (Equivalence_Reflexive x, R)).
+Defined.

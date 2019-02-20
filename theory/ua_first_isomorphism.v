@@ -98,7 +98,7 @@ Section first_isomorphism.
     (γ : Operation (A / cong_ker f) w) (α : Operation A w) (β : Operation B w)
     (P : OpPreserving f α β) (G : QuotientOpProperty A (cong_ker f) α γ)
     : OpPreserving def_first_isomorphism γ
-        (op_subalgebra B (in_image_hom f) β
+        (op_subalgebra (in_image_hom f) β
           (closed_under_subalgebra_in_image_hom f α β P)).
   Proof.
     unfold QuotientOpProperty in G.
@@ -167,7 +167,7 @@ Section surjective_first_isomorphism.
     (f : Homomorphism A B) {Su : ∀ s, IsSurjection (f s)}.
 
   Global Instance is_isomorphism_inclusion_surjective_first_isomorphism
-    : IsIsomorphism (hom_inclusion_subalgebra B (in_image_hom f)).
+    : IsIsomorphism (hom_inclusion_subalgebra (in_image_hom f)).
   Proof.
     apply is_isomorphism_inclusion_subalgebra.
     intros s y.
@@ -180,7 +180,7 @@ Section surjective_first_isomorphism.
 
   Definition hom_surjective_first_isomorphism : Homomorphism (A / cong_ker f) B
   := hom_compose
-      (hom_inclusion_subalgebra B (in_image_hom f))
+      (hom_inclusion_subalgebra (in_image_hom f))
       (hom_first_isomorphism f).
 
   Corollary path_surjective_first_isomorphism : (A / cong_ker f) = B.

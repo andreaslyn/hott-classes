@@ -15,7 +15,7 @@ Import
   quotient_algebra_notations
   subalgebra_notations.
 
-Local Notation i := (def_inclusion_subalgebra _ _).
+Local Notation i := (hom_inclusion_subalgebra _).
 
 Section cong_trace.
   Context
@@ -55,9 +55,9 @@ Section cong_trace.
   Proof.
     intros u a b R.
     refine (transport (λ X, Φ _ X _)
-              (path_ap_operation_inclusion_subalgebra A P u a) _).
+              (path_ap_operation_inclusion_subalgebra P u a) _).
     refine (transport (λ X, Φ _ _ X)
-              (path_ap_operation_inclusion_subalgebra A P u b) _).
+              (path_ap_operation_inclusion_subalgebra P u b) _).
     apply (property_congruence Φ).
     exact (for_all_2_family_prod_trace_congruence a b R).
   Qed.
@@ -143,9 +143,8 @@ Section second_isomorphism.
     (α : Operation A w) (γ : Operation (A/Φ) w)
     (ζ : Operation ((A&P) / Ψ) w) (CA : ClosedUnderOp (A/Φ) Q γ)
     (CB : ClosedUnderOp A P α) (QA : QuotientOpProperty A Φ α γ)
-    (QB : QuotientOpProperty (A&P) Ψ (op_subalgebra A P α CB) ζ)
-    : OpPreserving def_second_isomorphism ζ
-        (op_subalgebra (A/Φ) Q γ CA).
+    (QB : QuotientOpProperty (A&P) Ψ (op_subalgebra P α CB) ζ)
+    : OpPreserving def_second_isomorphism ζ (op_subalgebra Q γ CA).
   Proof.
     unfold QuotientOpProperty in *.
     induction w; simpl in *.
@@ -235,8 +234,8 @@ Section second_isomorphism'.
     (Cγ : ClosedUnderOp (A/Φ) Q γ)
     (Cα : ClosedUnderOp A P α)
     (R : QuotientOpProperty A Φ α γ)
-    : OpPreserving def_second_surjection (op_subalgebra A P α Cα)
-        (op_subalgebra (A/Φ) Q γ Cγ).
+    : OpPreserving def_second_surjection
+        (op_subalgebra P α Cα) (op_subalgebra Q γ Cγ).
   Proof.
     unfold QuotientOpProperty in *.
     induction w; simpl in *.
