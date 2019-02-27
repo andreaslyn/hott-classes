@@ -47,11 +47,11 @@ Section quotient_algebra.
          ap_operation g (map_family_prod (λ s, class_of (Φ s)) a)
          = class_of (Φ (cod_symboltype w)) (ap_operation f a).
 
-  Local Notation "'Ξ' w" :=
+  Local Notation Ξ w :=
     (∀ (f : Operation A w),
      CongruenceProperty A Φ f →
      ∃ g : Operation carriers_quotient_algebra w,
-     QuotientOpProperty f g) (at level 90).
+     QuotientOpProperty f g).
 
   Lemma op_quotient_algebra_well_def `{Funext}
     (q : ∀ (w : SymbolType σ), Ξ w)
@@ -94,6 +94,12 @@ Section quotient_algebra.
 
   Definition QuotientAlgebra `{Funext} : Algebra σ
     := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.
+
+  Global Instance hset_quotient_algebra `{Funext}
+    : IsHSetAlgebra QuotientAlgebra.
+  Proof.
+    intro s. exact _.
+  Defined.
 
   Lemma quotient_op_property `{Funext} (u : Symbol σ)
     : QuotientOpProperty (u^^A) (operations QuotientAlgebra u).
@@ -149,7 +155,12 @@ End hom_quotient.
     [ump_quotient_algebra] of the quotient algebra. *)
 
 Section ump_quotient_algebra.
-  Context `{Univalence} {σ} {A B : Algebra σ} (Φ : Congruence A).
+  Context
+    `{Univalence}
+    {σ : Signature}
+    {A B : Algebra σ}
+    `{!IsHSetAlgebra B}
+    (Φ : Congruence A).
 
 (** In the nested section below we show that for [f : Homomorphism A B]
     respecting the congruence [Φ], there is a homomorphism
@@ -159,7 +170,7 @@ Section ump_quotient_algebra.
   Section ump_quotient_algebra_mapout.
     Context
       (f : Homomorphism A B)
-      (R : ∀ s, RespectsRelation (Φ s) (f s)).
+      (R : ∀ s (x y : A s), Φ s x y → f s x = f s y).
 
     Definition def_ump_quotient_algebra_mapout
       : ∀ (s : Sort σ), (A/Φ) s → B s
@@ -221,7 +232,7 @@ Section ump_quotient_algebra.
     := hom_compose g (hom_quotient Φ).
 
   Lemma ump_quotient_algebra_lr :
-    (∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s))
+    (∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y)
     → Homomorphism (A/Φ) B.
   Proof.
     intros [f P].
@@ -231,7 +242,7 @@ Section ump_quotient_algebra.
 
   Lemma ump_quotient_algebra_rl :
     Homomorphism (A/Φ) B →
-    ∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s).
+    ∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y.
   Proof.
     intro g.
     refine ((hom_ump_quotient_algebra_factoring g ; _)).
@@ -245,18 +256,18 @@ Section ump_quotient_algebra.
     homomorphism [g : Homomorphism (A/Φ) B] out of the quotient algebra. *)
 
   Lemma ump_quotient_algebra
-    : (∃ (f : Homomorphism A B), ∀ s, RespectsRelation (Φ s) (f s))
+    : (∃ (f : Homomorphism A B), ∀ s (x y : A s), Φ s x y → f s x = f s y)
      <~>
       Homomorphism (A/Φ) B.
   Proof.
     apply (equiv_adjointify
              ump_quotient_algebra_lr ump_quotient_algebra_rl).
     - intro G.
-      apply path_homomorphism.
-      intro s.
-      refine (ap10 (eissect (quotient_ump (Φ s) _) (G s))).
+      apply path_hset_homomorphism.
+      funext s.
+      exact (eissect (quotient_ump (Φ s) _) (G s)).
     - intro F.
       apply path_sigma_hprop.
-      by apply path_homomorphism.
+      by apply path_hset_homomorphism.
   Defined.
 End ump_quotient_algebra.

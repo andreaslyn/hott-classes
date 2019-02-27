@@ -35,6 +35,11 @@ Section prod_algebra.
 
   Definition ProdAlgebra : Algebra σ
     := BuildAlgebra carriers_prod_algebra ops_prod_algebra.
+
+  Global Instance trunc_prod_algebra {n : trunc_index}
+    `{!∀ i, IsTruncAlgebra n (A i)}
+    : IsTruncAlgebra n ProdAlgebra.
+  Proof. intro s. exact _. Defined.
 End prod_algebra.
 
 (** The next section defines the product projection homomorphisms. *)
@@ -117,13 +122,13 @@ Section ump_prod_algebra.
           (def_ump_prod_algebra_mapin f)
           (is_homomorphism_ump_prod_algebra_mapin f).
 
- Lemma ump_prod_algebra
+ Lemma ump_prod_algebra `{!∀ i, IsHSetAlgebra (A i)}
    : Homomorphism C (ProdAlgebra I A) <~> ∀ (i:I), Homomorphism C (A i).
   Proof.
     apply (equiv_adjointify
             hom_ump_prod_algebra_factoring hom_ump_prod_algebra_mapin).
-    - intro f. funext i. by apply path_homomorphism.
-    - intro f. by apply path_homomorphism.
+    - intro f. funext i. by apply path_hset_homomorphism.
+    - intro f. by apply path_hset_homomorphism.
   Defined.
 End ump_prod_algebra.
 
@@ -132,6 +137,13 @@ Section bin_prod_algebra.
 
   Definition bin_prod_algebras (b:Bool) : Algebra σ
     := if b then B else A.
+
+  Global Instance trunc_bin_prod_algebras {n : trunc_index}
+    `{!IsTruncAlgebra n A} `{!IsTruncAlgebra n B}
+    : ∀ (b:Bool), IsTruncAlgebra n (bin_prod_algebras b).
+  Proof.
+    intros []; exact _.
+  Defined.
 
   Definition BinProdAlgebra : Algebra σ :=
     ProdAlgebra Bool bin_prod_algebras.
@@ -154,7 +166,11 @@ End prod_algebra_notations.
 Import prod_algebra_notations.
 
 Section ump_bin_prod_algebra.
-  Context `{Funext} {σ : Signature} (A B C : Algebra σ).
+  Context
+    `{Funext}
+    {σ : Signature}
+    (A B C : Algebra σ)
+    `{!IsHSetAlgebra A} `{!IsHSetAlgebra B}.
 
  Lemma ump_bin_prod_algebra
    : Homomorphism C (A × B) <~> Homomorphism C A * Homomorphism C B.

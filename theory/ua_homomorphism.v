@@ -11,6 +11,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.Types.Record
   HoTT.Types.Sigma
+  HoTT.Fibrations
   HoTT.HSet
   HoTT.Tactics
   HoTT.Classes.interfaces.abstract_algebra
@@ -37,9 +38,10 @@ Section is_homomorphism.
        | s ::: y => λ α β, ∀ (x : A s), OpPreserving (α x) (β (f s x))
        end.
 
-  Global Instance hprop_oppreserving `{Funext} {w : SymbolType σ}
+  Global Instance trunc_oppreserving `{Funext} {n : trunc_index}
+    `{!IsTruncAlgebra n.+1 B} {w : SymbolType σ}
     (α : Operation A w) (β : Operation B w)
-    : IsHProp (OpPreserving α β).
+    : IsTrunc n (OpPreserving α β).
   Proof.
     intros. induction w; exact _.
   Defined.
@@ -52,8 +54,9 @@ Section is_homomorphism.
   Definition IsHomomorphism : Type
     := ∀ (u : Symbol σ), OpPreserving (u^^A) (u^^B).
 
-  Global Instance hprop_is_homomorphism `{Funext}
-    : IsHProp IsHomomorphism.
+  Global Instance trunc_is_homomorphism `{Funext} {n : trunc_index}
+    `{!IsTruncAlgebra n.+1 B}
+    : IsTrunc n IsHomomorphism.
   Proof.
     intros. apply trunc_forall.
   Defined.
@@ -71,112 +74,56 @@ Arguments Homomorphism {σ}.
 
 Arguments BuildHomomorphism {σ A B} def_hom is_homomorphism_hom.
 
-(** We the implicit coercion from [Homomorphism A B] to the family
-    of functions [∀ s, A s → B s]. *)
+(** We declare an implicit coercion from [Homomorphism A B] to the
+    family of functions [∀ s, A s → B s]. *)
 
 Global Coercion def_hom : Homomorphism >-> Funclass.
 
-Definition SigHomomorphism {σ} (A B : Algebra σ) : Type :=
-  {def_hom : ∀ s, A s → B s | IsHomomorphism def_hom}.
+(** To find a path between two homomorphisms [f g : Homomorphism A B]
+    it suffices to find a path between the defining families of
+    functions and a path between the [is_homomorphism_hom] witnesses. *)
 
-Lemma issig_homomorphism {σ} (A B : Algebra σ)
-  : Homomorphism A B <~> SigHomomorphism A B.
+Lemma path_homomorphism {σ} {A B : Algebra σ}
+  (f g : Homomorphism A B) (p : def_hom f = def_hom g)
+  (q : p#(is_homomorphism_hom f) = is_homomorphism_hom g)
+  : f = g.
 Proof.
-  apply symmetric_equiv.
-  unfold SigHomomorphism.
-  issig (@BuildHomomorphism σ A B) (@def_hom σ A B)
-    (@is_homomorphism_hom σ A B).
+  destruct f,g. simpl in *. by path_induction.
 Defined.
 
-(** To find a path between homomorphisms [f g : Homomorphism A B],
-    it suffices to find a path between the defining families of
-    functions. *)
+(** Let [A B : Algebra σ] and suppose [IsHSetAlgebra A] and
+    [IsHSetAlgebra B]. To find a path between two homomorphisms
+    [f g : Homomorphism A B] it suffices to find a path between the
+    defining families of functions. *)
 
-Lemma path_homomorphism `{Funext} {σ} {A B : Algebra σ}
-  (f g : Homomorphism A B) (p : ∀ s, f s == g s) : f = g.
+Lemma path_hset_homomorphism `{Funext} {σ} {A B : Algebra σ} `{!IsHSetAlgebra B}
+  (f g : Homomorphism A B) (p : def_hom f = def_hom g)
+  : f = g.
 Proof.
-  transparent assert (F : (def_hom f = def_hom g)).
-  - funext s x. apply p.
-  - apply (ap (issig_homomorphism A B))^-1. by apply path_sigma_hprop.
+  apply (path_homomorphism _ _ p). apply path_ishprop.
 Defined.
 
 (** [f : Homomorphism A B] is an isomorphism if for each [s : Sort σ],
-    [f s] is both injective and surjective. *)
+    [f s] is an equivalence. *)
 
-Class IsIsomorphism {σ : Signature} {A B : Algebra σ}
-  (f : Homomorphism A B) : Type
-  := BuildIsIsomorphism
-    { injection_isomorphism : ∀ (s : Sort σ), Injective (f s)
-    ; surjection_isomorphism : ∀ (s : Sort σ), IsSurjection (f s) }.
+Class IsIsomorphism {σ : Signature} {A B : Algebra σ} (f : Homomorphism A B)
+  := isequiv_carriers_isomorphism : ∀ (s : Sort σ), IsEquiv (f s).
 
-Global Existing Instance injection_isomorphism.
+Global Existing Instance isequiv_carriers_isomorphism.
 
-Global Existing Instance surjection_isomorphism.
-
-Definition SigIsIsomorphism {σ} {A B : Algebra σ}
-  (f : Homomorphism A B) : Type
-  := { injection_isomorphism : ∀ (s : Sort σ), Injective (f s)
-     | ∀ (s : Sort σ), IsSurjection (f s) }.
-
-Lemma issig_is_isomorphism {σ : Signature} {A B : Algebra σ}
-  (f : Homomorphism A B)
-  : IsIsomorphism f <~> SigIsIsomorphism f.
+Definition equiv_carriers_isomorphism {σ : Signature} {A B : Algebra σ}
+  (f : Homomorphism A B) `{!IsIsomorphism f}
+  : ∀ (s : Sort σ), A s <~> B s.
 Proof.
-  apply symmetric_equiv.
-  unfold SigIsIsomorphism.
-  issig (@BuildIsIsomorphism σ A B f) (@injection_isomorphism σ A B f)
-    (@surjection_isomorphism σ A B f).
+  intro s. rapply (BuildEquiv _ _ (f s)).
 Defined.
 
-Global Instance hprop_is_isomorphism `{Funext} {σ} {A B : Algebra σ}
-  (f : Homomorphism A B)
+Global Instance hprop_is_isomorphism `{Funext} {σ : Signature}
+  {A B : Algebra σ} (f : Homomorphism A B)
   : IsHProp (IsIsomorphism f).
 Proof.
-  apply HProp.equiv_hprop_allpath.
-  intros i j.
-  apply (ap (issig_is_isomorphism f))^-1.
-  apply path_sigma_hprop.
-  funext s x y p.
-  apply set_path2.
+  apply trunc_forall.
 Defined.
-
-(** Suppose [f : Homomorphism A B] and [f s] is injective for all [s :
-    Sort σ]. Then [f s] is an embedding for all [s : Sort σ]. *)
-
-Global Instance embedding_homomorphism {σ} {A B : Algebra σ}
-  (f : Homomorphism A B) {In : ∀ s, Injective (f s)}
-  : ∀ s, IsEmbedding (f s).
-Proof.
-  intro s. apply isembedding_isinj_hset. apply In.
-Defined.
-
-(** The following section shows that an isomorphism between algebras
-    [A B : Algebra σ] induces a family of equivalences between the
-    carriers,
-
-    <<
-      ∀ (s : Sort σ), A s <~> B s
-    >>
-*)
-
-Section equiv_carriers_isomorphism.
-  Context
-    {σ : Signature}
-    {A B : Algebra σ}
-    (f : Homomorphism A B)
-    {Is : IsIsomorphism f}.
-
-  Global Instance isequiv_carriers_isomorphism
-    : ∀ (s : Sort σ), IsEquiv (f s).
-  Proof.
-    intro s. apply isequiv_surj_emb; exact _.
-  Defined.
-
-  Definition equiv_carriers_isomorphism : ∀ (s : Sort σ), A s <~> B s.
-  Proof.
-    intro s. rapply (BuildEquiv _ _ (f s)).
-  Defined.
-End equiv_carriers_isomorphism.
 
 (** Let [f : Homomorphism A B] be a homomorphism. The following
     section proves that [f] is "OpPreserving" with respect to
@@ -197,8 +144,8 @@ Section homomorphism_ap_operation.
   Lemma path_homomorphism_ap_operation' {w : SymbolType σ}
     (a : FamilyProd A (dom_symboltype w)) (α : Operation A w)
     (β : Operation B w) (P : OpPreserving f α β)
-    : f (cod_symboltype w) (ap_operation α a) =
-      ap_operation β (map_family_prod f a).
+    : f (cod_symboltype w) (ap_operation α a)
+      = ap_operation β (map_family_prod f a).
   Proof.
     induction w.
     - assumption.
@@ -228,23 +175,20 @@ Section hom_id.
    intro u. generalize (u^^A). intro w. induction (σ u).
    - reflexivity.
    - now intro x.
-  Qed.
+  Defined.
 
   Definition hom_id : Homomorphism A A
     := BuildHomomorphism (λ _, idmap) is_homomorphism_id.
 
   Global Instance is_isomorphism_id : IsIsomorphism hom_id.
   Proof.
-    constructor; intro s.
-    - intros x y. exact idmap.
-    - apply BuildIsSurjection. intro y. exact (tr (y; idpath)).
+    intro s. exact _.
   Qed.
 End hom_id.
 
 (** Suppose [f : Homomorphism A B] and [IsIsomorphism f]. The next
     section provides an inverse homomorphism [g : Homomorphism B A],
-    which is also an isomorphism [IsIsomorphism g]. The homomorphism
-    [g] satisfies [g s (f s x) = x] for all [s : Sort σ]. *)
+    which is also an isomorphism [IsIsomorphism g]. *)
 
 Section hom_inv.
   Context {σ} {A B : Algebra σ}.
@@ -257,11 +201,11 @@ Section hom_inv.
    generalize (u^^A) (u^^B) (is_homomorphism_hom f u).
    intros a b P.
    induction (σ u).
-   - rewrite <- P. apply (eissect (f t)).
+   - destruct P. apply (eissect (f t)).
    - intro. apply IHs.
      exact (transport (λ y, OpPreserving f _ (b y))
               (eisretr (f t) x) (P (_^-1 x))).
-  Qed.
+  Defined.
 
   Definition hom_inv (f : Homomorphism A B) `{!IsIsomorphism f}
     : Homomorphism B A
@@ -271,22 +215,13 @@ Section hom_inv.
     `{!IsIsomorphism f}
     : IsIsomorphism (hom_inv f).
   Proof.
-    constructor.
-    - intros s x y p.
-      rewrite <- (eisretr (f s) x), <- (eisretr (f s) y).
-      auto.
-    - intro s.
-      apply BuildIsSurjection.
-      intro y.
-      apply tr.
-      exists (f s y).
-      apply (eissect (f s) y).
+    intro s. exact _.
   Qed.
 End hom_inv.
 
 (** Let [f : Homomorphism A B] and [g : Homomorphism B C]. The
     following section shows that composition given by [λ (s : Sort σ),
-    g s ∘ f s] is again a homomorphism. If both [f] and [g] are
+    g s o f s] is again a homomorphism. If both [f] and [g] are
     isomorphisms, then the composition is an isomorphism. *)
 
 Section hom_compose.
@@ -296,41 +231,32 @@ Section hom_compose.
     {α : Operation A w} {β : Operation B w} {γ : Operation C w}
     (g : Homomorphism B C) (f : Homomorphism A B)
     (G : OpPreserving g β γ) (F : OpPreserving f α β)
-    : OpPreserving (λ s (x : A s), g s (f s x)) α γ.
+    : OpPreserving (λ s, g s o f s) α γ.
   Proof.
-   induction w; simpl.
-   - now rewrite F, G.
+   induction w; simpl in *.
+   - by path_induction.
    - intro x. now apply (IHw _ (β (f _ x))).
-  Qed.
+  Defined.
 
-  Definition is_homomorphism_compose (g : Homomorphism B C)
-    (f : Homomorphism A B)
-    : IsHomomorphism (λ s, g s ∘ f s).
+  Definition is_homomorphism_compose
+    (g : Homomorphism B C) (f : Homomorphism A B)
+    : IsHomomorphism (λ s, g s o f s).
   Proof.
    intro u.
    exact (oppreserving_compose g f
             (is_homomorphism_hom g u) (is_homomorphism_hom f u)).
-  Qed.
+  Defined.
 
   Definition hom_compose (g : Homomorphism B C) (f : Homomorphism A B)
     : Homomorphism A C
-    := BuildHomomorphism (λ s, g s ∘ f s) (is_homomorphism_compose g f).
+    := BuildHomomorphism (λ s, g s o f s) (is_homomorphism_compose g f).
 
   Global Instance is_isomorphism_compose
     (g : Homomorphism B C) `{!IsIsomorphism g}
     (f : Homomorphism A B) `{!IsIsomorphism f}
     : IsIsomorphism (hom_compose g f).
   Proof.
-   constructor.
-   - intros s x y p.
-     by do 2 apply injection_isomorphism.
-   - intro s.
-     apply BuildIsSurjection.
-     intro z.
-     apply tr.
-     exists ((f s)^-1 ((g s)^-1 z)).
-     unfold hom_compose, def_hom, Compose.
-     by rewrite (eisretr (f s)), (eisretr (g s)).
+   intro s. exact _.
   Qed.
 End hom_compose.
 
@@ -338,10 +264,10 @@ End hom_compose.
     then by function extensionality composed with univalence there is
     a path [F = G]. *)
 
-  Definition path_equiv_family `{Univalence} {I : Type}
-    {F G : I → Type} (f : ∀ i, F i <~> G i)
-    : F = G
-    := path_forall F G (λ i, path_universe (f i)).
+Definition path_equiv_family `{Univalence} {I : Type}
+  {F G : I → Type} (f : ∀ i, F i <~> G i)
+  : F = G
+  := path_forall F G (λ i, path_universe (f i)).
 
 (** The following section shows that there is a path between
     isomorphic algebras. *)
@@ -364,7 +290,8 @@ Section path_isomorphism.
     (α : Operation A w) (β : Operation B w)
     (f : ∀ (s : Sort σ), A s <~> B s) (P : OpPreserving f α β)
     : transport (λ C : Carriers σ, Operation C w)
-        (path_equiv_family f) α = β.
+        (path_equiv_family f) α
+      = β.
   Proof.
     unfold path_equiv_family.
     induction w; simpl in *.
@@ -405,8 +332,8 @@ Section path_isomorphism.
   Theorem path_isomorphism (f : Homomorphism A B) `{!IsIsomorphism f}
     : A = B.
   Proof.
-    apply path_algebra.
-    exists (path_equiv_family (equiv_carriers_isomorphism f)).
+    apply (path_algebra _ _
+            (path_equiv_family (equiv_carriers_isomorphism f))).
     funext u.
     exact (transport_forall_constant _ _ u
            @ path_operations_isomorphism f u).

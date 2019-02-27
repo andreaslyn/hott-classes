@@ -23,7 +23,7 @@ Section cong_quotient.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
+    (subrel : ∀ (s : Sort σ) (x y : A s), Ψ s x y → Φ s x y).
 
   Definition relation_quotient (s : Sort σ) (a b : (A/Ψ) s) : Type
     := ∀ (x y : A s), in_class (Ψ s) a x → in_class (Ψ s) b y → Φ s x y.
@@ -91,7 +91,7 @@ Section third_isomorphism.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
+    (subrel : ∀ (s : Sort σ) (x y : A s), Ψ s x y → Φ s x y).
 
   Local Notation Θ := (cong_quotient Φ Ψ subrel).
 
@@ -206,7 +206,7 @@ Section third_isomorphism'.
     {A : Algebra σ}
     (Φ : Congruence A)
     (Ψ : Congruence A)
-    (subrel : ∀ (s : Sort σ), subrelation (A s) (Ψ s) (Φ s)).
+    (subrel : ∀ (s : Sort σ) (x y : A s), Ψ s x y → Φ s x y).
 
   Definition def_third_surjection (s : Sort σ) : (A/Ψ) s → (A/Φ) s
     := quotient_rec (Ψ s) (class_of (Φ s))

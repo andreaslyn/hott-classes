@@ -1,5 +1,6 @@
 Require Import
   HoTT.Basics.Equivalences
+  HoTT.HSet
   HoTT.Types.Sigma
   HoTT.Types.Record
   HoTT.Classes.interfaces.abstract_algebra
@@ -130,28 +131,14 @@ Section hom_inclusion_subalgebra.
     := BuildHomomorphism
         def_inclusion_subalgebra is_homomorphism_inclusion_subalgebra.
 
-  Global Instance injection_inclusion_subalgebra
-    : ∀ (s : Sort σ), Injective (hom_inclusion_subalgebra s).
-  Proof.
-    intros s x y p. by apply path_sigma_hprop.
-  Qed.
-
-  Lemma surjection_inclusion_subalgebra (full : ∀ s (x : A s), P s x)
-    : ∀ (s : Sort σ), IsSurjection (hom_inclusion_subalgebra s).
-  Proof.
-    intros s.
-    apply BuildIsSurjection.
-    intro y.
-    apply tr.
-    by exists (y; full s y).
-  Qed.
-
-  Lemma is_isomorphism_inclusion_subalgebra (full : ∀ s (x : A s), P s x)
+  Lemma is_isomorphism_inclusion_improper_subalgebra
+    `{!IsHSetAlgebra A} (full : ∀ s (x : A s), P s x)
     : IsIsomorphism hom_inclusion_subalgebra.
   Proof.
-    constructor.
-    - exact _.
-    - by apply surjection_inclusion_subalgebra.
+    intro s.
+    refine (isequiv_adjointify _ (λ x, (x; full s x)) _ _).
+    - intro x. reflexivity.
+    - intro x. by apply path_sigma_hprop.
   Qed.
 
   Lemma path_ap_operation_inclusion_subalgebra'

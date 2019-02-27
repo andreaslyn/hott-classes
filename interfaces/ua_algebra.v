@@ -87,7 +87,7 @@ Definition arity_symboltype {σ} : SymbolType σ → nat
 (* [Carriers] is a notation because it will be used for an implicit
    coercion [Algebra >-> Funclass] below. *)
 
-Notation Carriers := (λ σ, Sort σ → Type).
+Global Notation Carriers σ := (Sort σ → Type).
 
 (** The function [Operation] maps a family of carriers [A : Carriers σ]
     and [w : SymbolType σ] to the corresponding function type.
@@ -153,55 +153,38 @@ Fixpoint path_forall_ap_operation `{Funext} {σ : Signature}
 (** An [Algebra σ] for a signature [σ] consists of a family [carriers :
     Carriers σ] indexed by the sorts [s : Sort σ], and for each symbol
     [u : Symbol σ], an operation of type [Operation carriers (σ u)],
-    where [σ u : SymbolType σ] is the symbol type of [u]. For each
-    sort [s : Sort σ], [carriers s] is required to be a set. *)
+    where [σ u : SymbolType σ] is the symbol type of [u]. *)
 
 Record Algebra {σ : Signature} : Type := BuildAlgebra
   { carriers : Carriers σ
-  ; operations : ∀ (u : Symbol σ), Operation carriers (σ u)
-  ; hset_carriers_algebra : ∀ (s : Sort σ), IsHSet (carriers s) }.
+  ; operations : ∀ (u : Symbol σ), Operation carriers (σ u) }.
 
 Arguments Algebra : clear implicits.
 
-Arguments BuildAlgebra {σ} carriers operations {hset_carriers_algebra}.
+Arguments BuildAlgebra {σ} carriers operations.
 
 (** We have a convenient implicit coercion from an algebra to the
     family of carriers. *)
 Global Coercion carriers : Algebra >-> Funclass.
 
-Global Existing Instance hset_carriers_algebra.
-
-Definition SigAlgebra (σ : Signature) : Type :=
-  {carriers : Carriers σ
-  | {operations : ∀ (u : Symbol σ), Operation carriers (σ u)
-    | ∀ (s : Sort σ), IsHSet (carriers s)}}.
-
-Lemma issig_algebra (σ : Signature) : Algebra σ <~> SigAlgebra σ.
-Proof.
-  apply symmetric_equiv.
-  unfold SigAlgebra.
-  issig (@BuildAlgebra σ) (@carriers σ) (@operations σ)
-            (@hset_carriers_algebra σ).
-Defined.
-
 (** To find a path between two algebras [A B : Algebra σ] it suffices
     to find a path between the carriers and the operations. *)
 
-Lemma path_algebra `{Funext} {σ : Signature} (A B : Algebra σ)
-  : (∃ (p : carriers A = carriers B),
-        transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
-        = operations B)
-    → A = B.
+Lemma path_algebra {σ : Signature} (A B : Algebra σ)
+  (p : carriers A = carriers B)
+  (q : transport (λ X, ∀ u, Operation X (σ u)) p (operations A)
+       = operations B)
+  : A = B.
 Proof.
-  intros [p q].
-  apply ((ap (issig_algebra σ))^-1).
-  change (carriers A) with (issig_algebra _ A).1 in *.
-  change (carriers B) with (issig_algebra _ B).1 in *.
-  refine (path_sigma _ _ _ p _).
-  apply path_sigma_hprop.
-  simpl in *.
-  by path_induction.
+  destruct A,B. simpl in *. by path_induction.
 Defined.
+
+Class IsTruncAlgebra (n : trunc_index) {σ : Signature} (A : Algebra σ)
+  := trunc_algebra : ∀ (s : Sort σ), IsTrunc n (A s).
+
+Global Existing Instance trunc_algebra.
+
+Notation IsHSetAlgebra := (IsTruncAlgebra 0).
 
 Module algebra_notations.
 
