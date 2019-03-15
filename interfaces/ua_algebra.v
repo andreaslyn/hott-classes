@@ -6,9 +6,7 @@ Require Export
   HoTTClasses.implementations.family_prod.
 
 Require Import
-  Coq.Unicode.Utf8
   HoTT.Basics.Overture
-  HoTT.Basics.Equivalences
   HoTT.Types.Record
   HoTT.Types.Sigma
   HoTT.Types.Arrow
@@ -16,7 +14,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.HSet
   HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.implementations.list.
+  HoTT.Classes.implementations.list.
 
 Import ne_list.notations.
 
@@ -50,11 +48,11 @@ Record Signature : Type := BuildSignature
 
 Global Coercion symbol_types : Signature >-> Funclass.
 
-(** A single sorted [Signature] is a singuture with [Sort = Unit]. *)
+(** A single sorted [Signature] is a signature with [Sort = Unit]. *)
 
 Definition BuildSingleSortedSignature (sym : Type) (arities : sym → nat)
   : Signature
-  := BuildSignature Unit sym (ne_list.replicate_Sn tt ∘ arities).
+  := BuildSignature Unit sym (ne_list.replicate_Sn tt o arities).
 
 (** Let [σ:Signature]. For each symbol [u : Symbol σ], [σ u]
     associates [u] to a [SymbolType σ]. This represents the required
@@ -79,7 +77,7 @@ Definition dom_symboltype {σ} : SymbolType σ → list (Sort σ)
     [SymbolType σ]. *)
 
 Definition arity_symboltype {σ} : SymbolType σ → nat
-  := length ∘ dom_symboltype.
+  := length o dom_symboltype.
 
 (** An [Algebra] must provide a family of [Carriers σ] indexed by
     [Sort σ]. These carriers are the "objects" (types) of the algebra. *)
@@ -87,7 +85,7 @@ Definition arity_symboltype {σ} : SymbolType σ → nat
 (* [Carriers] is a notation because it will be used for an implicit
    coercion [Algebra >-> Funclass] below. *)
 
-Global Notation Carriers σ := (Sort σ → Type).
+Notation Carriers σ := (Sort σ → Type).
 
 (** The function [Operation] maps a family of carriers [A : Carriers σ]
     and [w : SymbolType σ] to the corresponding function type.
@@ -180,11 +178,18 @@ Proof.
 Defined.
 
 Class IsTruncAlgebra (n : trunc_index) {σ : Signature} (A : Algebra σ)
-  := trunc_algebra : ∀ (s : Sort σ), IsTrunc n (A s).
+  := trunc_carriers_algebra : ∀ (s : Sort σ), IsTrunc n (A s).
 
-Global Existing Instance trunc_algebra.
+Global Existing Instance trunc_carriers_algebra.
 
 Notation IsHSetAlgebra := (IsTruncAlgebra 0).
+
+Global Instance trunc_algebra_succ {σ : Signature} (A : Algebra σ)
+  {n} `{!IsTruncAlgebra n A}
+  : IsTruncAlgebra n.+1 A | 1000.
+Proof.
+  intro; exact _.
+Qed.
 
 Module algebra_notations.
 
