@@ -4,7 +4,7 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Sigma
   HoTT.Types.Prod
-  HoTTClasses.theory.ua_homomorphism.
+  HoTT.Classes.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
 
@@ -48,8 +48,7 @@ End prod_algebra.
 Section hom_proj_prod_algebra.
   Context `{Funext} {σ : Signature} (I : Type) (A : I → Algebra σ).
 
-  Definition def_proj_prod_algebra (i:I) (s : Sort σ)
-      (c : ProdAlgebra I A s)
+  Definition def_proj_prod_algebra (i:I) (s : Sort σ) (c : ProdAlgebra I A s)
     : A i s
     := c i.
 

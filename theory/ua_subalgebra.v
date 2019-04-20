@@ -2,10 +2,8 @@ Require Import
   HoTT.Basics.Equivalences
   HoTT.TruncType
   HoTT.HProp
-  HoTT.HSet
   HoTT.Types.Universe
   HoTT.Types.Sigma
-  HoTT.Types.Record
   HoTT.Types.Forall
   HoTTClasses.theory.ua_homomorphism.
 
@@ -25,7 +23,7 @@ Section closed_under_op.
     implies
 
     <<
-      P t (α x1 x2 ... xn).
+      P t (α x1 x2 ... xn)
     >>
   *)
 
@@ -60,7 +58,7 @@ Section subalgebra.
     {σ : Signature} (A : Algebra σ)
     (P : ∀ s, A s → hProp) `{!IsClosedUnderOps A P}.
 
-  (** The subalgebra carriers is the family of subtypes defined by [P]. *)
+(** The subalgebra carriers is the family of subtypes defined by [P]. *)
 
   Definition carriers_subalgebra : Carriers σ
     := λ (s : Sort σ), {x | P s x}.
@@ -149,23 +147,17 @@ End hom_inc_subalgebra.
 
 Section path_subalgebra.
   Context
-    `{Univalence} {σ : Signature} (A : Algebra σ)
+    {σ : Signature} (A : Algebra σ)
     (P : ∀ s, A s → hProp) {CP : IsClosedUnderOps A P}
     (Q : ∀ s, A s → hProp) {CQ : IsClosedUnderOps A Q}.
 
-  Lemma path_subalgebra_closed_under_ops (p : P = Q) (q : p#CP = CQ)
+  Lemma path_subalgebra `{Funext} (p : P = Q) : A&P = A&Q.
+  Proof.
+    by destruct p, (path_ishprop CP CQ).
+  Defined.
+
+  Lemma path_subalgebra_iff `{Univalence} (R : ∀ s x, P s x <-> Q s x)
     : A&P = A&Q.
-  Proof.
-    by path_induction.
-  Defined.
-
-  Lemma path_subalgebra (p : P = Q) : A&P = A&Q.
-  Proof.
-    apply (path_subalgebra_closed_under_ops p).
-    apply path_ishprop.
-  Defined.
-
-  Lemma path_subalgebra_iff (R : ∀ s x, P s x <-> Q s x) : A&P = A&Q.
   Proof.
     apply path_subalgebra.
     funext s x.
