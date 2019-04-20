@@ -1,3 +1,5 @@
+(*
+
 (** This files proves the second isomorphism theorem in two ways.
     The first way is direct and the other way uses the first
     isomorphism theorem. From a software engineering perspective it
@@ -7,9 +9,6 @@ Require Import
   HoTT.Types.Sigma
   HoTT.Types.Universe
   HoTT.HIT.quotient
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_homomorphism
   HoTTClasses.theory.ua_subalgebra
   HoTTClasses.theory.ua_quotient_algebra
@@ -327,3 +326,4 @@ Section second_isomorphism'.
     by induction path_second_surjection_cong_ker_trace.
   Defined.
 End second_isomorphism'.
+*)

@@ -1,19 +1,19 @@
+Require Export HoTTClasses.interfaces.ua_congruence.
+
 Require Import
   HoTT.Basics.Equivalences
   HoTT.Types.Sigma
   HoTT.Types.Universe
   HoTT.HIT.quotient
+  HoTT.HIT.Truncations
   HoTT.Classes.implementations.list
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
 
 Section quotient_algebra.
   Context
-    {σ : Signature} (A : Algebra σ)
+    `{Funext} {σ : Signature} (A : Algebra σ)
     (Φ : ∀ s, relation (A s)) `{!IsCongruence A Φ}.
 
 (** The quotient algebra carriers is the family of set-quotients
@@ -29,7 +29,7 @@ Section quotient_algebra.
     that [P (class_of _ x1, ..., class_of _ xn, tt)] holds for all
     [(x1, ..., xn, tt) : FamilyProd A w]. *)
 
-  Fixpoint quotient_ind_prop_family_prod `{Funext} {w : list (Sort σ)}
+  Fixpoint quotient_ind_prop_family_prod {w : list (Sort σ)}
     : ∀ (P : FamilyProd carriers_quotient_algebra w → Type)
         `{!∀ a, IsHProp (P a)}
         (dclass : ∀ x, P (map_family_prod (λ s, class_of (Φ s)) x))
@@ -70,7 +70,7 @@ Section quotient_algebra.
   Local Notation op_qalg_cons q f P x :=
     (q _ (f x) (op_compatible_cons Φ _ _ f x P)).1 (only parsing).
 
-  Lemma op_quotient_algebra_well_def `{Funext}
+  Lemma op_quotient_algebra_well_def
     (q : ∀ (w : SymbolType σ), QuotOp w)
     (s : Sort σ) (w : SymbolType σ) (f : Operation A (s ::: w))
     (P : OpCompatible A Φ f) (x y : A s) (C : Φ s x y)
@@ -108,35 +108,34 @@ Section quotient_algebra.
    >>
 *)
 
-  Fixpoint op_quotient_algebra `{Funext} {w : SymbolType σ} : QuotOp w.
+  Fixpoint op_quotient_algebra {w : SymbolType σ} : QuotOp w.
   Proof. refine (
       match w return QuotOp w with
       | [:s:] => λ (f : A s) P, (class_of (Φ s) f; λ a, idpath)
       | s ::: w' => λ (f : A s → Operation A w') P,
         (quotient_rec (Φ s)
-          (λ (x : A s), op_qalg_cons (op_quotient_algebra _) f P x)
-          (op_quotient_algebra_well_def (op_quotient_algebra _) s w' f P)
+          (λ (x : A s), op_qalg_cons op_quotient_algebra f P x)
+          (op_quotient_algebra_well_def op_quotient_algebra s w' f P)
         ; _)
       end
     ).
     intros [x a].
-    apply (op_quotient_algebra _ w' (f x)
-             (op_compatible_cons Φ s w' f x P)).
+    apply (op_quotient_algebra w' (f x) (op_compatible_cons Φ s w' f x P)).
   Defined.
 
-  Definition ops_quotient_algebra `{Funext} (u : Symbol σ)
+  Definition ops_quotient_algebra (u : Symbol σ)
     : Operation carriers_quotient_algebra (σ u)
     := (op_quotient_algebra (u^^A) (ops_compatible_cong A Φ u)).1.
 
 (** Definition of quotient algebra. See Lemma [compute_op_quotient]
     below for the computation rule of quotient algebra operations. *)
 
-  Definition QuotientAlgebra `{Funext} : Algebra σ
+  Definition QuotientAlgebra : Algebra σ
     := BuildAlgebra carriers_quotient_algebra ops_quotient_algebra.
 
 (** The quotient algebra carriers are always sets. *)
 
-  Global Instance hset_quotient_algebra `{Funext}
+  Global Instance hset_quotient_algebra
     : IsHSetAlgebra QuotientAlgebra.
   Proof.
     intro s. exact _.
@@ -147,14 +146,14 @@ Section quotient_algebra.
     [(a1, a2, ..., an) : A s1 * A s2 * ... * A sn],
 
     <<
-      β (class_of _ a1) (class_of _ a2) ... (class_of _ an)
+      β (class_of _ a1, class_of _ a2, ..., class_of _ an)
       = class_of _ (α (a1, a2, ..., an))
     >>
 
     where [α] is the uncurried [u^^A] operation and [β] is the
     uncurried [u^^QuotientAlgebra] operation. *)
 
-  Lemma compute_op_quotient `{Funext} (u : Symbol σ)
+  Lemma compute_op_quotient (u : Symbol σ)
     : ComputeOpQuotient (u^^A) (u^^QuotientAlgebra).
   Proof.
     apply op_quotient_algebra.
@@ -244,7 +243,7 @@ Section ump_quotient_algebra.
 
 (** In the nested section below we show that if [f : Homomorphism A B]
     maps elements related by [Φ] to equal elements, there is a
-    [Homomorphism (A/Φ) B] of the quotient algebra satisfying
+    [Homomorphism (A/Φ) B] out of the quotient algebra satisfying
     [compute_quotient_algebra_mapout] below. *)
 
   Section quotient_algebra_mapout.

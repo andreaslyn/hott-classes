@@ -1,3 +1,4 @@
+(*
 (** This files proves the third isomorphism theorem in two ways.
     The first way is direct and the other way uses the first
     isomorphism theorem. From a software engineering perspective it
@@ -6,10 +7,7 @@
 Require Import
   HoTT.Types.Universe
   HoTT.HIT.quotient
-  HoTT.Classes.interfaces.abstract_algebra
   HoTTClasses.interfaces.relation
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_quotient_algebra
   HoTTClasses.theory.ua_homomorphism
   HoTTClasses.theory.ua_first_isomorphism.
@@ -308,3 +306,4 @@ Section third_isomorphism'.
     by induction path_third_surjection_cong_ker_quotient.
   Defined.
 End third_isomorphism'.
+*)

@@ -1,3 +1,5 @@
+(*
+
 (** This files proves the first isomorphism theorem. From a software
     engineering perspective it makes sense to distribute the results
     in this file to other files. For example, move [cong_ker] to file
@@ -8,9 +10,6 @@ Require Import
   HoTT.Types.Sigma
   HoTT.Types.Universe
   HoTT.HIT.quotient
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.ua_congruence
   HoTTClasses.theory.ua_homomorphism
   HoTTClasses.theory.ua_subalgebra
   HoTTClasses.theory.ua_quotient_algebra.
@@ -208,3 +207,4 @@ Section surjective_first_isomorphism.
     exact (path_isomorphism hom_surjective_first_isomorphism).
   Defined.
 End surjective_first_isomorphism.
+*)

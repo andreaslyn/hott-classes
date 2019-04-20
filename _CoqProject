@@ -4,14 +4,16 @@
 ./implementations/ne_list.v
 ./implementations/family_prod.v
 
-./interfaces/relation.v
 ./interfaces/ua_algebra.v
 ./interfaces/ua_congruence.v
 
 ./theory/ua_homomorphism.v
+./theory/ua_isomorphic.v
 ./theory/ua_prod_algebra.v
 ./theory/ua_subalgebra.v
 ./theory/ua_quotient_algebra.v
 ./theory/ua_first_isomorphism.v
 ./theory/ua_second_isomorphism.v
 ./theory/ua_third_isomorphism.v
+
+./categories/ua_category.v

@@ -3,6 +3,8 @@
     theorem in this file is the [path_isomorphism] theorem, which
     states that there is a path between isomorphic algebras. *)
 
+Require Export HoTTClasses.interfaces.ua_algebra.
+
 Require Import
   HoTT.Basics.Equivalences
   HoTT.Basics.PathGroupoids
@@ -14,9 +16,7 @@ Require Import
   HoTT.Fibrations
   HoTT.HProp
   HoTT.HSet
-  HoTT.Tactics
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra.
+  HoTT.Tactics.
 
 Import algebra_notations ne_list.notations.
 
@@ -78,6 +78,12 @@ Global Coercion def_hom : Homomorphism >-> Funclass.
 
 Global Existing Instance is_homomorphism_hom.
 
+Lemma apD10_homomorphism {σ} {A B : Algebra σ} {f g : Homomorphism A B}
+  : f = g → ∀ s, f s == g s.
+Proof.
+  intro p. by destruct p.
+Defined.
+
 Definition SigHomomorphism {σ} (A B : Algebra σ) : Type :=
   { def_hom : ∀ s, A s → B s | IsHomomorphism def_hom }.
 
@@ -138,7 +144,7 @@ Defined.
 
 (* We make [IsHomomorphism] an argument here, rather than a field, so
    having both [f : Homomorphism A B] and [X : IsIsomorphism f] in
-   context does not result in having two proofs of [IsIsomorphism f]
+   context does not result in having two proofs of [IsHomomorphism f]
    in context. *)
 
 Class IsIsomorphism {σ : Signature} {A B : Algebra σ}
@@ -174,6 +180,16 @@ Section homomorphism_ap_operation.
     - assumption.
     - destruct a as [x a]. apply IHw. apply P.
   Defined.
+
+(** A homomorphism [f : ∀ s, A s → B s] satisfies
+
+    <<
+      f t (α (a1, a2, ..., an, tt))
+      = β (f s1 a1, f s2 a2, ..., f sn an, tt)
+    >>
+
+    where [(a1, a2, ..., an, tt) : FamilyProd A [s1; s2; ...; sn]] and
+    [α], [β] uncurried versions of [u^^A], [u^^B] respectively. *)
 
   Lemma path_homomorphism_ap_operation (f : ∀ s, A s → B s)
     `{!IsHomomorphism f}
@@ -278,8 +294,7 @@ Section hom_compose.
   Qed.
 
   Definition hom_compose
-    (g : ∀ s, B s → C s) `{!IsHomomorphism g}
-    (f : ∀ s, A s → B s) `{!IsHomomorphism f}
+    (g : Homomorphism B C) (f : Homomorphism A B)
     : Homomorphism A C
     := BuildHomomorphism (λ s, g s o f s).
 
@@ -354,10 +369,13 @@ Section path_isomorphism.
   Theorem path_isomorphism (f : ∀ s, A s → B s) `{IsIsomorphism σ A B f}
     : A = B.
   Proof.
-    apply (path_algebra _ _
-             (path_equiv_family (equiv_isomorphism f))).
-    funext u.
-    exact (transport_forall_constant _ _ u
-           @ path_operations_isomorphism f u).
+    apply (path_algebra _ _ (path_equiv_family (equiv_isomorphism f))).
+(* Make the last part abstract because it relies on [path_operations_equiv],
+   which is opaque. In cases where the involved algebras are set algebras,
+   then this part is a mere proposition. *)
+    abstract (
+      funext u;
+      exact (transport_forall_constant _ _ u
+             @ path_operations_isomorphism f u)).
   Defined.
 End path_isomorphism.

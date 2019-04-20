@@ -3,9 +3,8 @@ Require Import
   HoTT.HProp
   HoTT.Types.Universe
   HoTT.Types.Forall
-  HoTTClasses.interfaces.ua_algebra
-  HoTTClasses.interfaces.relation
-  HoTT.Classes.interfaces.abstract_algebra.
+  HoTT.Classes.interfaces.canonical_names
+  HoTTClasses.interfaces.ua_algebra.
 
 Import algebra_notations ne_list.notations.
 
@@ -47,7 +46,7 @@ Section congruence.
 
   Class IsCongruence : Type := BuildIsCongruence
    { is_mere_relation_cong : ∀ (s : Sort σ), is_mere_relation (A s) (Φ s)
-   ; equiv_rel_cong : ∀ (s : Sort σ), Equivalence (Φ s)
+   ; equiv_rel_cong : ∀ (s : Sort σ), EquivRel (Φ s)
    ; ops_compatible_cong : OpsCompatible }.
 
   Global Existing Instance is_mere_relation_cong.
@@ -67,7 +66,7 @@ Section congruence.
 
 End congruence.
 
-(** If [Φ] is a contruence and [f : A s1 → A s2 → ... → A sn] an
+(** If [Φ] is a congruence and [f : A s1 → A s2 → ... → A sn] an
     operation such that [OpCompatible A Φ f] holds.
     Then [OpCompatible (f x)] holds for all [x : A s1]. *)
 
@@ -78,5 +77,5 @@ Lemma op_compatible_cons {σ : Signature} {A : Algebra σ}
   : OpCompatible A Φ (f x).
 Proof.
   intros a b R.
-  exact (P (x,a) (x,b) (Equivalence_Reflexive x, R)).
+  exact (P (x,a) (x,b) (EquivRel_Reflexive x, R)).
 Defined.

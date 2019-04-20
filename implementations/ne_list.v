@@ -94,14 +94,14 @@ Section with_type.
     : ∀ l, P l.
   Proof with auto.
    cut (∀ l, P l * ∀ x, P (cons x l)).
-    intros. apply X.
-   destruct l...
-   revert t.
-   induction l...
-   intros.
-   split. apply IHl.
-   intro.
-   apply Pmore; intros; apply IHl.
+   - intros. apply X.
+   - destruct l...
+     revert t.
+     induction l...
+     intros.
+     split.
+     + apply IHl.
+     + intro. apply Pmore; intros; apply IHl.
   Qed.
 
   Lemma tl_length (l: ne_list)
@@ -122,8 +122,10 @@ Lemma tails_are_shorter {T} (y x: ne_list T):
   le (length (to_list x)) (length (to_list y)).
 Proof with auto.
  induction y; simpl.
- intros [[] | C]. constructor. elim C.
- intros [[] | C]...
+ - intros [[] | C].
+   + constructor.
+   + elim C.
+ - intros [[] | C]...
 Qed.
 
 Fixpoint map {A B} (f: A → B) (l: ne_list A): ne_list B :=
@@ -136,10 +138,8 @@ Lemma list_map {A B} (f: A → B) (l: ne_list A)
   : to_list (map f l) = list.map f (to_list l).
 Proof.
   induction l.
-  reflexivity.
-  simpl.
-  rewrite <- IHl.
-  reflexivity.
+  - reflexivity.
+  - simpl. rewrite <- IHl. reflexivity.
 Qed.
 
 Fixpoint inits {A} (l: ne_list A): ne_list (ne_list A) :=

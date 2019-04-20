@@ -7,8 +7,6 @@ Require Import
   HoTT.Types.Sigma
   HoTT.Types.Record
   HoTT.Types.Forall
-  HoTT.Classes.interfaces.abstract_algebra
-  HoTTClasses.interfaces.ua_algebra
   HoTTClasses.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
