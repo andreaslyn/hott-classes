@@ -5,6 +5,7 @@
 ./implementations/family_prod.v
 
 ./interfaces/ua_algebra.v
+./interfaces/ua_setalgebra.v
 ./interfaces/ua_congruence.v
 
 ./theory/ua_homomorphism.v

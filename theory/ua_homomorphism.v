@@ -3,7 +3,7 @@
     theorem in this file is the [path_isomorphism] theorem, which
     states that there is a path between isomorphic algebras. *)
 
-Require Export HoTTClasses.interfaces.ua_algebra.
+Require Export HoTTClasses.interfaces.ua_setalgebra.
 
 Require Import
   HoTT.Basics.Equivalences
