@@ -4,7 +4,7 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Sigma
   HoTT.Types.Prod
-  HoTT.Classes.theory.ua_homomorphism.
+  HoTTClasses.theory.ua_homomorphism.
 
 Import algebra_notations ne_list.notations.
 
