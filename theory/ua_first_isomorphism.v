@@ -41,7 +41,7 @@ Section kernel.
     induction w.
     - reflexivity.
     - destruct a as [x a], b as [y b], R as [r R].
-      simpl.
+      cbn.
       rewrite r.
       now apply IHw.
   Qed.

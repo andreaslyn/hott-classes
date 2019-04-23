@@ -23,7 +23,7 @@ Lemma path_setalgebra `{Funext} {σ} (A B : SetAlgebra σ)
   (p : algebra_setalgebra A = algebra_setalgebra B)
   : A = B.
 Proof.
-  destruct A as [A AH], B as [B BH]. simpl in *.
+  destruct A as [A AH], B as [B BH]. cbn in *.
   transparent assert (a : (p#AH = BH)) by apply path_ishprop.
   by path_induction.
 Defined.
@@ -51,6 +51,6 @@ Proof.
   - abstract (intro p; induction p; by rewrite path_setalgebra_1).
   - abstract (
       intro e; destruct A as [A AH], B as [B BH];
-      simpl in e; destruct e;
+      cbn in e; destruct e;
       unfold path_setalgebra; by destruct path_ishprop).
 Defined.

@@ -38,7 +38,7 @@ Section closed_under_op.
     {w : SymbolType σ} (α : Operation A w)
     : IsHProp (ClosedUnderOp α).
   Proof.
-    induction w; simpl; exact _.
+    induction w; cbn; exact _.
   Qed.
 
   Class IsClosedUnderOps : Type

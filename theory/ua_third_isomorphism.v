@@ -52,11 +52,11 @@ Section cong_quotient.
       for_all_2_family_prod A A Φ a b.
   Proof.
     intro F.
-    induction w; simpl in *.
+    induction w; cbn in *.
     - constructor.
     - destruct a as [x a], b as [y b], F as [Q F].
       split.
-      + apply Q; simpl; reflexivity.
+      + apply Q; cbn; reflexivity.
       + by apply IHw.
   Qed.
 
@@ -132,7 +132,7 @@ Section third_isomorphism.
       apply related_classes_eq.
       transitivity f.
       + apply (classes_eq_related (Θ t) _ _ (Qγ tt)).
-        * simpl. reflexivity.
+        * cbn. reflexivity.
         * apply (classes_eq_related (Ψ t)). exact (Qβ tt).
       + apply (classes_eq_related (Φ t)). symmetry. exact (Qα tt).
     - intros α Qα β Qβ γ Qγ.

@@ -205,7 +205,7 @@ Lemma path_algebra {σ : Signature} (A B : Algebra σ)
        = operations B)
   : A = B.
 Proof.
-  destruct A,B. simpl in *. by path_induction.
+  destruct A,B. cbn in *. by path_induction.
 Defined.
 
 Lemma path_ap_carriers_path_algebra {σ} (A B : Algebra σ)
@@ -214,7 +214,7 @@ Lemma path_ap_carriers_path_algebra {σ} (A B : Algebra σ)
        = operations B)
   : ap carriers (path_algebra A B p q) = p.
 Proof.
-  destruct A as [A a], B as [B b]. simpl in *. by destruct p,q.
+  destruct A as [A a], B as [B b]. cbn in *. by destruct p,q.
 Defined.
 
 (** Suppose [p],[q] are paths in [Algebra σ]. To show that [p = q] it

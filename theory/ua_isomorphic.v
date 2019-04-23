@@ -9,10 +9,9 @@ Require Import
   HoTT.Basics.Equivalences
   HoTT.Types.Forall
   HoTT.Types.Sigma
+  HoTT.Types.Record
   HoTT.Types.Universe
   HoTT.Tactics.
-
-Import algebra_notations.
 
 (** Tow algebras [A B : Algebra σ] are isomorphic if there is an
     isomorphism [∀ s, A s → B s]. *)
@@ -40,6 +39,18 @@ End isomorphic_notations.
 
 Import isomorphic_notations.
 
+Definition SigIsomorphic {σ : Signature} (A B : Algebra σ) :=
+  { def_iso : ∀ s, A s → B s
+  | { _ : IsHomomorphism def_iso | IsIsomorphism def_iso }}.
+
+Lemma issig_isomorphic {σ : Signature} (A B : Algebra σ)
+  : SigIsomorphic A B <~> A ≅ B.
+Proof.
+  unfold SigIsomorphic.
+  issig (@BuildIsomorphic σ A B) (@def_isomorphic σ A B)
+    (@is_homomorphism_isomorphic σ A B) (@is_isomorphism_isomorphic σ A B).
+Defined.
+
 (** Isomorphic algebras can be identified [A ≅ B → A = B]. *)
 
 Corollary id_isomorphic `{Univalence} {σ} {A B : Algebra σ} (e : A ≅ B)
@@ -55,7 +66,7 @@ Proof.
   destruct p. exact (BuildIsomorphic (hom_id A)).
 Defined.
 
-(** To find a path between two isomorphic [F G : A ≅ B], it suffices
+(** To find a path between two witnesses [F G : A ≅ B], it suffices
     to find a path between the defining families of functions and
     the [is_homomorphism_hom] witnesses. *)
 
@@ -64,10 +75,9 @@ Lemma path_isomorphic `{Funext} {σ : Signature} {A B : Algebra σ}
   (b : a#(is_homomorphism_isomorphic F) = is_homomorphism_isomorphic G)
   : F = G.
 Proof.
-  transparent assert (c :
-   (transport (λ f, ∀ s, IsEquiv (f s)) a (is_isomorphism_isomorphic F)
-    = is_isomorphism_isomorphic G)) by apply path_ishprop.
-  destruct F,G. simpl in *. by path_induction.
+  apply (ap (issig_isomorphic A B)^-1)^-1. unshelve eapply path_sigma.
+  - exact a.
+  - apply path_sigma_hprop. cbn. by destruct b,a.
 Defined.
 
 (** Suppose [IsHSetAlgebra B]. To find a path between two isomorphic
@@ -113,20 +123,20 @@ Lemma path_path_isomorphism_hom_id_hset `{Univalence} {σ : Signature}
 Proof.
   apply path_path_hset_algebra.
   rewrite path_ap_carriers_path_algebra.
-  assert (∀ (E : ∀ (s : Sort σ), IsEquiv (λ x : A s, x)),
-           (λ s, @path_universe _ _ _ idmap (E s)) = (λ s, idpath)).
+  apply (paths_ind (λ s, idpath) (λ f _, path_forall A A f = idpath)).
+  - apply path_forall_1.
   - intros.
     funext s.
+    symmetry.
     rewrite (path_ishprop _ (isequiv_idmap (A s))).
     apply path_universe_1.
-  - rewrite X. apply path_forall_1.
 Qed.
 
 (** The following section shows that [isomorphic_id] is an equivalence
     with inverse [id_isomorphic]. *)
 
 Section isequiv_isomorphic_id.
- Context `{Univalence} {σ} (A B : Algebra σ) `{IsHSetAlgebra B}.
+  Context `{Univalence} {σ} (A B : Algebra σ) `{IsHSetAlgebra B}.
 
   Lemma sect_id_isomorphic : Sect id_isomorphic (@isomorphic_id σ A B).
   Proof.
@@ -148,12 +158,11 @@ Section isequiv_isomorphic_id.
     exact _.
   Qed.
 
-  Global Instance isequiv_isomorphic_id : IsEquiv (@isomorphic_id σ A B).
-  Proof.
-    exact (isequiv_adjointify
-            isomorphic_id
-            id_isomorphic
-            sect_id_isomorphic
-            sect_isomorphic_id).
-  Defined.
+  Global Instance isequiv_isomorphic_id : IsEquiv (@isomorphic_id σ A B)
+    := isequiv_adjointify
+          isomorphic_id
+          id_isomorphic
+          sect_id_isomorphic
+          sect_isomorphic_id.
+
 End isequiv_isomorphic_id.

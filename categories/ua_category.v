@@ -7,10 +7,7 @@ Require Import
 
 Require HoTT.Categories.Category.Morphisms.
 
-Import
-  Morphisms.CategoryMorphismsNotations
-  algebra_notations
-  isomorphic_notations.
+Import Morphisms.CategoryMorphismsNotations isomorphic_notations.
 
 Local Open Scope category.
 
@@ -20,7 +17,7 @@ Local Open Scope category.
 Lemma precategory_algebra `{Funext} (σ : Signature) : PreCategory.
 Proof.
   apply (@Build_PreCategory
-          (SetAlgebra σ) Homomorphism hom_id (@hom_compose σ));
+           (SetAlgebra σ) Homomorphism hom_id (@hom_compose σ));
     [intros; by apply path_hset_homomorphism .. | exact _].
 Defined.
 
@@ -59,6 +56,9 @@ Proof.
   - intros [f F G]. by apply path_hset_isomorphic.
   - intros [f F]. by apply Morphisms.path_isomorphic.
 Defined.
+
+(** [Morphisms.idtoiso] factorizes as the composition of equivalences.
+    This implies [Morphisms.idtoiso] is an equivalence. *)
 
 Lemma path_idtoiso_isomorphic_id `{Funext} {σ : Signature}
   (A B : object (precategory_algebra σ))

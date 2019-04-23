@@ -90,7 +90,7 @@ Section in_subquotient.
     : ClosedUnderOp (A/Φ) def_in_subquotient γ.
   Proof.
     induction w.
-    - specialize (Q tt). simpl in Q.
+    - specialize (Q tt). cbn in Q.
       apply tr.
       exists (α; C).
       unfold i, def_inclusion_subalgebra.
@@ -152,7 +152,7 @@ Section second_isomorphism.
     : OpPreserving def_second_isomorphism ζ (op_subalgebra Q γ CA).
   Proof.
     unfold QuotientOpProperty in *.
-    induction w; simpl in *.
+    induction w; cbn in *.
     - apply path_sigma_hprop.
       rewrite (QB tt), (QA tt).
       by apply related_classes_eq.
@@ -243,7 +243,7 @@ Section second_isomorphism'.
         (op_subalgebra P α Cα) (op_subalgebra Q γ Cγ).
   Proof.
     unfold QuotientOpProperty in *.
-    induction w; simpl in *.
+    induction w; cbn in *.
     - apply path_sigma_hprop. symmetry. apply (R tt).
     - intro x.
       by specialize (IHw (α (i t x)) (γ (class_of (Φ t) (i t x)))
