@@ -57,8 +57,7 @@ Proof.
   - intros [f F]. by apply Morphisms.path_isomorphic.
 Defined.
 
-(** [Morphisms.idtoiso] factorizes as the composition of equivalences.
-    This implies [Morphisms.idtoiso] is an equivalence. *)
+(** [Morphisms.idtoiso] factorizes as the composition of equivalences. *)
 
 Lemma path_idtoiso_isomorphic_id `{Funext} {σ : Signature}
   (A B : object (precategory_algebra σ))

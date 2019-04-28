@@ -15,7 +15,7 @@ Require Import
   HoTT.Types.Forall
   HoTT.Types.Universe
   HoTT.HSet
-  HoTT.Classes.implementations.list.
+  HoTTClasses.implementations.list.
 
 Import ne_list.notations.
 

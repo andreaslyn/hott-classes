@@ -66,6 +66,9 @@ Section congruence.
 
 End congruence.
 
+Global Arguments BuildIsCongruence {σ} A Φ {is_mere_relation_cong}
+  {equiv_rel_cong} {ops_compatible_cong}.
+
 (** If [Φ] is a congruence and [f : A s1 → A s2 → ... → A sn] an
     operation such that [OpCompatible A Φ f] holds.
     Then [OpCompatible (f x)] holds for all [x : A s1]. *)

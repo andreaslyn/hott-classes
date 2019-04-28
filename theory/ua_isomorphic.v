@@ -13,7 +13,7 @@ Require Import
   HoTT.Types.Universe
   HoTT.Tactics.
 
-(** Tow algebras [A B : Algebra σ] are isomorphic if there is an
+(** Two algebras [A B : Algebra σ] are isomorphic if there is an
     isomorphism [∀ s, A s → B s]. *)
 
 Record Isomorphic {σ : Signature} (A B : Algebra σ) := BuildIsomorphic
