@@ -200,3 +200,66 @@ Section path_subalgebra.
     apply (equiv_equiv_iff_hprop _ _ (R s x)).
   Defined.
 End path_subalgebra.
+
+Section ump_subalgebra.
+  Context
+    {σ : Signature} (A B : Algebra σ)
+    (P : ∀ s, B s → Type) `{!IsSubalgebraPredicate B P}.
+
+  Definition hom_subalgebra_mapout (f : Homomorphism A (B&P))
+    : Homomorphism A B
+    := hom_compose (hom_inc_subalgebra B P) f.
+
+  Definition def_subalgebra_mapin
+    (f : ∀ s, A s → B s) (submap : ∀ s x, P s (f s x))
+    : ∀ s, A s → (B&P) s
+    := λ s x, (f s x; submap s x).
+
+  Lemma oppreserving_subalgebra_mapin {w : SymbolType σ}
+    (f : ∀ s, A s → B s) (submap : ∀ s x, P s (f s x))
+    (α : Operation A w) (β : Operation B w) (C : ClosedUnderOp B P β)
+    (S : OpPreserving f α β)
+    : OpPreserving (def_subalgebra_mapin f submap) α (op_subalgebra B P β C).
+  Proof.
+    induction w.
+    - by apply path_sigma_hprop.
+    - cbn. intro. by apply IHw.
+  Defined.
+
+  Global Instance is_homomorphism_subalgebra_mapin
+    (f : ∀ s, A s → B s) {h : IsHomomorphism f}
+    (submap : ∀ s x, P s (f s x))
+    : IsHomomorphism (def_subalgebra_mapin f submap).
+  Proof.
+    intro u.
+    apply oppreserving_subalgebra_mapin.
+    apply h.
+  Defined.
+
+  Definition hom_subalgebra_mapin
+    (f : ∀ s, A s → B s) {h : IsHomomorphism f}
+    (submap : ∀ s x, P s (f s x))
+    : Homomorphism A (B&P)
+    := BuildHomomorphism (def_subalgebra_mapin f submap).
+
+  Definition hom_subalgebra_mapout' (f : Homomorphism A (B&P))
+    : {f : Homomorphism A B | ∀ s x, P s (f s x)}.
+  Proof.
+    refine (hom_subalgebra_mapout f; _). intros s x. apply (f s x).2.
+  Defined.
+
+  Definition hom_subalgebra_mapin'
+    (F : {f : Homomorphism A B | ∀ s x, P s (f s x)})
+    : Homomorphism A (B&P)
+    := hom_subalgebra_mapin F.1 F.2.
+
+  Lemma ump_subalgebra `{Funext} `{!IsHSetAlgebra B}
+    : Homomorphism A (B&P)
+     <~>
+      {f : Homomorphism A B | ∀ s x, P s (f s x)}.
+  Proof.
+    refine (equiv_adjointify hom_subalgebra_mapout' hom_subalgebra_mapin' _ _).
+    - intro. apply path_sigma_hprop. by apply path_hset_homomorphism.
+    - intro. by apply path_hset_homomorphism.
+  Defined.
+End ump_subalgebra.
